@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,24 +12,25 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Users } from "lucide-react";
 import { CreateTeamDialog } from "@/components/team/create-team-dialog";
 import { SignOutButton } from "@/components/shared/sign-out-button";
+import { getSessionUser } from "@/lib/auth/session";
+import { db } from "@/lib/db";
+import { teamMembers, teams as teamsTable } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 export default async function TeamSelectorPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const { data: memberships } = await supabase
-    .from("team_members")
-    .select("team_id, role, teams:team_id(id, name, slug)")
-    .eq("user_id", user.id);
-
-  const teams =
-    memberships?.map((m) => ({
-      ...(m.teams as unknown as { id: string; name: string; slug: string }),
-      role: m.role,
-    })) ?? [];
+  const teams = await db
+    .select({
+      id: teamsTable.id,
+      name: teamsTable.name,
+      slug: teamsTable.slug,
+      role: teamMembers.role,
+    })
+    .from(teamMembers)
+    .innerJoin(teamsTable, eq(teamMembers.teamId, teamsTable.id))
+    .where(eq(teamMembers.userId, user.id));
 
   return (
     <div className="min-h-screen flex flex-col">

@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createTeamAction } from "@/lib/actions/team";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,55 +31,22 @@ export function CreateTeamDialog() {
   const [slug, setSlug] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const supabase = createClient();
 
   function handleNameChange(value: string) {
     setName(value);
     setSlug(slugify(value));
   }
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleCreate(formData: FormData) {
     setError("");
     setLoading(true);
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setError("Not authenticated");
+    formData.set("slug", slug);
+    const result = await createTeamAction(formData);
+    if (result?.error) {
+      setError(result.error);
       setLoading(false);
-      return;
     }
-
-    const { data: team, error: teamError } = await supabase
-      .from("teams")
-      .insert({ name: name.trim(), slug: slug.trim(), created_by: user.id })
-      .select()
-      .single();
-
-    if (teamError) {
-      setError(
-        teamError.code === "23505"
-          ? "This slug is already taken"
-          : teamError.message
-      );
-      setLoading(false);
-      return;
-    }
-
-    await supabase.from("team_members").insert({
-      team_id: team.id,
-      user_id: user.id,
-      role: "owner",
-    });
-
-    setOpen(false);
-    setName("");
-    setSlug("");
-    router.push(`/app/${team.slug}`);
-    router.refresh();
+    // On success, createTeamAction redirects — no cleanup needed
   }
 
   return (
@@ -96,11 +62,12 @@ export function CreateTeamDialog() {
             Set up a new team to start running retros.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleCreate} className="space-y-3">
+        <form action={handleCreate} className="space-y-3">
           <div className="space-y-1">
             <Label htmlFor="team-name">Team name</Label>
             <Input
               id="team-name"
+              name="name"
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               placeholder="Engineering"
@@ -111,6 +78,7 @@ export function CreateTeamDialog() {
             <Label htmlFor="team-slug">URL slug</Label>
             <Input
               id="team-slug"
+              name="slug"
               value={slug}
               onChange={(e) => setSlug(slugify(e.target.value))}
               placeholder="engineering"

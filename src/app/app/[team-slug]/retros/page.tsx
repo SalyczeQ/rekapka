@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db";
+import { teams as teamsTable, retros } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,21 +17,27 @@ export default async function RetroListPage({
   params: Promise<{ "team-slug": string }>;
 }) {
   const { "team-slug": teamSlug } = await params;
-  const supabase = await createClient();
 
-  const { data: team } = await supabase
-    .from("teams")
-    .select("id")
-    .eq("slug", teamSlug)
-    .single();
+  const [team] = await db
+    .select({ id: teamsTable.id })
+    .from(teamsTable)
+    .where(eq(teamsTable.slug, teamSlug))
+    .limit(1);
 
   if (!team) return null;
 
-  const { data: retros } = await supabase
-    .from("retros")
-    .select("id, title, status, date, template, created_at")
-    .eq("team_id", team.id)
-    .order("created_at", { ascending: false });
+  const retroList = await db
+    .select({
+      id: retros.id,
+      title: retros.title,
+      status: retros.status,
+      date: retros.date,
+      template: retros.template,
+      createdAt: retros.createdAt,
+    })
+    .from(retros)
+    .where(eq(retros.teamId, team.id))
+    .orderBy(desc(retros.createdAt));
 
   return (
     <div className="space-y-4">
@@ -41,7 +49,7 @@ export default async function RetroListPage({
         </Button>
       </div>
 
-      {!retros?.length ? (
+      {!retroList.length ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-3">No retros yet.</p>
           <Button render={<Link href={`/app/${teamSlug}/retros/new`} />}>
@@ -50,7 +58,7 @@ export default async function RetroListPage({
         </div>
       ) : (
         <div className="space-y-2">
-          {retros.map((retro) => (
+          {retroList.map((retro) => (
             <Link key={retro.id} href={`/app/${teamSlug}/retros/${retro.id}`}>
               <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
                 <CardHeader className="py-3 px-4">

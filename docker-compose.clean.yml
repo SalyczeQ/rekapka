@@ -1,0 +1,40 @@
+version: "3.8"
+
+# Minimal stack: plain PostgreSQL + app. No Supabase services.
+# Usage: docker compose -f docker-compose.clean.yml up
+
+services:
+  db:
+    image: postgres:15-alpine
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - ./data/postgres-clean:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: rekapka
+      POSTGRES_USER: rekapka
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-rekapka_dev}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rekapka -d rekapka"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      DATABASE_URL: postgres://rekapka:${DB_PASSWORD:-rekapka_dev}@db:5432/rekapka
+      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    restart: unless-stopped

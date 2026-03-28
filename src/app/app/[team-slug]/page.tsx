@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db";
+import { teams as teamsTable, retros, actionItems } from "@/lib/db/schema";
+import { eq, desc, inArray, or } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,34 +18,53 @@ export default async function TeamDashboard({
   params: Promise<{ "team-slug": string }>;
 }) {
   const { "team-slug": teamSlug } = await params;
-  const supabase = await createClient();
 
-  const { data: team } = await supabase
-    .from("teams")
-    .select("id")
-    .eq("slug", teamSlug)
-    .single();
+  const [team] = await db
+    .select({ id: teamsTable.id })
+    .from(teamsTable)
+    .where(eq(teamsTable.slug, teamSlug))
+    .limit(1);
 
   if (!team) return null;
 
-  const { data: retros } = await supabase
-    .from("retros")
-    .select("id, title, status, date, created_at")
-    .eq("team_id", team.id)
-    .order("created_at", { ascending: false })
+  const recentRetros = await db
+    .select({
+      id: retros.id,
+      title: retros.title,
+      status: retros.status,
+      date: retros.date,
+      createdAt: retros.createdAt,
+    })
+    .from(retros)
+    .where(eq(retros.teamId, team.id))
+    .orderBy(desc(retros.createdAt))
     .limit(5);
 
-  const { data: actions } = await supabase
-    .from("action_items")
-    .select("id, text, status, assignee_id, due_date, retro_id")
-    .in(
-      "retro_id",
-      (retros ?? []).map((r) => r.id)
-    )
-    .in("status", ["open", "in_progress"])
-    .limit(5);
+  const retroIds = recentRetros.map((r) => r.id);
 
-  const activeRetro = retros?.find((r) => r.status !== "completed");
+  const actions =
+    retroIds.length > 0
+      ? await db
+          .select({
+            id: actionItems.id,
+            text: actionItems.text,
+            status: actionItems.status,
+            assigneeId: actionItems.assigneeId,
+            dueDate: actionItems.dueDate,
+            retroId: actionItems.retroId,
+          })
+          .from(actionItems)
+          .where(
+            inArray(actionItems.retroId, retroIds)
+          )
+          .limit(5)
+      : [];
+
+  const openActions = actions.filter(
+    (a) => a.status === "open" || a.status === "in_progress"
+  );
+
+  const activeRetro = recentRetros.find((r) => r.status !== "completed");
 
   return (
     <div className="space-y-4">
@@ -83,11 +104,11 @@ export default async function TeamDashboard({
           </div>
         </CardHeader>
         <CardContent className="px-4 pb-3">
-          {!retros?.length ? (
+          {!recentRetros.length ? (
             <p className="text-sm text-muted-foreground">No retros yet.</p>
           ) : (
             <div className="space-y-2">
-              {retros.map((retro) => (
+              {recentRetros.map((retro) => (
                 <Link
                   key={retro.id}
                   href={`/app/${teamSlug}/retros/${retro.id}`}
@@ -112,13 +133,13 @@ export default async function TeamDashboard({
           </div>
         </CardHeader>
         <CardContent className="px-4 pb-3">
-          {!actions?.length ? (
+          {!openActions.length ? (
             <p className="text-sm text-muted-foreground">
               No open action items.
             </p>
           ) : (
             <div className="space-y-2">
-              {actions.map((action) => (
+              {openActions.map((action) => (
                 <div
                   key={action.id}
                   className="flex items-center justify-between py-1 text-sm"

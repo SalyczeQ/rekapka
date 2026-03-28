@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { teams as teamsTable, teamMembers } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { SignOutButton } from "@/components/shared/sign-out-button";
@@ -12,27 +15,27 @@ export default async function TeamLayout({
   params: Promise<{ "team-slug": string }>;
 }) {
   const { "team-slug": teamSlug } = await params;
-  const supabase = await createClient();
+  const session = await auth();
+  if (!session?.user?.id) notFound();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) notFound();
-
-  const { data: team } = await supabase
-    .from("teams")
-    .select("id, name, slug")
-    .eq("slug", teamSlug)
-    .single();
+  const [team] = await db
+    .select({ id: teamsTable.id, name: teamsTable.name, slug: teamsTable.slug })
+    .from(teamsTable)
+    .where(eq(teamsTable.slug, teamSlug))
+    .limit(1);
 
   if (!team) notFound();
 
-  const { data: membership } = await supabase
-    .from("team_members")
-    .select("role")
-    .eq("team_id", team.id)
-    .eq("user_id", user.id)
-    .single();
+  const [membership] = await db
+    .select({ role: teamMembers.role })
+    .from(teamMembers)
+    .where(
+      and(
+        eq(teamMembers.teamId, team.id),
+        eq(teamMembers.userId, session.user.id)
+      )
+    )
+    .limit(1);
 
   if (!membership) notFound();
 
