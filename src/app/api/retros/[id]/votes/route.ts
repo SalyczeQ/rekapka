@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { retros, teamMembers, cards, votes } from '@/lib/db/schema'
+import { eq, and, inArray, sql } from 'drizzle-orm'
 import { createVoteSchema, deleteVoteSchema } from '@/lib/validators'
 
 export async function POST(
@@ -8,13 +11,8 @@ export async function POST(
 ) {
   try {
     const { id: retroId } = await params
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const session = await auth()
+    if (!session?.user?.id) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -27,18 +25,16 @@ export async function POST(
       )
     }
 
-    // Fetch retro
-    const { data: retro, error: retroError } = await supabase
-      .from('retros')
-      .select('id, team_id, status, max_votes')
-      .eq('id', retroId)
-      .single()
+    const [retro] = await db
+      .select({ id: retros.id, teamId: retros.teamId, status: retros.status, maxVotes: retros.maxVotes })
+      .from(retros)
+      .where(eq(retros.id, retroId))
+      .limit(1)
 
-    if (retroError || !retro) {
+    if (!retro) {
       return Response.json({ error: 'Retro not found' }, { status: 404 })
     }
 
-    // Check retro is in voting phase
     if (retro.status !== 'voting') {
       return Response.json(
         { error: 'Votes can only be cast during the voting phase' },
@@ -46,25 +42,21 @@ export async function POST(
       )
     }
 
-    // Check team membership
-    const { data: membership } = await supabase
-      .from('team_members')
-      .select('id')
-      .eq('team_id', retro.team_id)
-      .eq('user_id', user.id)
-      .single()
+    const [membership] = await db
+      .select({ id: teamMembers.id })
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, retro.teamId), eq(teamMembers.userId, session.user.id)))
+      .limit(1)
 
     if (!membership) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Check the card belongs to this retro
-    const { data: card } = await supabase
-      .from('cards')
-      .select('id')
-      .eq('id', parsed.data.card_id)
-      .eq('retro_id', retroId)
-      .single()
+    const [card] = await db
+      .select({ id: cards.id })
+      .from(cards)
+      .where(and(eq(cards.id, parsed.data.card_id), eq(cards.retroId, retroId)))
+      .limit(1)
 
     if (!card) {
       return Response.json(
@@ -73,13 +65,11 @@ export async function POST(
       )
     }
 
-    // Check if user already voted on this card (one vote per card per user)
-    const { data: existingVote } = await supabase
-      .from('votes')
-      .select('id')
-      .eq('card_id', parsed.data.card_id)
-      .eq('user_id', user.id)
-      .single()
+    const [existingVote] = await db
+      .select({ id: votes.id })
+      .from(votes)
+      .where(and(eq(votes.cardId, parsed.data.card_id), eq(votes.userId, session.user.id)))
+      .limit(1)
 
     if (existingVote) {
       return Response.json(
@@ -88,42 +78,35 @@ export async function POST(
       )
     }
 
-    // Check max votes for this retro
-    // Count user's total votes across all cards in this retro
-    const { data: retroCards } = await supabase
-      .from('cards')
-      .select('id')
-      .eq('retro_id', retroId)
+    // Count user's total votes in this retro
+    const retroCards = await db
+      .select({ id: cards.id })
+      .from(cards)
+      .where(eq(cards.retroId, retroId))
 
-    const cardIds = (retroCards ?? []).map((c) => c.id)
+    const cardIds = retroCards.map((c) => c.id)
 
     if (cardIds.length > 0) {
-      const { count } = await supabase
-        .from('votes')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .in('card_id', cardIds)
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(votes)
+        .where(and(eq(votes.userId, session.user.id), inArray(votes.cardId, cardIds)))
 
-      if ((count ?? 0) >= retro.max_votes) {
+      if ((countResult?.count ?? 0) >= retro.maxVotes) {
         return Response.json(
-          { error: `Maximum of ${retro.max_votes} votes reached` },
+          { error: `Maximum of ${retro.maxVotes} votes reached` },
           { status: 409 }
         )
       }
     }
 
-    const { data: vote, error: insertError } = await supabase
-      .from('votes')
-      .insert({
-        card_id: parsed.data.card_id,
-        user_id: user.id,
+    const [vote] = await db
+      .insert(votes)
+      .values({
+        cardId: parsed.data.card_id,
+        userId: session.user.id,
       })
-      .select()
-      .single()
-
-    if (insertError) {
-      return Response.json({ error: 'Failed to cast vote' }, { status: 500 })
-    }
+      .returning()
 
     return Response.json({ vote }, { status: 201 })
   } catch {
@@ -137,13 +120,8 @@ export async function DELETE(
 ) {
   try {
     const { id: retroId } = await params
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const session = await auth()
+    if (!session?.user?.id) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -156,18 +134,18 @@ export async function DELETE(
       )
     }
 
-    // Verify the vote belongs to the user and to a card in this retro
-    const { data: vote } = await supabase
-      .from('votes')
-      .select('id, user_id, card_id, cards!inner(retro_id)')
-      .eq('id', parsed.data.vote_id)
-      .single()
+    // Find the vote and check ownership
+    const [vote] = await db
+      .select({ id: votes.id, userId: votes.userId, cardId: votes.cardId })
+      .from(votes)
+      .where(eq(votes.id, parsed.data.vote_id))
+      .limit(1)
 
     if (!vote) {
       return Response.json({ error: 'Vote not found' }, { status: 404 })
     }
 
-    if (vote.user_id !== user.id) {
+    if (vote.userId !== session.user.id) {
       return Response.json(
         { error: 'You can only remove your own votes' },
         { status: 403 }
@@ -175,22 +153,20 @@ export async function DELETE(
     }
 
     // Verify card belongs to this retro
-    const voteCards = vote.cards as unknown as { retro_id: string }
-    if (voteCards.retro_id !== retroId) {
+    const [card] = await db
+      .select({ retroId: cards.retroId })
+      .from(cards)
+      .where(eq(cards.id, vote.cardId))
+      .limit(1)
+
+    if (!card || card.retroId !== retroId) {
       return Response.json(
         { error: 'Vote does not belong to this retro' },
         { status: 400 }
       )
     }
 
-    const { error: deleteError } = await supabase
-      .from('votes')
-      .delete()
-      .eq('id', parsed.data.vote_id)
-
-    if (deleteError) {
-      return Response.json({ error: 'Failed to remove vote' }, { status: 500 })
-    }
+    await db.delete(votes).where(eq(votes.id, parsed.data.vote_id))
 
     return Response.json({ success: true })
   } catch {

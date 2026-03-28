@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { inviteMemberAction } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,67 +13,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 export function InviteModal({ teamId }: { teamId: string }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"owner" | "facilitator" | "member">("member");
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
 
-    // Look up user by email
-    const { data: user } = await supabase
-      .from("users")
-      .select("id")
-      .eq("email", email.trim().toLowerCase())
-      .single();
-
-    if (!user) {
-      toast.error("User not found. They need to sign up first.");
-      setLoading(false);
-      return;
-    }
-
-    // Check if already a member
-    const { data: existing } = await supabase
-      .from("team_members")
-      .select("id")
-      .eq("team_id", teamId)
-      .eq("user_id", user.id)
-      .single();
-
-    if (existing) {
-      toast.error("User is already a team member.");
-      setLoading(false);
-      return;
-    }
-
-    const { error } = await supabase.from("team_members").insert({
-      team_id: teamId,
-      user_id: user.id,
-      role,
-    });
-
-    if (error) {
-      toast.error(error.message);
+    const result = await inviteMemberAction(teamId, email);
+    if (result?.error) {
+      toast.error(result.error);
     } else {
       toast.success("Member added!");
       setOpen(false);
       setEmail("");
-      setRole("member");
     }
     setLoading(false);
   }
@@ -102,18 +60,6 @@ export function InviteModal({ teamId }: { teamId: string }) {
               placeholder="colleague@example.com"
               required
             />
-          </div>
-          <div className="space-y-1">
-            <Label>Role</Label>
-            <Select value={role} onValueChange={(v) => v && setRole(v as typeof role)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="facilitator">Facilitator</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Adding..." : "Add member"}

@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { retros, teamMembers } from '@/lib/db/schema'
+import { eq, and } from 'drizzle-orm'
 import { advancePhaseSchema, PHASE_ORDER } from '@/lib/validators'
 
 export async function PATCH(
@@ -8,13 +11,8 @@ export async function PATCH(
 ) {
   try {
     const { id: retroId } = await params
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const session = await auth()
+    if (!session?.user?.id) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -27,30 +25,32 @@ export async function PATCH(
       )
     }
 
-    // Fetch retro
-    const { data: retro, error: retroError } = await supabase
-      .from('retros')
-      .select('id, team_id, status, created_by')
-      .eq('id', retroId)
-      .single()
+    const [retro] = await db
+      .select({
+        id: retros.id,
+        teamId: retros.teamId,
+        status: retros.status,
+        createdBy: retros.createdBy,
+      })
+      .from(retros)
+      .where(eq(retros.id, retroId))
+      .limit(1)
 
-    if (retroError || !retro) {
+    if (!retro) {
       return Response.json({ error: 'Retro not found' }, { status: 404 })
     }
 
-    // Check user is owner or facilitator
-    const { data: membership } = await supabase
-      .from('team_members')
-      .select('role')
-      .eq('team_id', retro.team_id)
-      .eq('user_id', user.id)
-      .single()
+    const [membership] = await db
+      .select({ role: teamMembers.role })
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, retro.teamId), eq(teamMembers.userId, session.user.id)))
+      .limit(1)
 
     if (!membership) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const isCreator = retro.created_by === user.id
+    const isCreator = retro.createdBy === session.user.id
     const isFacilitatorOrOwner =
       membership.role === 'owner' || membership.role === 'facilitator'
 
@@ -61,7 +61,6 @@ export async function PATCH(
       )
     }
 
-    // Validate phase transition order
     const currentIndex = PHASE_ORDER.indexOf(
       retro.status as (typeof PHASE_ORDER)[number]
     )
@@ -80,8 +79,6 @@ export async function PATCH(
       )
     }
 
-    // Do not allow advancing to 'completed' via this endpoint
-    // Use the /complete endpoint instead
     if (parsed.data.target_status === 'completed') {
       return Response.json(
         { error: 'Use the /complete endpoint to finish a retro' },
@@ -89,19 +86,11 @@ export async function PATCH(
       )
     }
 
-    const { data: updated, error: updateError } = await supabase
-      .from('retros')
-      .update({ status: parsed.data.target_status })
-      .eq('id', retroId)
-      .select()
-      .single()
-
-    if (updateError) {
-      return Response.json(
-        { error: 'Failed to advance phase' },
-        { status: 500 }
-      )
-    }
+    const [updated] = await db
+      .update(retros)
+      .set({ status: parsed.data.target_status, updatedAt: new Date() })
+      .where(eq(retros.id, retroId))
+      .returning()
 
     return Response.json({ retro: updated })
   } catch {

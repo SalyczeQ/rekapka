@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { useParams } from "next/navigation";
+import { createRetroAction } from "@/lib/actions/retro";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 const TEMPLATES = [
   {
@@ -55,73 +55,26 @@ const TEMPLATES = [
 ];
 
 export default function NewRetroPage() {
-  const router = useRouter();
   const routeParams = useParams();
   const teamSlug = routeParams["team-slug"] as string;
   const [title, setTitle] = useState(
     `Retro ${new Date().toLocaleDateString()}`
   );
-  const [template, setTemplate] = useState<"went_well_improve" | "mad_sad_glad" | "start_stop_continue" | "four_ls" | "custom">("went_well_improve");
+  const [template, setTemplate] = useState<string>("went_well_improve");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const supabase = createClient();
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleCreate(formData: FormData) {
     setError("");
     setLoading(true);
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setError("Not authenticated");
+    formData.set("teamSlug", teamSlug);
+    formData.set("template", template);
+    const result = await createRetroAction(formData);
+    if (result?.error) {
+      setError(result.error);
       setLoading(false);
-      return;
     }
-
-    const { data: team } = await supabase
-      .from("teams")
-      .select("id")
-      .eq("slug", teamSlug)
-      .single();
-
-    if (!team) {
-      setError("Team not found");
-      setLoading(false);
-      return;
-    }
-
-    const { data: retro, error: retroError } = await supabase
-      .from("retros")
-      .insert({
-        team_id: team.id,
-        title: title.trim(),
-        template,
-        created_by: user.id,
-      })
-      .select()
-      .single();
-
-    if (retroError) {
-      setError(retroError.message);
-      setLoading(false);
-      return;
-    }
-
-    const tmpl = TEMPLATES.find((t) => t.value === template);
-    if (tmpl) {
-      const categories = tmpl.categories.map((cat, i) => ({
-        retro_id: retro.id,
-        name: cat.name,
-        icon: cat.icon,
-        color: cat.color,
-        sort_order: i,
-      }));
-      await supabase.from("categories").insert(categories);
-    }
-
-    router.push(`/app/${teamSlug}/retros/${retro.id}`);
+    // On success, createRetroAction redirects
   }
 
   return (
@@ -130,11 +83,12 @@ export default function NewRetroPage() {
 
       <Card>
         <CardContent className="pt-4">
-          <form onSubmit={handleCreate} className="space-y-4">
+          <form action={handleCreate} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
+                name="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -143,7 +97,7 @@ export default function NewRetroPage() {
 
             <div className="space-y-1">
               <Label>Template</Label>
-              <Select value={template} onValueChange={(v) => v && setTemplate(v as typeof template)}>
+              <Select value={template} onValueChange={(v) => v && setTemplate(v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

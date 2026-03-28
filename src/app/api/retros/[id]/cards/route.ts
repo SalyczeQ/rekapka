@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { retros, teamMembers, cards, categories, cardTags, tags } from '@/lib/db/schema'
+import { eq, and, desc, asc, inArray } from 'drizzle-orm'
 import { createCardSchema } from '@/lib/validators'
 
 export async function GET(
@@ -8,76 +11,79 @@ export async function GET(
 ) {
   try {
     const { id: retroId } = await params
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const session = await auth()
+    if (!session?.user?.id) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Fetch retro to check status and team membership
-    const { data: retro, error: retroError } = await supabase
-      .from('retros')
-      .select('id, team_id, status')
-      .eq('id', retroId)
-      .single()
+    const [retro] = await db
+      .select({ id: retros.id, teamId: retros.teamId, status: retros.status })
+      .from(retros)
+      .where(eq(retros.id, retroId))
+      .limit(1)
 
-    if (retroError || !retro) {
+    if (!retro) {
       return Response.json({ error: 'Retro not found' }, { status: 404 })
     }
 
-    // Check team membership
-    const { data: membership } = await supabase
-      .from('team_members')
-      .select('id')
-      .eq('team_id', retro.team_id)
-      .eq('user_id', user.id)
-      .single()
+    const [membership] = await db
+      .select({ id: teamMembers.id })
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, retro.teamId), eq(teamMembers.userId, session.user.id)))
+      .limit(1)
 
     if (!membership) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Fetch cards with author info and tags
-    const { data: cards, error: cardsError } = await supabase
-      .from('cards')
-      .select(`
-        id,
-        retro_id,
-        category_id,
-        author_id,
-        text,
-        sort_order,
-        group_label,
-        is_discussed,
-        carried_from_retro_id,
-        created_at,
-        updated_at,
-        card_tags (
-          id,
-          tag_id,
-          tags ( id, name )
-        )
-      `)
-      .eq('retro_id', retroId)
-      .order('sort_order', { ascending: true })
+    const retroCards = await db
+      .select()
+      .from(cards)
+      .where(eq(cards.retroId, retroId))
+      .orderBy(asc(cards.sortOrder))
 
-    if (cardsError) {
-      return Response.json({ error: 'Failed to fetch cards' }, { status: 500 })
+    const cardIds = retroCards.map((c) => c.id)
+
+    // Fetch tags for all cards
+    let cardTagsWithNames: { cardId: string; tagId: string; tagName: string }[] = []
+    if (cardIds.length > 0) {
+      cardTagsWithNames = await db
+        .select({
+          cardId: cardTags.cardId,
+          tagId: cardTags.tagId,
+          tagName: tags.name,
+        })
+        .from(cardTags)
+        .innerJoin(tags, eq(cardTags.tagId, tags.id))
+        .where(inArray(cardTags.cardId, cardIds))
     }
 
-    // Privacy: in writing phase, hide text of other users' cards
-    const processedCards = (cards ?? []).map((card) => {
-      if (retro.status === 'writing' && card.author_id !== user.id) {
-        return {
-          ...card,
-          text: '',
-        }
+    const tagsByCardId = new Map<string, { id: string; tag_id: string; tags: { id: string; name: string } }[]>()
+    for (const ct of cardTagsWithNames) {
+      const list = tagsByCardId.get(ct.cardId) ?? []
+      list.push({ id: ct.cardId, tag_id: ct.tagId, tags: { id: ct.tagId, name: ct.tagName } })
+      tagsByCardId.set(ct.cardId, list)
+    }
+
+    const processedCards = retroCards.map((card) => {
+      const cardData = {
+        id: card.id,
+        retro_id: card.retroId,
+        category_id: card.categoryId,
+        author_id: card.authorId,
+        text: card.text,
+        sort_order: card.sortOrder,
+        group_label: card.groupLabel,
+        is_discussed: card.isDiscussed,
+        carried_from_retro_id: card.carriedFromRetroId,
+        created_at: card.createdAt.toISOString(),
+        updated_at: card.updatedAt.toISOString(),
+        card_tags: tagsByCardId.get(card.id) ?? [],
       }
-      return card
+      if (retro.status === 'writing' && card.authorId !== session.user!.id) {
+        return { ...cardData, text: '' }
+      }
+      return cardData
     })
 
     return Response.json({ cards: processedCards })
@@ -92,13 +98,8 @@ export async function POST(
 ) {
   try {
     const { id: retroId } = await params
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const session = await auth()
+    if (!session?.user?.id) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -111,18 +112,16 @@ export async function POST(
       )
     }
 
-    // Fetch retro
-    const { data: retro, error: retroError } = await supabase
-      .from('retros')
-      .select('id, team_id, status')
-      .eq('id', retroId)
-      .single()
+    const [retro] = await db
+      .select({ id: retros.id, teamId: retros.teamId, status: retros.status })
+      .from(retros)
+      .where(eq(retros.id, retroId))
+      .limit(1)
 
-    if (retroError || !retro) {
+    if (!retro) {
       return Response.json({ error: 'Retro not found' }, { status: 404 })
     }
 
-    // Check retro is in writing phase
     if (retro.status !== 'writing') {
       return Response.json(
         { error: 'Cards can only be added during the writing phase' },
@@ -130,25 +129,21 @@ export async function POST(
       )
     }
 
-    // Check team membership
-    const { data: membership } = await supabase
-      .from('team_members')
-      .select('id')
-      .eq('team_id', retro.team_id)
-      .eq('user_id', user.id)
-      .single()
+    const [membership] = await db
+      .select({ id: teamMembers.id })
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, retro.teamId), eq(teamMembers.userId, session.user.id)))
+      .limit(1)
 
     if (!membership) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Validate category belongs to retro
-    const { data: category } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('id', parsed.data.category_id)
-      .eq('retro_id', retroId)
-      .single()
+    const [category] = await db
+      .select({ id: categories.id })
+      .from(categories)
+      .where(and(eq(categories.id, parsed.data.category_id), eq(categories.retroId, retroId)))
+      .limit(1)
 
     if (!category) {
       return Response.json(
@@ -157,33 +152,25 @@ export async function POST(
       )
     }
 
-    // Get max sort order for new card
-    const { data: maxCard } = await supabase
-      .from('cards')
-      .select('sort_order')
-      .eq('retro_id', retroId)
-      .eq('category_id', parsed.data.category_id)
-      .order('sort_order', { ascending: false })
+    const [maxCard] = await db
+      .select({ sortOrder: cards.sortOrder })
+      .from(cards)
+      .where(and(eq(cards.retroId, retroId), eq(cards.categoryId, parsed.data.category_id)))
+      .orderBy(desc(cards.sortOrder))
       .limit(1)
-      .single()
 
-    const nextOrder = (maxCard?.sort_order ?? -1) + 1
+    const nextOrder = (maxCard?.sortOrder ?? -1) + 1
 
-    const { data: card, error: insertError } = await supabase
-      .from('cards')
-      .insert({
-        retro_id: retroId,
-        category_id: parsed.data.category_id,
-        author_id: user.id,
+    const [card] = await db
+      .insert(cards)
+      .values({
+        retroId,
+        categoryId: parsed.data.category_id,
+        authorId: session.user.id,
         text: parsed.data.text,
-        sort_order: nextOrder,
+        sortOrder: nextOrder,
       })
-      .select()
-      .single()
-
-    if (insertError) {
-      return Response.json({ error: 'Failed to create card' }, { status: 500 })
-    }
+      .returning()
 
     return Response.json({ card }, { status: 201 })
   } catch {

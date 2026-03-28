@@ -1,5 +1,15 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import {
+  teams as teamsTable,
+  retros,
+  categories,
+  cards,
+  votes,
+  teamMembers,
+} from "@/lib/db/schema";
+import { eq, and, inArray, asc } from "drizzle-orm";
 import { RetroSession } from "@/components/retro/retro-session";
 
 export default async function RetroPage({
@@ -8,62 +18,93 @@ export default async function RetroPage({
   params: Promise<{ "team-slug": string; id: string }>;
 }) {
   const { "team-slug": teamSlug, id } = await params;
-  const supabase = await createClient();
+  const session = await auth();
+  if (!session?.user?.id) notFound();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) notFound();
-
-  const { data: team } = await supabase
-    .from("teams")
-    .select("id")
-    .eq("slug", teamSlug)
-    .single();
+  const [team] = await db
+    .select({ id: teamsTable.id })
+    .from(teamsTable)
+    .where(eq(teamsTable.slug, teamSlug))
+    .limit(1);
   if (!team) notFound();
 
-  const { data: retro } = await supabase
-    .from("retros")
-    .select("*")
-    .eq("id", id)
-    .eq("team_id", team.id)
-    .single();
+  const [retro] = await db
+    .select()
+    .from(retros)
+    .where(and(eq(retros.id, id), eq(retros.teamId, team.id)))
+    .limit(1);
   if (!retro) notFound();
 
-  const { data: categories } = await supabase
-    .from("categories")
-    .select("*")
-    .eq("retro_id", retro.id)
-    .order("sort_order");
+  const retroCategories = await db
+    .select()
+    .from(categories)
+    .where(eq(categories.retroId, retro.id))
+    .orderBy(asc(categories.sortOrder));
 
-  const { data: cards } = await supabase
-    .from("cards")
-    .select("*")
-    .eq("retro_id", retro.id)
-    .order("created_at");
+  const retroCards = await db
+    .select()
+    .from(cards)
+    .where(eq(cards.retroId, retro.id))
+    .orderBy(asc(cards.createdAt));
 
-  const { data: votes } = await supabase
-    .from("votes")
-    .select("*")
-    .in(
-      "card_id",
-      (cards ?? []).map((c) => c.id)
-    );
+  const cardIds = retroCards.map((c) => c.id);
+  const retroVotes =
+    cardIds.length > 0
+      ? await db
+          .select()
+          .from(votes)
+          .where(inArray(votes.cardId, cardIds))
+      : [];
 
-  const { data: membership } = await supabase
-    .from("team_members")
-    .select("role")
-    .eq("team_id", team.id)
-    .eq("user_id", user.id)
-    .single();
+  const [membership] = await db
+    .select({ role: teamMembers.role })
+    .from(teamMembers)
+    .where(
+      and(
+        eq(teamMembers.teamId, team.id),
+        eq(teamMembers.userId, session.user.id)
+      )
+    )
+    .limit(1);
 
+  // Map Drizzle camelCase output to snake_case props expected by RetroSession
+  // (RetroSession still uses Supabase client internally for realtime — will be migrated later)
   return (
     <RetroSession
-      retro={retro}
-      categories={categories ?? []}
-      initialCards={cards ?? []}
-      initialVotes={votes ?? []}
-      currentUserId={user.id}
+      retro={{
+        id: retro.id,
+        title: retro.title,
+        status: retro.status,
+        template: retro.template,
+        location: retro.location,
+        photo_url: retro.photoUrl,
+        date: retro.date,
+        max_votes: retro.maxVotes,
+        phase_timer_seconds: retro.phaseTimerSeconds,
+      }}
+      categories={retroCategories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        icon: c.icon,
+        sort_order: c.sortOrder,
+        color: c.color,
+      }))}
+      initialCards={retroCards.map((c) => ({
+        id: c.id,
+        category_id: c.categoryId,
+        author_id: c.authorId,
+        text: c.text,
+        sort_order: c.sortOrder,
+        group_label: c.groupLabel,
+        is_discussed: c.isDiscussed,
+        created_at: c.createdAt.toISOString(),
+      }))}
+      initialVotes={retroVotes.map((v) => ({
+        id: v.id,
+        card_id: v.cardId,
+        user_id: v.userId,
+      }))}
+      currentUserId={session.user.id}
       userRole={membership?.role ?? "member"}
       teamSlug={teamSlug}
     />

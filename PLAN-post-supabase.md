@@ -217,10 +217,28 @@ Best order:
 - [x] convert team dashboard (`/app/[team-slug]/page.tsx`) to Drizzle
 - [x] convert retro list page (`/app/[team-slug]/retros/page.tsx`) to Drizzle
 - [x] migrate `middleware.ts` → `proxy.ts` (Next 16 convention)
-- [ ] convert retro creation path to use Drizzle + server actions
-- [ ] convert retro detail page to Drizzle + server actions
-- [ ] convert actions page to Drizzle
-- [ ] convert settings page to Drizzle
+- [x] convert retro creation path to Drizzle + server action (`src/lib/actions/retro.ts`)
+- [x] convert retro detail page to Drizzle (maps to snake_case for RetroSession compat)
+- [x] convert actions page to Drizzle (server component + client component split)
+- [x] convert settings page to Drizzle (server component + client component split)
+- [x] convert retro stats page to Drizzle (server component + client component split)
+- [x] convert all 5 retro API routes (cards, votes, phase, complete, export) to Drizzle
+- [x] convert AI API routes (group, stats) to Drizzle
+- [x] convert ICS API route to Drizzle
+- [x] convert member-list and invite-modal components to server actions + API
+- [x] create `/api/teams/[id]/members` route
+- [x] remove dead `src/app/auth/callback/route.ts`
+
+### E. Remaining: realtime/client components (10 files still use Supabase client)
+- [ ] `retro-session.tsx` — realtime card/vote subscriptions + broadcast
+- [ ] `phase-actions.tsx` — realtime action items
+- [ ] `participant-bar.tsx` — presence tracking
+- [ ] `timer-display.tsx` — timer broadcast
+- [ ] `retro-metadata.tsx` — photo upload (Supabase Storage)
+- [ ] `tag-input.tsx` — tag search (direct DB query)
+- [ ] hooks: `use-realtime-cards`, `use-retro-phase`, `use-realtime-presence`, `use-timer`
+- [ ] remove `src/lib/supabase/` directory
+- [ ] remove `@supabase/*` packages from package.json
 
 ## Risks
 - realtime feature regression if done too aggressively
@@ -267,13 +285,15 @@ If only one agent should code first, pick the **backend migration agent**. That 
 - docs and deployment updated
 
 ## Practical next action (updated 2026-03-28)
-Auth, proxy, team selector, team dashboard, and retro list are fully migrated to Auth.js + Drizzle.
-Remaining Supabase-coupled pages (28 files) still compile against old client libs.
+All pages, API routes, server actions, and data access are migrated to Auth.js + Drizzle.
+Build passes clean. Only 10 client-side files still import Supabase (all realtime/presence/upload).
 
-Next steps:
-1. Convert retro creation page (`/app/[team-slug]/retros/new/page.tsx`) — server action for insert
-2. Convert retro detail page (`/app/[team-slug]/retros/[id]/page.tsx`) — read retro + cards
-3. Convert API routes (`/api/retros/[id]/*`) from Supabase server client to Drizzle
-4. Convert remaining client components (hooks, retro session) — replace Supabase realtime with polling/SSE
-5. Remove `src/lib/supabase/` and `src/app/auth/callback/` once no imports remain
-6. Remove `@supabase/*` packages from package.json
+**Remaining to reach full Supabase removal:**
+1. Replace Supabase realtime subscriptions in `retro-session.tsx` and hooks with polling or SSE
+2. Replace Supabase presence tracking with a lightweight alternative
+3. Replace Supabase broadcast (phase changes, timer) with a simple channel mechanism
+4. Replace Supabase Storage photo upload in `retro-metadata.tsx` with local file/API upload
+5. Replace `tag-input.tsx` Supabase query with an API route
+6. Remove `src/lib/supabase/` directory and `@supabase/*` packages
+7. Remove Supabase services from docker-compose
+8. Test end-to-end flows

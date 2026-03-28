@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { retros, teamMembers, categories, cards } from '@/lib/db/schema'
+import { eq, and, asc } from 'drizzle-orm'
 
 export async function POST(
   request: NextRequest,
@@ -7,40 +10,39 @@ export async function POST(
 ) {
   try {
     const { id: retroId } = await params
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const session = await auth()
+    if (!session?.user?.id) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Fetch retro
-    const { data: retro, error: retroError } = await supabase
-      .from('retros')
-      .select('id, team_id, status, created_by, title, template')
-      .eq('id', retroId)
-      .single()
+    const [retro] = await db
+      .select({
+        id: retros.id,
+        teamId: retros.teamId,
+        status: retros.status,
+        createdBy: retros.createdBy,
+        title: retros.title,
+        template: retros.template,
+      })
+      .from(retros)
+      .where(eq(retros.id, retroId))
+      .limit(1)
 
-    if (retroError || !retro) {
+    if (!retro) {
       return Response.json({ error: 'Retro not found' }, { status: 404 })
     }
 
-    // Check user is owner or facilitator
-    const { data: membership } = await supabase
-      .from('team_members')
-      .select('role')
-      .eq('team_id', retro.team_id)
-      .eq('user_id', user.id)
-      .single()
+    const [membership] = await db
+      .select({ role: teamMembers.role })
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, retro.teamId), eq(teamMembers.userId, session.user.id)))
+      .limit(1)
 
     if (!membership) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const isCreator = retro.created_by === user.id
+    const isCreator = retro.createdBy === session.user.id
     const isFacilitatorOrOwner =
       membership.role === 'owner' || membership.role === 'facilitator'
 
@@ -51,7 +53,6 @@ export async function POST(
       )
     }
 
-    // Retro must be in 'actions' phase to complete
     if (retro.status !== 'actions') {
       return Response.json(
         { error: 'Retro must be in the actions phase to be completed' },
@@ -59,49 +60,43 @@ export async function POST(
       )
     }
 
-    // Set status to completed
-    const { data: completedRetro, error: updateError } = await supabase
-      .from('retros')
-      .update({
+    const [completedRetro] = await db
+      .update(retros)
+      .set({
         status: 'completed',
-        completed_at: new Date().toISOString(),
+        completedAt: new Date(),
+        updatedAt: new Date(),
       })
-      .eq('id', retroId)
-      .select()
-      .single()
-
-    if (updateError) {
-      return Response.json(
-        { error: 'Failed to complete retro' },
-        { status: 500 }
-      )
-    }
+      .where(eq(retros.id, retroId))
+      .returning()
 
     // Find undiscussed cards to carry over
-    const { data: undiscussedCards } = await supabase
-      .from('cards')
-      .select('id, category_id, author_id, text, sort_order')
-      .eq('retro_id', retroId)
-      .eq('is_discussed', false)
+    const undiscussedCards = await db
+      .select({
+        id: cards.id,
+        categoryId: cards.categoryId,
+        authorId: cards.authorId,
+        text: cards.text,
+        sortOrder: cards.sortOrder,
+      })
+      .from(cards)
+      .where(and(eq(cards.retroId, retroId), eq(cards.isDiscussed, false)))
 
     let carryOverRetroId: string | null = null
 
-    if (undiscussedCards && undiscussedCards.length > 0) {
-      // Create a new draft retro for carry-over cards
-      const { data: newRetro, error: newRetroError } = await supabase
-        .from('retros')
-        .insert({
-          team_id: retro.team_id,
+    if (undiscussedCards.length > 0) {
+      const [newRetro] = await db
+        .insert(retros)
+        .values({
+          teamId: retro.teamId,
           title: `Follow-up: ${retro.title}`,
           status: 'draft',
           template: retro.template,
-          created_by: user.id,
+          createdBy: session.user.id,
         })
-        .select()
-        .single()
+        .returning({ id: retros.id })
 
-      if (newRetroError || !newRetro) {
-        // Non-fatal: retro is completed but carry-over failed
+      if (!newRetro) {
         return Response.json({
           retro: completedRetro,
           carry_over: { error: 'Failed to create follow-up retro' },
@@ -110,65 +105,62 @@ export async function POST(
 
       carryOverRetroId = newRetro.id
 
-      // Copy categories from original retro to new retro
-      const { data: originalCategories } = await supabase
-        .from('categories')
-        .select('name, icon, sort_order, color')
-        .eq('retro_id', retroId)
-        .order('sort_order', { ascending: true })
+      const originalCategories = await db
+        .select({
+          id: categories.id,
+          name: categories.name,
+          icon: categories.icon,
+          sortOrder: categories.sortOrder,
+          color: categories.color,
+        })
+        .from(categories)
+        .where(eq(categories.retroId, retroId))
+        .orderBy(asc(categories.sortOrder))
 
-      if (originalCategories && originalCategories.length > 0) {
-        const newCategories = originalCategories.map((cat) => ({
-          retro_id: newRetro.id,
-          name: cat.name,
-          icon: cat.icon,
-          sort_order: cat.sort_order,
-          color: cat.color,
-        }))
+      if (originalCategories.length > 0) {
+        const insertedCategories = await db
+          .insert(categories)
+          .values(
+            originalCategories.map((cat) => ({
+              retroId: newRetro.id,
+              name: cat.name,
+              icon: cat.icon,
+              sortOrder: cat.sortOrder,
+              color: cat.color,
+            }))
+          )
+          .returning({ id: categories.id, name: categories.name })
 
-        const { data: insertedCategories } = await supabase
-          .from('categories')
-          .insert(newCategories)
-          .select()
+        // Map old category name -> new category id
+        const categoryMap = new Map<string, string>()
+        for (const cat of insertedCategories) {
+          categoryMap.set(cat.name, cat.id)
+        }
 
-        if (insertedCategories) {
-          // Build a mapping from old category name to new category id
-          const categoryMap = new Map<string, string>()
-          for (const cat of insertedCategories) {
-            categoryMap.set(cat.name, cat.id)
-          }
+        // Map old category id -> name
+        const oldCatIdToName = new Map<string, string>()
+        for (const c of originalCategories) {
+          oldCatIdToName.set(c.id, c.name)
+        }
 
-          // Get original categories to map old category_id -> name
-          const { data: origCats } = await supabase
-            .from('categories')
-            .select('id, name')
-            .eq('retro_id', retroId)
+        const newCards = undiscussedCards
+          .map((card, index) => {
+            const catName = oldCatIdToName.get(card.categoryId)
+            const newCatId = catName ? categoryMap.get(catName) : undefined
+            if (!newCatId) return null
+            return {
+              retroId: newRetro.id,
+              categoryId: newCatId,
+              authorId: card.authorId,
+              text: card.text,
+              sortOrder: index,
+              carriedFromRetroId: retroId,
+            }
+          })
+          .filter((c): c is NonNullable<typeof c> => c !== null)
 
-          const oldCatIdToName = new Map<string, string>()
-          for (const c of origCats ?? []) {
-            oldCatIdToName.set(c.id, c.name)
-          }
-
-          // Clone undiscussed cards into the new retro
-          const newCards = undiscussedCards
-            .map((card, index) => {
-              const catName = oldCatIdToName.get(card.category_id)
-              const newCatId = catName ? categoryMap.get(catName) : undefined
-              if (!newCatId) return null
-              return {
-                retro_id: newRetro.id,
-                category_id: newCatId,
-                author_id: card.author_id,
-                text: card.text,
-                sort_order: index,
-                carried_from_retro_id: retroId,
-              }
-            })
-            .filter((c): c is NonNullable<typeof c> => c !== null)
-
-          if (newCards.length > 0) {
-            await supabase.from('cards').insert(newCards)
-          }
+        if (newCards.length > 0) {
+          await db.insert(cards).values(newCards)
         }
       }
     }
@@ -178,7 +170,7 @@ export async function POST(
       carry_over: carryOverRetroId
         ? {
             retro_id: carryOverRetroId,
-            cards_carried: undiscussedCards?.length ?? 0,
+            cards_carried: undiscussedCards.length,
           }
         : null,
     })

@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { retros, teamMembers, cards } from '@/lib/db/schema'
+import { eq, and, asc } from 'drizzle-orm'
 import { aiGroupSchema } from '@/lib/validators'
 import { groupCardsByTheme } from '@/lib/ai/group-cards'
 
@@ -27,13 +30,8 @@ function checkRateLimit(retroId: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const session = await auth()
+    if (!session?.user?.id) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -48,7 +46,6 @@ export async function POST(request: NextRequest) {
 
     const { retro_id } = parsed.data
 
-    // Rate limit check
     if (!checkRateLimit(retro_id)) {
       return Response.json(
         { error: 'Rate limit exceeded. Try again in a minute.' },
@@ -56,29 +53,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch retro and verify membership
-    const { data: retro, error: retroError } = await supabase
-      .from('retros')
-      .select('id, team_id, status')
-      .eq('id', retro_id)
-      .single()
+    const [retro] = await db
+      .select({ id: retros.id, teamId: retros.teamId, status: retros.status })
+      .from(retros)
+      .where(eq(retros.id, retro_id))
+      .limit(1)
 
-    if (retroError || !retro) {
+    if (!retro) {
       return Response.json({ error: 'Retro not found' }, { status: 404 })
     }
 
-    const { data: membership } = await supabase
-      .from('team_members')
-      .select('role')
-      .eq('team_id', retro.team_id)
-      .eq('user_id', user.id)
-      .single()
+    const [membership] = await db
+      .select({ role: teamMembers.role })
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, retro.teamId), eq(teamMembers.userId, session.user.id)))
+      .limit(1)
 
     if (!membership) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Only allow grouping after the writing phase
     if (retro.status === 'draft' || retro.status === 'writing') {
       return Response.json(
         { error: 'AI grouping is only available after the writing phase' },
@@ -86,40 +80,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch all cards for this retro
-    const { data: cards, error: cardsError } = await supabase
-      .from('cards')
-      .select('id, text')
-      .eq('retro_id', retro_id)
-      .order('sort_order', { ascending: true })
+    const retroCards = await db
+      .select({ id: cards.id, text: cards.text })
+      .from(cards)
+      .where(eq(cards.retroId, retro_id))
+      .orderBy(asc(cards.sortOrder))
 
-    if (cardsError || !cards) {
-      return Response.json({ error: 'Failed to fetch cards' }, { status: 500 })
-    }
-
-    if (cards.length === 0) {
+    if (retroCards.length === 0) {
       return Response.json({ labels: [], count: 0 })
     }
 
-    // Call AI grouping
-    const labels = await groupCardsByTheme(cards.map((c) => c.text))
+    const labels = await groupCardsByTheme(retroCards.map((c) => c.text))
 
-    // Update cards with group labels
     let updatedCount = 0
-    for (let i = 0; i < cards.length; i++) {
+    for (let i = 0; i < retroCards.length; i++) {
       if (labels[i]) {
-        const { error } = await supabase
-          .from('cards')
-          .update({ group_label: labels[i] })
-          .eq('id', cards[i].id)
-
-        if (!error) updatedCount++
+        await db
+          .update(cards)
+          .set({ groupLabel: labels[i] })
+          .where(eq(cards.id, retroCards[i].id))
+        updatedCount++
       }
     }
 
     return Response.json({
       labels,
-      count: cards.length,
+      count: retroCards.length,
       grouped: updatedCount,
     })
   } catch {
