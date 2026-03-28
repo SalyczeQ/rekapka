@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
@@ -22,7 +21,6 @@ export function TagInput({ teamId, selectedTags, onTagsChange }: TagInputProps) 
   const [input, setInput] = useState("");
   const [suggestions, setSuggestions] = useState<TagSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const supabase = createClient();
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,18 +30,17 @@ export function TagInput({ teamId, selectedTags, onTagsChange }: TagInputProps) 
     }
 
     const timer = setTimeout(async () => {
-      const { data } = await supabase
-        .from("tags")
-        .select("id, name, usage_count")
-        .eq("team_id", teamId)
-        .ilike("name", `%${input}%`)
-        .order("usage_count", { ascending: false })
-        .limit(5);
-      setSuggestions(data ?? []);
+      const res = await fetch(
+        `/api/tags/search?teamId=${encodeURIComponent(teamId)}&q=${encodeURIComponent(input)}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setSuggestions(data.tags ?? []);
+      }
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [input, teamId, supabase]);
+  }, [input, teamId]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {

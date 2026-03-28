@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, RotateCcw, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,6 +11,7 @@ interface TimerDisplayProps {
   isFacilitator: boolean;
 }
 
+// Local-only timer. Multi-client sync will be added when a WebSocket/SSE layer is introduced.
 export function TimerDisplay({
   retroId,
   durationSeconds,
@@ -19,16 +19,13 @@ export function TimerDisplay({
 }: TimerDisplayProps) {
   const [remaining, setRemaining] = useState(durationSeconds ?? 0);
   const [isRunning, setIsRunning] = useState(false);
-  const supabase = createClient();
 
-  // Countdown
   useEffect(() => {
     if (!isRunning || remaining <= 0) return;
     const interval = setInterval(() => {
       setRemaining((prev) => {
         if (prev <= 1) {
           setIsRunning(false);
-          // Vibrate on mobile when timer ends
           if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
           return 0;
         }
@@ -38,49 +35,13 @@ export function TimerDisplay({
     return () => clearInterval(interval);
   }, [isRunning, remaining]);
 
-  // Listen for timer broadcasts
-  useEffect(() => {
-    const channel = supabase
-      .channel(`timer-${retroId}`)
-      .on("broadcast", { event: "timer" }, (payload) => {
-        const { action, remaining: r } = payload.payload;
-        if (action === "start") {
-          setRemaining(r);
-          setIsRunning(true);
-        } else if (action === "pause") {
-          setIsRunning(false);
-          setRemaining(r);
-        } else if (action === "reset") {
-          setIsRunning(false);
-          setRemaining(r);
-        }
-      })
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [retroId, supabase]);
-
-  const broadcast = useCallback(
-    (action: string, r: number) => {
-      supabase.channel(`timer-${retroId}`).send({
-        type: "broadcast",
-        event: "timer",
-        payload: { action, remaining: r },
-      });
-    },
-    [retroId, supabase]
-  );
-
   const toggleTimer = () => {
     if (isRunning) {
       setIsRunning(false);
-      broadcast("pause", remaining);
     } else {
       const r = remaining || durationSeconds || 300;
       setRemaining(r);
       setIsRunning(true);
-      broadcast("start", r);
     }
   };
 
@@ -88,7 +49,6 @@ export function TimerDisplay({
     const r = durationSeconds || 300;
     setIsRunning(false);
     setRemaining(r);
-    broadcast("reset", r);
   };
 
   if (!durationSeconds && !isFacilitator) return null;

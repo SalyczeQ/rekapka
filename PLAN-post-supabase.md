@@ -229,16 +229,26 @@ Best order:
 - [x] create `/api/teams/[id]/members` route
 - [x] remove dead `src/app/auth/callback/route.ts`
 
-### E. Remaining: realtime/client components (10 files still use Supabase client)
-- [ ] `retro-session.tsx` — realtime card/vote subscriptions + broadcast
-- [ ] `phase-actions.tsx` — realtime action items
-- [ ] `participant-bar.tsx` — presence tracking
-- [ ] `timer-display.tsx` — timer broadcast
-- [ ] `retro-metadata.tsx` — photo upload (Supabase Storage)
-- [ ] `tag-input.tsx` — tag search (direct DB query)
-- [ ] hooks: `use-realtime-cards`, `use-retro-phase`, `use-realtime-presence`, `use-timer`
-- [ ] remove `src/lib/supabase/` directory
-- [ ] remove `@supabase/*` packages from package.json
+### E. Client components migrated off Supabase
+- [x] `retro-session.tsx` — uses polling via hooks + API routes
+- [x] `phase-actions.tsx` — uses server actions
+- [x] `participant-bar.tsx` — simplified (current user only, pending WS)
+- [x] `timer-display.tsx` — local timer (pending WS sync)
+- [x] `retro-metadata.tsx` — uses `/api/uploads/retro-photo`
+- [x] `tag-input.tsx` — uses `/api/tags/search`
+- [x] hooks: `use-realtime-cards`, `use-retro-phase`, `use-realtime-presence`, `use-timer` — polling-based
+- [x] remove `src/lib/supabase/` directory
+- [x] remove `@supabase/*` packages from package.json
+
+### F. Cleanup pass (simplification)
+- [x] removed `src/lib/auth/api.ts` (unused exports)
+- [x] removed `src/lib/card-ordering.ts` (unused)
+- [x] removed `supabase/migrations/` directory (ported to Drizzle)
+- [x] removed legacy `docker-compose.yml`, promoted `docker-compose.clean.yml`
+- [x] removed `docker/kong/` (only used by Supabase gateway)
+- [x] removed `docs/supabase-coupling-inventory.md` (completed)
+- [x] removed Supabase image patterns from `next.config.ts`
+- [x] removed legacy Supabase env vars from `.env`, `.env.example`, `.env.local`
 
 ## Risks
 - realtime feature regression if done too aggressively
@@ -285,15 +295,10 @@ If only one agent should code first, pick the **backend migration agent**. That 
 - docs and deployment updated
 
 ## Practical next action (updated 2026-03-28)
-All pages, API routes, server actions, and data access are migrated to Auth.js + Drizzle.
-Build passes clean. Only 10 client-side files still import Supabase (all realtime/presence/upload).
+All Supabase code, packages, infrastructure, and env vars have been removed.
+Auth.js + Drizzle are the sole backend. Realtime uses polling (3s) as a temporary measure.
 
-**Remaining to reach full Supabase removal:**
-1. Replace Supabase realtime subscriptions in `retro-session.tsx` and hooks with polling or SSE
-2. Replace Supabase presence tracking with a lightweight alternative
-3. Replace Supabase broadcast (phase changes, timer) with a simple channel mechanism
-4. Replace Supabase Storage photo upload in `retro-metadata.tsx` with local file/API upload
-5. Replace `tag-input.tsx` Supabase query with an API route
-6. Remove `src/lib/supabase/` directory and `@supabase/*` packages
-7. Remove Supabase services from docker-compose
-8. Test end-to-end flows
+**Remaining work (enhancement, not migration):**
+1. Replace polling hooks with SSE or WebSocket for lower latency
+2. Add multi-user presence tracking (currently shows only current user)
+3. Add cross-client timer sync via SSE/WS

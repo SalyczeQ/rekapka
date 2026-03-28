@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { updateRetroMetadataAction } from "@/lib/actions/retro-session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,19 +29,14 @@ export function RetroMetadata({
   const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const supabase = createClient();
 
   async function handleSave() {
     setSaving(true);
-    const { error } = await supabase
-      .from("retros")
-      .update({
-        location: location || null,
-        date,
-      })
-      .eq("id", retroId);
-
-    if (error) toast.error("Failed to save metadata");
+    const result = await updateRetroMetadataAction(retroId, {
+      location: location || null,
+      date,
+    });
+    if (result?.error) toast.error("Failed to save metadata");
     else toast.success("Saved");
     setSaving(false);
   }
@@ -61,29 +56,27 @@ export function RetroMetadata({
     }
 
     setUploading(true);
-    const ext = file.name.split(".").pop();
-    const path = `retros/${retroId}/photo.${ext}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from("photos")
-      .upload(path, file, { upsert: true });
+    const formData = new FormData();
+    formData.set("file", file);
+    formData.set("retroId", retroId);
 
-    if (uploadError) {
+    const res = await fetch("/api/uploads/retro-photo", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
       toast.error("Upload failed");
       setUploading(false);
       return;
     }
 
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("photos").getPublicUrl(path);
+    const { url } = await res.json();
 
-    await supabase
-      .from("retros")
-      .update({ photo_url: publicUrl })
-      .eq("id", retroId);
+    await updateRetroMetadataAction(retroId, { photoUrl: url });
 
-    setPhotoUrl(publicUrl);
+    setPhotoUrl(url);
     setUploading(false);
     toast.success("Photo uploaded");
   }

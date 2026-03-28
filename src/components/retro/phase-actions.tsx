@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import {
+  addActionItemAction,
+  getActionItemsAction,
+} from "@/lib/actions/retro-session";
+import { cycleActionStatusAction } from "@/lib/actions/action-items";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,87 +30,51 @@ export function PhaseActions({ retroId, currentUserId }: PhaseActionsProps) {
   const [actions, setActions] = useState<ActionItem[]>([]);
   const [newText, setNewText] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const supabase = createClient();
+
+  const load = useCallback(async () => {
+    const result = await getActionItemsAction(retroId);
+    if (result?.items) setActions(result.items);
+  }, [retroId]);
 
   useEffect(() => {
-    async function load() {
-      const { data } = await supabase
-        .from("action_items")
-        .select("*")
-        .eq("retro_id", retroId)
-        .order("created_at");
-      if (data) setActions(data);
-    }
     load();
-  }, [retroId, supabase]);
-
-  // Real-time updates
-  useEffect(() => {
-    const channel = supabase
-      .channel(`actions-${retroId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "action_items",
-          filter: `retro_id=eq.${retroId}`,
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setActions((prev) => [...prev, payload.new as ActionItem]);
-          } else if (payload.eventType === "UPDATE") {
-            setActions((prev) =>
-              prev.map((a) =>
-                a.id === (payload.new as ActionItem).id
-                  ? (payload.new as ActionItem)
-                  : a
-              )
-            );
-          } else if (payload.eventType === "DELETE") {
-            setActions((prev) =>
-              prev.filter(
-                (a) => a.id !== (payload.old as { id: string }).id
-              )
-            );
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [retroId, supabase]);
+    // Poll for updates from other participants
+    const interval = setInterval(load, 3000);
+    return () => clearInterval(interval);
+  }, [load]);
 
   const addAction = useCallback(async () => {
     if (!newText.trim()) return;
     setSubmitting(true);
-    const { error } = await supabase.from("action_items").insert({
-      retro_id: retroId,
-      text: newText.trim(),
-      assignee_id: currentUserId,
-    });
-    if (error) toast.error("Failed to add action item");
+    const result = await addActionItemAction(retroId, newText.trim(), currentUserId);
+    if (result?.error) {
+      toast.error("Failed to add action item");
+    } else if (result?.item) {
+      setActions((prev) => [
+        ...prev,
+        {
+          id: result.item.id,
+          text: result.item.text,
+          assignee_id: result.item.assigneeId,
+          due_date: result.item.dueDate,
+          status: result.item.status,
+        },
+      ]);
+    }
     setNewText("");
     setSubmitting(false);
-  }, [newText, retroId, currentUserId, supabase]);
+  }, [newText, retroId, currentUserId]);
 
-  const cycleStatus = useCallback(
-    async (action: ActionItem) => {
-      const nextStatus =
-        action.status === "open"
-          ? "in_progress"
-          : action.status === "in_progress"
-          ? "done"
-          : "open";
-      await supabase
-        .from("action_items")
-        .update({ status: nextStatus })
-        .eq("id", action.id);
-    },
-    [supabase]
-  );
+  const cycleStatus = useCallback(async (action: ActionItem) => {
+    const result = await cycleActionStatusAction(action.id, action.status);
+    if (result?.status) {
+      setActions((prev) =>
+        prev.map((a) =>
+          a.id === action.id ? { ...a, status: result.status! } : a
+        )
+      );
+    }
+  }, []);
 
   const statusIcon = (status: string) => {
     switch (status) {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { deleteCardAction, toggleDiscussedAction } from "@/lib/actions/retro-session";
 import { RetroPhaseBar } from "./retro-phase-bar";
 import { PhaseWriting } from "./phase-writing";
 import { PhaseDiscussing } from "./phase-discussing";
@@ -86,81 +86,52 @@ export function RetroSession({
   const [cards, setCards] = useState(initialCards);
   const [votes, setVotes] = useState(initialVotes);
   const [showCompletion, setShowCompletion] = useState(false);
-  const supabase = createClient();
   const isFacilitator = userRole === "owner" || userRole === "facilitator";
+  const statusRef = useRef(status);
+  statusRef.current = status;
 
-  // Real-time subscription for cards
+  // Poll for card and vote updates during active phases
   useEffect(() => {
-    const channel = supabase
-      .channel(`retro-${retro.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "cards",
-          filter: `retro_id=eq.${retro.id}`,
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setCards((prev) => [...prev, payload.new as (typeof cards)[0]]);
-          } else if (payload.eventType === "UPDATE") {
-            setCards((prev) =>
-              prev.map((c) =>
-                c.id === (payload.new as { id: string }).id
-                  ? (payload.new as (typeof cards)[0])
-                  : c
-              )
-            );
-          } else if (payload.eventType === "DELETE") {
-            setCards((prev) =>
-              prev.filter(
-                (c) => c.id !== (payload.old as { id: string }).id
-              )
-            );
-          }
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "votes",
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setVotes((prev) => [...prev, payload.new as (typeof votes)[0]]);
-          } else if (payload.eventType === "DELETE") {
-            setVotes((prev) =>
-              prev.filter(
-                (v) => v.id !== (payload.old as { id: string }).id
-              )
-            );
-          }
-        }
-      )
-      .subscribe();
+    if (status === "completed") return;
 
-    return () => {
-      supabase.removeChannel(channel);
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/retros/${retro.id}/cards`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.cards) {
+          setCards(data.cards);
+        }
+      } catch {
+        // Silently ignore polling errors
+      }
     };
-  }, [retro.id, supabase]);
 
-  // Listen for phase changes via broadcast
+    const interval = setInterval(poll, 3000);
+    return () => clearInterval(interval);
+  }, [retro.id, status]);
+
+  // Poll for phase/status changes
   useEffect(() => {
-    const channel = supabase
-      .channel(`retro-phase-${retro.id}`)
-      .on("broadcast", { event: "phase_change" }, (payload) => {
-        setStatus(payload.payload.status as RetroStatus);
-        toast.info(`Phase changed to ${payload.payload.status}`);
-      })
-      .subscribe();
+    if (status === "completed") return;
 
-    return () => {
-      supabase.removeChannel(channel);
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/retros/${retro.id}/status`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.status && data.status !== statusRef.current) {
+          setStatus(data.status as RetroStatus);
+          toast.info(`Phase changed to ${data.status}`);
+        }
+      } catch {
+        // Silently ignore polling errors
+      }
     };
-  }, [retro.id, supabase]);
+
+    const interval = setInterval(poll, 3000);
+    return () => clearInterval(interval);
+  }, [retro.id, status]);
 
   const advancePhase = useCallback(async () => {
     const currentIndex = PHASE_ORDER.indexOf(status);
@@ -173,73 +144,75 @@ export function RetroSession({
       return;
     }
 
-    const { error } = await supabase
-      .from("retros")
-      .update({ status: nextStatus })
-      .eq("id", retro.id);
+    const res = await fetch(`/api/retros/${retro.id}/phase`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target_status: nextStatus }),
+    });
 
-    if (error) {
+    if (!res.ok) {
       toast.error("Failed to advance phase");
       return;
     }
 
     setStatus(nextStatus);
-
-    // Broadcast phase change to all participants
-    await supabase.channel(`retro-phase-${retro.id}`).send({
-      type: "broadcast",
-      event: "phase_change",
-      payload: { status: nextStatus },
-    });
-  }, [status, retro.id, supabase]);
+  }, [status, retro.id]);
 
   const handleComplete = useCallback(async () => {
-    const { error } = await supabase
-      .from("retros")
-      .update({
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", retro.id);
+    const res = await fetch(`/api/retros/${retro.id}/complete`, {
+      method: "POST",
+    });
 
-    if (error) {
+    if (!res.ok) {
       toast.error("Failed to complete retro");
       return;
     }
 
     setStatus("completed");
     setShowCompletion(false);
-
-    await supabase.channel(`retro-phase-${retro.id}`).send({
-      type: "broadcast",
-      event: "phase_change",
-      payload: { status: "completed" },
-    });
-  }, [retro.id, supabase]);
+  }, [retro.id]);
 
   const addCard = useCallback(
     async (categoryId: string, text: string) => {
-      const { error } = await supabase.from("cards").insert({
-        retro_id: retro.id,
-        category_id: categoryId,
-        author_id: currentUserId,
-        text,
+      const res = await fetch(`/api/retros/${retro.id}/cards`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category_id: categoryId, text }),
       });
-      if (error) toast.error("Failed to add card");
+      if (!res.ok) {
+        toast.error("Failed to add card");
+        return;
+      }
+      const data = await res.json();
+      if (data.card) {
+        setCards((prev) => [
+          ...prev,
+          {
+            id: data.card.id,
+            category_id: data.card.categoryId,
+            author_id: data.card.authorId,
+            text: data.card.text,
+            sort_order: data.card.sortOrder,
+            group_label: data.card.groupLabel,
+            is_discussed: data.card.isDiscussed,
+            created_at: data.card.createdAt,
+          },
+        ]);
+      }
     },
-    [retro.id, currentUserId, supabase]
+    [retro.id]
   );
 
   const deleteCard = useCallback(
     async (cardId: string) => {
-      const { error } = await supabase
-        .from("cards")
-        .delete()
-        .eq("id", cardId)
-        .eq("author_id", currentUserId);
-      if (error) toast.error("Failed to delete card");
+      const result = await deleteCardAction(cardId, currentUserId);
+      if (result?.error) {
+        toast.error("Failed to delete card");
+        return;
+      }
+      setCards((prev) => prev.filter((c) => c.id !== cardId));
     },
-    [currentUserId, supabase]
+    [currentUserId]
   );
 
   const toggleVote = useCallback(
@@ -248,7 +221,14 @@ export function RetroSession({
         (v) => v.card_id === cardId && v.user_id === currentUserId
       );
       if (existing) {
-        await supabase.from("votes").delete().eq("id", existing.id);
+        const res = await fetch(`/api/retros/${retro.id}/votes`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ vote_id: existing.id }),
+        });
+        if (res.ok) {
+          setVotes((prev) => prev.filter((v) => v.id !== existing.id));
+        }
       } else {
         const userVoteCount = votes.filter(
           (v) => v.user_id === currentUserId
@@ -257,25 +237,40 @@ export function RetroSession({
           toast.error(`Maximum ${retro.max_votes} votes reached`);
           return;
         }
-        await supabase.from("votes").insert({
-          card_id: cardId,
-          user_id: currentUserId,
+        const res = await fetch(`/api/retros/${retro.id}/votes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ card_id: cardId }),
         });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.vote) {
+            setVotes((prev) => [
+              ...prev,
+              {
+                id: data.vote.id,
+                card_id: data.vote.cardId,
+                user_id: data.vote.userId,
+              },
+            ]);
+          }
+        }
       }
     },
-    [votes, currentUserId, retro.max_votes, supabase]
+    [votes, currentUserId, retro.max_votes, retro.id]
   );
 
   const toggleDiscussed = useCallback(
     async (cardId: string) => {
-      const card = cards.find((c) => c.id === cardId);
-      if (!card) return;
-      await supabase
-        .from("cards")
-        .update({ is_discussed: !card.is_discussed })
-        .eq("id", cardId);
+      const result = await toggleDiscussedAction(cardId);
+      if (result?.error) return;
+      setCards((prev) =>
+        prev.map((c) =>
+          c.id === cardId ? { ...c, is_discussed: !c.is_discussed } : c
+        )
+      );
     },
-    [cards, supabase]
+    []
   );
 
   return (
