@@ -1,0 +1,89 @@
+/* Windows 95/98 Classic theme - beveled borders, system gray */
+[data-ui-theme="windows"],
+.dark[data-ui-theme="windows"] {
+  --font-family: "Tahoma", "MS Sans Serif", Arial, sans-serif;
+  --radius: 0;
+  --background: oklch(0.78 0.02 220);
+  --foreground: oklch(0.1 0 0);
+  --card: oklch(0.78 0.02 220);
+  --card-foreground: oklch(0.1 0 0);
+  --primary: oklch(0.35 0.1 260);
+  --primary-foreground: oklch(0.95 0 0);
+  --secondary: oklch(0.82 0.01 220);
+  --secondary-foreground: oklch(0.1 0 0);
+  --muted: oklch(0.75 0.01 220);
+  --muted-foreground: oklch(0.4 0 0);
+  --accent: oklch(0.35 0.1 260);
+  --accent-foreground: oklch(0.95 0 0);
+  --border: oklch(0.5 0 0);
+  --input: oklch(0.98 0 0);
+  --ring: oklch(0.35 0.1 260);
+  --popover: oklch(0.78 0.02 220);
+  --popover-foreground: oklch(0.1 0 0);
+}
+
+[data-ui-theme="windows"] * {
+  font-family: "Tahoma", "MS Sans Serif", Arial, sans-serif !important;
+  border-radius: 0 !important;
+}
+
+/* 3D beveled buttons */
+[data-ui-theme="windows"] button,
+[data-ui-theme="windows"] [role="button"] {
+  border-style: outset !important;
+  border-width: 2px !important;
+  border-color: oklch(0.9 0 0) oklch(0.4 0 0) oklch(0.4 0 0) oklch(0.9 0 0) !important;
+  background: oklch(0.78 0.02 220) !important;
+  color: oklch(0.1 0 0) !important;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+[data-ui-theme="windows"] button:active,
+[data-ui-theme="windows"] [role="button"]:active {
+  border-style: inset !important;
+  border-color: oklch(0.4 0 0) oklch(0.9 0 0) oklch(0.9 0 0) oklch(0.4 0 0) !important;
+}
+
+/* Primary buttons get blue background */
+[data-ui-theme="windows"] button[data-slot="button"][class*="bg-primary"] {
+  background: oklch(0.35 0.1 260) !important;
+  color: oklch(0.95 0 0) !important;
+}
+
+/* Window-chrome style cards */
+[data-ui-theme="windows"] [data-slot="card"] {
+  border: 2px solid;
+  border-color: oklch(0.9 0 0) oklch(0.4 0 0) oklch(0.4 0 0) oklch(0.9 0 0);
+  box-shadow: 1px 1px 0 oklch(0.2 0 0);
+}
+
+/* Title bar gradient for card headers */
+[data-ui-theme="windows"] [data-slot="card-header"] {
+  background: linear-gradient(
+    90deg,
+    oklch(0.35 0.1 260),
+    oklch(0.5 0.1 200)
+  );
+  color: oklch(0.95 0 0) !important;
+  padding: 2px 4px;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+/* Input fields - inset border */
+[data-ui-theme="windows"] input,
+[data-ui-theme="windows"] textarea,
+[data-ui-theme="windows"] select {
+  border-style: inset !important;
+  border-width: 2px !important;
+  border-color: oklch(0.5 0 0) oklch(0.9 0 0) oklch(0.9 0 0) oklch(0.5 0 0) !important;
+  background: oklch(0.98 0 0) !important;
+  color: oklch(0.1 0 0) !important;
+}
+
+/* Bottom nav as taskbar */
+[data-ui-theme="windows"] nav {
+  border-top: 2px outset oklch(0.78 0.02 220) !important;
+  background: oklch(0.78 0.02 220) !important;
+}

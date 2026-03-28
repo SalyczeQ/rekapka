@@ -1,0 +1,13 @@
+-- seed.sql
+-- Seed data for the Rekapka retrospective app
+--
+-- This file is intentionally left mostly empty.
+-- Add seed data below as needed for local development.
+--
+-- Examples of data you might seed:
+--   - Test users (must exist in auth.users first)
+--   - Sample teams
+--   - Sample retros with categories matching each template
+--   - Sample cards, votes, and action items
+--
+-- To run: supabase db reset (applies migrations + seed)

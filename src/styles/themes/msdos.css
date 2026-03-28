@@ -1,0 +1,44 @@
+/* MS-DOS theme - blue background, VGA-style text */
+[data-ui-theme="msdos"],
+.dark[data-ui-theme="msdos"] {
+  --font-family: "Courier New", Courier, monospace;
+  --radius: 0;
+  --background: oklch(0.2 0.1 260);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.2 0.1 260);
+  --card-foreground: oklch(0.95 0.05 90);
+  --primary: oklch(0.95 0.05 90);
+  --primary-foreground: oklch(0.2 0.1 260);
+  --secondary: oklch(0.25 0.08 260);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.25 0.08 260);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.3 0.08 260);
+  --accent-foreground: oklch(0.95 0.05 90);
+  --border: oklch(0.6 0 0);
+  --input: oklch(0.15 0.08 260);
+  --ring: oklch(0.95 0 0);
+  --popover: oklch(0.2 0.1 260);
+  --popover-foreground: oklch(0.95 0 0);
+  --destructive: oklch(0.7 0.2 25);
+}
+
+[data-ui-theme="msdos"] * {
+  font-family: "Courier New", Courier, monospace !important;
+  border-radius: 0 !important;
+  text-shadow: none !important;
+}
+
+/* Box-drawing style borders for cards */
+[data-ui-theme="msdos"] [data-slot="card"] {
+  border: 2px solid oklch(0.6 0 0);
+  box-shadow: 2px 2px 0 oklch(0.3 0 0);
+}
+
+/* Blocky button style with keyboard hints */
+[data-ui-theme="msdos"] button,
+[data-ui-theme="msdos"] [role="button"] {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: bold;
+}

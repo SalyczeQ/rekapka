@@ -1,0 +1,63 @@
+/* Material 3 Expressive theme - tonal surfaces, large radii */
+[data-ui-theme="material3"] {
+  --radius: 1.75rem;
+  --background: oklch(0.98 0.005 270);
+  --foreground: oklch(0.15 0.02 270);
+  --card: oklch(0.96 0.01 270);
+  --card-foreground: oklch(0.15 0.02 270);
+  --primary: oklch(0.5 0.2 270);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.92 0.03 270);
+  --secondary-foreground: oklch(0.25 0.05 270);
+  --muted: oklch(0.94 0.02 270);
+  --muted-foreground: oklch(0.5 0.03 270);
+  --accent: oklch(0.88 0.05 270);
+  --accent-foreground: oklch(0.2 0.05 270);
+  --border: oklch(0.85 0.03 270);
+  --input: oklch(0.92 0.02 270);
+  --ring: oklch(0.5 0.2 270);
+  --popover: oklch(0.98 0.005 270);
+  --popover-foreground: oklch(0.15 0.02 270);
+}
+
+.dark[data-ui-theme="material3"] {
+  --background: oklch(0.15 0.01 270);
+  --foreground: oklch(0.92 0.01 270);
+  --card: oklch(0.2 0.015 270);
+  --card-foreground: oklch(0.92 0.01 270);
+  --primary: oklch(0.7 0.15 270);
+  --primary-foreground: oklch(0.15 0 0);
+  --secondary: oklch(0.25 0.03 270);
+  --secondary-foreground: oklch(0.9 0.02 270);
+  --muted: oklch(0.22 0.02 270);
+  --muted-foreground: oklch(0.65 0.03 270);
+  --accent: oklch(0.28 0.04 270);
+  --accent-foreground: oklch(0.9 0.02 270);
+  --border: oklch(0.3 0.03 270);
+  --input: oklch(0.25 0.02 270);
+  --ring: oklch(0.7 0.15 270);
+}
+
+/* M3 ripple on interactive elements */
+[data-ui-theme="material3"] button,
+[data-ui-theme="material3"] [role="button"],
+[data-ui-theme="material3"] a {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+[data-ui-theme="material3"] button:active,
+[data-ui-theme="material3"] [role="button"]:active {
+  transform: scale(0.97);
+}
+
+/* M3 elevated cards */
+[data-ui-theme="material3"] [data-slot="card"] {
+  box-shadow: 0 1px 3px oklch(0 0 0 / 12%), 0 1px 2px oklch(0 0 0 / 8%);
+  transition: box-shadow 0.2s ease;
+}
+
+[data-ui-theme="material3"] [data-slot="card"]:hover {
+  box-shadow: 0 4px 8px oklch(0 0 0 / 12%), 0 2px 4px oklch(0 0 0 / 8%);
+}

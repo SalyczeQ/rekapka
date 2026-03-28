@@ -1,0 +1,4 @@
+/* Default theme - uses shadcn baseline variables from globals.css */
+[data-ui-theme="default"] {
+  --font-family: var(--font-sans);
+}
