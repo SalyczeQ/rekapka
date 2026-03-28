@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { tags } from '@/lib/db/schema'
-import { eq, ilike, desc } from 'drizzle-orm'
+import { tags, teamMembers } from '@/lib/db/schema'
+import { eq, and, ilike, desc } from 'drizzle-orm'
 
 export async function GET(request: NextRequest) {
   const session = await auth()
@@ -17,20 +17,25 @@ export async function GET(request: NextRequest) {
     return Response.json({ tags: [] })
   }
 
+  const [membership] = await db
+    .select({ id: teamMembers.id })
+    .from(teamMembers)
+    .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, session.user.id)))
+    .limit(1)
+
+  if (!membership) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const results = await db
     .select({ id: tags.id, name: tags.name, usageCount: tags.usageCount })
     .from(tags)
-    .where(eq(tags.teamId, teamId))
+    .where(and(eq(tags.teamId, teamId), ilike(tags.name, `%${q}%`)))
     .orderBy(desc(tags.usageCount))
     .limit(5)
 
-  // Filter in JS since Drizzle's ilike needs the pattern applied
-  const filtered = results.filter((t) =>
-    t.name.toLowerCase().includes(q.toLowerCase())
-  )
-
   return Response.json({
-    tags: filtered.map((t) => ({
+    tags: results.map((t) => ({
       id: t.id,
       name: t.name,
       usage_count: t.usageCount,

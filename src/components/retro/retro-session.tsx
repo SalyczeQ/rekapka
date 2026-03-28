@@ -205,14 +205,14 @@ export function RetroSession({
 
   const deleteCard = useCallback(
     async (cardId: string) => {
-      const result = await deleteCardAction(cardId, currentUserId);
+      const result = await deleteCardAction(cardId, retro.id);
       if (result?.error) {
         toast.error("Failed to delete card");
         return;
       }
       setCards((prev) => prev.filter((c) => c.id !== cardId));
     },
-    [currentUserId]
+    [retro.id]
   );
 
   const toggleVote = useCallback(
@@ -262,7 +262,7 @@ export function RetroSession({
 
   const toggleDiscussed = useCallback(
     async (cardId: string) => {
-      const result = await toggleDiscussedAction(cardId);
+      const result = await toggleDiscussedAction(cardId, retro.id);
       if (result?.error) return;
       setCards((prev) =>
         prev.map((c) =>
@@ -270,7 +270,7 @@ export function RetroSession({
         )
       );
     },
-    []
+    [retro.id]
   );
 
   return (

@@ -1,20 +1,23 @@
 import { NextRequest } from 'next/server'
-import { auth } from '@/lib/auth'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
+import { requireRetroTeamMember } from '@/lib/auth/session'
+
+const ALLOWED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'])
 
 export async function POST(request: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   const formData = await request.formData()
   const file = formData.get('file') as File | null
   const retroId = formData.get('retroId') as string | null
 
   if (!file || !retroId) {
     return Response.json({ error: 'File and retroId are required' }, { status: 400 })
+  }
+
+  const member = await requireRetroTeamMember(retroId)
+  if (member.error) {
+    const status = member.error === 'Not authenticated' ? 401 : 403
+    return Response.json({ error: member.error }, { status })
   }
 
   if (!file.type.startsWith('image/')) {
@@ -25,7 +28,11 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'File must be under 5MB' }, { status: 400 })
   }
 
-  const ext = file.name.split('.').pop() ?? 'jpg'
+  const ext = (file.name.split('.').pop() ?? '').toLowerCase()
+  if (!ALLOWED_EXTENSIONS.has(ext)) {
+    return Response.json({ error: 'Unsupported image format' }, { status: 400 })
+  }
+
   const filename = `${retroId}-photo.${ext}`
   const dir = join(process.cwd(), 'public', 'uploads', 'retros')
 

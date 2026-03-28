@@ -1,16 +1,16 @@
 'use server'
 
-import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { retros, cards, actionItems } from '@/lib/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
+import { requireRetroTeamMember } from '@/lib/auth/session'
 
 export async function updateRetroMetadataAction(
   retroId: string,
   data: { location?: string | null; date?: string; photoUrl?: string | null }
 ) {
-  const session = await auth()
-  if (!session?.user?.id) return { error: 'Not authenticated' }
+  const member = await requireRetroTeamMember(retroId)
+  if ('error' in member) return { error: member.error }
 
   await db
     .update(retros)
@@ -20,20 +20,20 @@ export async function updateRetroMetadataAction(
   return { success: true }
 }
 
-export async function deleteCardAction(cardId: string, userId: string) {
-  const session = await auth()
-  if (!session?.user?.id) return { error: 'Not authenticated' }
+export async function deleteCardAction(cardId: string, retroId: string) {
+  const member = await requireRetroTeamMember(retroId)
+  if ('error' in member) return { error: member.error }
 
   await db
     .delete(cards)
-    .where(and(eq(cards.id, cardId), eq(cards.authorId, userId)))
+    .where(and(eq(cards.id, cardId), eq(cards.authorId, member.userId)))
 
   return { success: true }
 }
 
-export async function toggleDiscussedAction(cardId: string) {
-  const session = await auth()
-  if (!session?.user?.id) return { error: 'Not authenticated' }
+export async function toggleDiscussedAction(cardId: string, retroId: string) {
+  const member = await requireRetroTeamMember(retroId)
+  if ('error' in member) return { error: member.error }
 
   const [card] = await db
     .select({ isDiscussed: cards.isDiscussed })
@@ -52,8 +52,8 @@ export async function toggleDiscussedAction(cardId: string) {
 }
 
 export async function addActionItemAction(retroId: string, text: string, assigneeId: string) {
-  const session = await auth()
-  if (!session?.user?.id) return { error: 'Not authenticated' }
+  const member = await requireRetroTeamMember(retroId)
+  if ('error' in member) return { error: member.error }
 
   const [item] = await db
     .insert(actionItems)
@@ -64,8 +64,8 @@ export async function addActionItemAction(retroId: string, text: string, assigne
 }
 
 export async function getActionItemsAction(retroId: string) {
-  const session = await auth()
-  if (!session?.user?.id) return { items: [] }
+  const member = await requireRetroTeamMember(retroId)
+  if (member.error) return { items: [] }
 
   const items = await db
     .select()

@@ -1,13 +1,17 @@
 'use server'
 
-import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { teams, teamMembers, users } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
+import { requireTeamMember } from '@/lib/auth/session'
 
 export async function updateTeamNameAction(teamId: string, name: string) {
-  const session = await auth()
-  if (!session?.user?.id) return { error: 'Not authenticated' }
+  const member = await requireTeamMember(teamId)
+  if (member.error) return { error: member.error }
+
+  if (member.role !== 'owner' && member.role !== 'facilitator') {
+    return { error: 'Only owners and facilitators can rename the team.' }
+  }
 
   const trimmed = name.trim()
   if (!trimmed || trimmed.length < 2) return { error: 'Name must be at least 2 characters.' }
@@ -21,8 +25,12 @@ export async function updateTeamNameAction(teamId: string, name: string) {
 }
 
 export async function inviteMemberAction(teamId: string, email: string) {
-  const session = await auth()
-  if (!session?.user?.id) return { error: 'Not authenticated' }
+  const member = await requireTeamMember(teamId)
+  if (member.error) return { error: member.error }
+
+  if (member.role !== 'owner' && member.role !== 'facilitator') {
+    return { error: 'Only owners and facilitators can invite members.' }
+  }
 
   const trimmedEmail = email.trim().toLowerCase()
   if (!trimmedEmail) return { error: 'Email is required.' }

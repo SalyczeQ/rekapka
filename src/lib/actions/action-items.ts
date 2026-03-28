@@ -1,16 +1,21 @@
 'use server'
 
-import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { actionItems } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
-import { revalidatePath } from 'next/cache'
+import { requireRetroTeamMember } from '@/lib/auth/session'
 
 export async function cycleActionStatusAction(actionId: string, currentStatus: string) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return { error: 'Not authenticated' }
-  }
+  const [action] = await db
+    .select({ retroId: actionItems.retroId })
+    .from(actionItems)
+    .where(eq(actionItems.id, actionId))
+    .limit(1)
+
+  if (!action) return { error: 'Action item not found' }
+
+  const member = await requireRetroTeamMember(action.retroId)
+  if (member.error) return { error: member.error }
 
   const nextStatus =
     currentStatus === 'open'
