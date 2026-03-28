@@ -34,9 +34,13 @@ function UIThemeProvider({ children }: { children: React.ReactNode }) {
       .find((c) => c.startsWith("ui-theme="))
       ?.split("=")[1] as UITheme | undefined;
     if (stored) {
-      setUIThemeState(stored);
       document.documentElement.setAttribute("data-ui-theme", stored);
     }
+    // Schedule state update in timer callback to avoid synchronous setState in effect
+    const timer = setTimeout(() => {
+      if (stored) setUIThemeState(stored);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const setUITheme = useCallback((theme: UITheme) => {

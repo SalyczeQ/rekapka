@@ -37,10 +37,10 @@ export function PhaseActions({ retroId, currentUserId }: PhaseActionsProps) {
   }, [retroId]);
 
   useEffect(() => {
-    load();
-    // Poll for updates from other participants
+    // Initial fetch via timer + poll for updates from other participants
+    const timer = setTimeout(load, 0);
     const interval = setInterval(load, 3000);
-    return () => clearInterval(interval);
+    return () => { clearTimeout(timer); clearInterval(interval); };
   }, [load]);
 
   const addAction = useCallback(async () => {

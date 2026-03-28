@@ -2,8 +2,8 @@
 
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { teams, retros, categories } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
+import { teams, teamMembers, retros, categories } from '@/lib/db/schema'
+import { eq, and } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 
 const TEMPLATES: Record<string, { name: string; icon: string; color: string }[]> = {
@@ -51,6 +51,16 @@ export async function createRetroAction(formData: FormData) {
 
   if (!team) {
     return { error: 'Team not found' }
+  }
+
+  const [membership] = await db
+    .select({ id: teamMembers.id })
+    .from(teamMembers)
+    .where(and(eq(teamMembers.teamId, team.id), eq(teamMembers.userId, session.user.id)))
+    .limit(1)
+
+  if (!membership) {
+    return { error: 'Forbidden' }
   }
 
   const [retro] = await db

@@ -65,7 +65,7 @@ export async function addActionItemAction(retroId: string, text: string, assigne
 
 export async function getActionItemsAction(retroId: string) {
   const member = await requireRetroTeamMember(retroId)
-  if (member.error) return { items: [] }
+  if ('error' in member) return { items: [] }
 
   const items = await db
     .select()

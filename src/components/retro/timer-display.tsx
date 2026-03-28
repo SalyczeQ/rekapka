@@ -13,7 +13,6 @@ interface TimerDisplayProps {
 
 // Local-only timer. Multi-client sync will be added when a WebSocket/SSE layer is introduced.
 export function TimerDisplay({
-  retroId,
   durationSeconds,
   isFacilitator,
 }: TimerDisplayProps) {

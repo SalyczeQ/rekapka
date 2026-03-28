@@ -17,8 +17,6 @@ interface ParticipantBarProps {
 // Simplified participant bar — shows current user as online.
 // Full multi-user presence will be added when a WebSocket/SSE layer is introduced.
 export function ParticipantBar({
-  retroId,
-  currentUserId,
   currentUserName,
 }: ParticipantBarProps) {
   const name = currentUserName ?? "You";

@@ -24,12 +24,11 @@ export function TagInput({ teamId, selectedTags, onTagsChange }: TagInputProps) 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!input.trim()) {
-      setSuggestions([]);
-      return;
-    }
-
     const timer = setTimeout(async () => {
+      if (!input.trim()) {
+        setSuggestions([]);
+        return;
+      }
       const res = await fetch(
         `/api/tags/search?teamId=${encodeURIComponent(teamId)}&q=${encodeURIComponent(input)}`
       );

@@ -27,7 +27,8 @@ export function MemberList({ teamId }: { teamId: string }) {
   }, [teamId]);
 
   useEffect(() => {
-    load();
+    const timer = setTimeout(load, 0);
+    return () => clearTimeout(timer);
   }, [load]);
 
   return (

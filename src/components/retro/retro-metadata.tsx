@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Camera, Calendar } from "lucide-react";
+import Image from "next/image";
 import { toast } from "sonner";
 
 interface RetroMetadataProps {
@@ -143,9 +144,11 @@ export function RetroMetadata({
           <div className="flex-1">
             {photoUrl ? (
               <div className="flex items-center gap-2">
-                <img
+                <Image
                   src={photoUrl}
                   alt="Retro photo"
+                  width={40}
+                  height={40}
                   className="h-10 w-10 rounded object-cover"
                 />
                 <span className="text-xs text-muted-foreground">

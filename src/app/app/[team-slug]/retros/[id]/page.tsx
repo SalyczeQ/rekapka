@@ -68,7 +68,6 @@ export default async function RetroPage({
     .limit(1);
 
   // Map Drizzle camelCase output to snake_case props expected by RetroSession
-  // (RetroSession still uses Supabase client internally for realtime — will be migrated later)
   return (
     <RetroSession
       retro={{

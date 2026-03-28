@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { teams as teamsTable, retros, actionItems } from "@/lib/db/schema";
-import { eq, desc, inArray, or } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
 import {
   Card,

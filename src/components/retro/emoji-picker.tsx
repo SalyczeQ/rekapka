@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useMemo } from "react";
 import { getEmojiSuggestions } from "@/lib/emoji";
 
 interface EmojiPickerProps {
@@ -14,29 +14,17 @@ export function EmojiPicker({
   cursorPosition,
   onSelect,
 }: EmojiPickerProps) {
-  const [suggestions, setSuggestions] = useState<
-    { code: string; emoji: string }[]
-  >([]);
-  const [colonStart, setColonStart] = useState(-1);
-
-  useEffect(() => {
-    // Find if we're in a :shortcode: context
+  const { suggestions, colonStart } = useMemo(() => {
     const before = text.slice(0, cursorPosition);
     const lastColon = before.lastIndexOf(":");
     if (lastColon === -1 || before.includes(" ", lastColon)) {
-      setSuggestions([]);
-      setColonStart(-1);
-      return;
+      return { suggestions: [] as { code: string; emoji: string }[], colonStart: -1 };
     }
-
     const query = before.slice(lastColon + 1);
     if (query.length < 1) {
-      setSuggestions([]);
-      return;
+      return { suggestions: [] as { code: string; emoji: string }[], colonStart: -1 };
     }
-
-    setColonStart(lastColon);
-    setSuggestions(getEmojiSuggestions(query));
+    return { suggestions: getEmojiSuggestions(query), colonStart: lastColon };
   }, [text, cursorPosition]);
 
   if (suggestions.length === 0) return null;

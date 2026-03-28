@@ -88,7 +88,10 @@ export function RetroSession({
   const [showCompletion, setShowCompletion] = useState(false);
   const isFacilitator = userRole === "owner" || userRole === "facilitator";
   const statusRef = useRef(status);
-  statusRef.current = status;
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   // Poll for card and vote updates during active phases
   useEffect(() => {

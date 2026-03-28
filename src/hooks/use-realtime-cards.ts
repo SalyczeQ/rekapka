@@ -31,9 +31,9 @@ export function useRealtimeCards(retroId: string) {
   }, [retroId]);
 
   useEffect(() => {
-    fetchCards();
+    const timer = setTimeout(fetchCards, 0);
     const interval = setInterval(fetchCards, 3000);
-    return () => clearInterval(interval);
+    return () => { clearTimeout(timer); clearInterval(interval); };
   }, [fetchCards]);
 
   return cards;

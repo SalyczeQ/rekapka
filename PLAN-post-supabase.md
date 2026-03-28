@@ -295,8 +295,9 @@ If only one agent should code first, pick the **backend migration agent**. That 
 - docs and deployment updated
 
 ## Practical next action (updated 2026-03-28)
-All Supabase code, packages, infrastructure, and env vars have been removed.
+All Supabase code, packages, infrastructure, env vars, and stale comments have been removed.
 Auth.js + Drizzle are the sole backend. Realtime uses polling (3s) as a temporary measure.
+`pnpm lint` passes clean (0 errors, 0 warnings). `pnpm build` succeeds.
 
 **Remaining work (enhancement, not migration):**
 1. Replace polling hooks with SSE or WebSocket for lower latency

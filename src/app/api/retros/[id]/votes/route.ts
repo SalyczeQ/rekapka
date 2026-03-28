@@ -166,6 +166,27 @@ export async function DELETE(
       )
     }
 
+    // Verify team membership
+    const [retro] = await db
+      .select({ teamId: retros.teamId })
+      .from(retros)
+      .where(eq(retros.id, retroId))
+      .limit(1)
+
+    if (!retro) {
+      return Response.json({ error: 'Retro not found' }, { status: 404 })
+    }
+
+    const [membership] = await db
+      .select({ id: teamMembers.id })
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, retro.teamId), eq(teamMembers.userId, session.user.id)))
+      .limit(1)
+
+    if (!membership) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     await db.delete(votes).where(eq(votes.id, parsed.data.vote_id))
 
     return Response.json({ success: true })
