@@ -17,8 +17,15 @@ export async function proxy(req: NextRequest) {
 
   if (isPublicPath(pathname)) return NextResponse.next()
 
-  const token = await getToken({ req })
+  const secureCookie = req.headers.get('x-forwarded-proto') === 'https' || req.nextUrl.protocol === 'https:'
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET,
+    secureCookie,
+  })
   if (!token) {
+    console.log('[proxy] no token for', pathname, '— redirecting to /login (secure:', secureCookie, ')')
+    console.log('[proxy] cookies:', req.cookies.getAll().map(c => c.name).join(', '))
     const url = req.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirectTo', pathname)
@@ -30,6 +37,6 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }

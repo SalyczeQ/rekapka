@@ -1,12 +1,7 @@
-"use client";
-
-import { useActionState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import Link from "next/link";
-import { signInAction, signInWithGoogleAction } from "@/lib/actions/auth";
+import { signInWithGoogleAction } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -14,11 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { LoginForm } from "./login-form";
 
 export default function LoginPage() {
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/app";
-
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-sm">
@@ -60,7 +53,9 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <LoginForm redirectTo={redirectTo} />
+          <Suspense>
+            <LoginForm />
+          </Suspense>
 
           <p className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
@@ -71,38 +66,5 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function LoginForm({ redirectTo }: { redirectTo: string }) {
-  const [state, formAction, isPending] = useActionState(signInAction, null);
-
-  return (
-    <form action={formAction} className="space-y-3">
-      <input type="hidden" name="redirectTo" value={redirectTo} />
-      <div className="space-y-1">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="you@example.com"
-          required
-        />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          required
-        />
-      </div>
-      {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
-      <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "Signing in..." : "Sign in"}
-      </Button>
-    </form>
   );
 }
