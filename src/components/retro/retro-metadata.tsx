@@ -43,21 +43,26 @@ function resizeImage(file: File, maxSize: number, quality: number): Promise<Blob
 
 interface RetroMetadataProps {
   retroId: string;
+  title?: string;
   location: string | null;
   photoUrl: string | null;
   date: string;
   isFacilitator: boolean;
   hidePhoto?: boolean;
+  onTitleChange?: (title: string) => void;
 }
 
 export function RetroMetadata({
   retroId,
+  title: initialTitle,
   location: initialLocation,
   photoUrl: initialPhotoUrl,
   date: initialDate,
   isFacilitator,
   hidePhoto = false,
+  onTitleChange,
 }: RetroMetadataProps) {
+  const [title, setTitle] = useState(initialTitle ?? "");
   const [location, setLocation] = useState(initialLocation ?? "");
   const [date, setDate] = useState(initialDate);
   const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl);
@@ -67,11 +72,15 @@ export function RetroMetadata({
   async function handleSave() {
     setSaving(true);
     const result = await updateRetroMetadataAction(retroId, {
+      ...(initialTitle !== undefined ? { title: title.trim() || initialTitle } : {}),
       location: location || null,
       date,
     });
     if (result?.error) toast.error("Failed to save metadata");
-    else toast.success("Saved");
+    else {
+      toast.success("Saved");
+      if (onTitleChange && title.trim()) onTitleChange(title.trim());
+    }
     setSaving(false);
   }
 
@@ -155,6 +164,20 @@ export function RetroMetadata({
         </CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4 space-y-3">
+        {initialTitle !== undefined && (
+          <div className="space-y-1">
+            <Label className="text-xs" htmlFor="retro-title">
+              Title
+            </Label>
+            <Input
+              id="retro-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Retro title"
+              className="h-8 text-sm"
+            />
+          </div>
+        )}
         <div className="space-y-1">
           <Label className="text-xs" htmlFor="location">
             Location

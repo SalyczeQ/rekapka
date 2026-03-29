@@ -200,6 +200,7 @@ export const cards = pgTable(
     sortOrder: integer('sort_order').notNull().default(0),
     groupLabel: text('group_label'),
     isDiscussed: boolean('is_discussed').notNull().default(false),
+    discussionNotes: text('discussion_notes'),
     carriedFromRetroId: uuid('carried_from_retro_id').references(() => retros.id, {
       onDelete: 'set null',
     }),

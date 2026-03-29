@@ -80,6 +80,7 @@ export default async function RetroPage({
         max_votes: retro.maxVotes,
         phase_timer_seconds: retro.phaseTimerSeconds,
         created_by: retro.createdBy,
+        team_id: retro.teamId,
       }}
       categories={retroCategories.map((c) => ({
         id: c.id,
@@ -96,6 +97,7 @@ export default async function RetroPage({
         sort_order: c.sortOrder,
         group_label: c.groupLabel,
         is_discussed: c.isDiscussed,
+        discussion_notes: c.discussionNotes ?? null,
         created_at: c.createdAt.toISOString(),
       }))}
       initialVotes={retroVotes.map((v) => ({

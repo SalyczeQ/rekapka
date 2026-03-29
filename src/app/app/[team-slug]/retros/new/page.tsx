@@ -99,7 +99,9 @@ export default function NewRetroPage() {
               <Label>Template</Label>
               <Select value={template} onValueChange={(v) => v && setTemplate(v)}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue>
+                    {TEMPLATES.find((t) => t.value === template)?.label}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {TEMPLATES.map((t) => (

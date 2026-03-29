@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { deleteCardAction, toggleDiscussedAction, updateCardTextAction } from "@/lib/actions/retro-session";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { deleteCardAction, toggleDiscussedAction, updateCardTextAction, getActionItemsAction, updateGroupLabelAction, updateDiscussionNotesAction } from "@/lib/actions/retro-session";
 import { RetroPhaseBar } from "./retro-phase-bar";
 import { PhaseWriting } from "./phase-writing";
 import { PhaseDiscussing } from "./phase-discussing";
@@ -45,6 +45,7 @@ interface RetroSessionProps {
     max_votes: number;
     phase_timer_seconds: number | null;
     created_by: string;
+    team_id: string;
   };
   categories: {
     id: string;
@@ -61,6 +62,7 @@ interface RetroSessionProps {
     sort_order: number;
     group_label: string | null;
     is_discussed: boolean;
+    discussion_notes?: string | null;
     created_at: string;
   }[];
   initialVotes: {
@@ -90,6 +92,8 @@ export function RetroSession({
   const [cards, setCards] = useState(initialCards);
   const [votes, setVotes] = useState(initialVotes);
   const [showCompletion, setShowCompletion] = useState(false);
+  const [actionItemCount, setActionItemCount] = useState(0);
+  const [retroTitle, setRetroTitle] = useState(retro.title);
   const isFacilitator =
     userRole === "owner" ||
     userRole === "facilitator" ||
@@ -297,6 +301,78 @@ export function RetroSession({
     [retro.id]
   );
 
+  const updateGroupLabel = useCallback(
+    async (cardId: string, label: string) => {
+      await updateGroupLabelAction(cardId, retro.id, label);
+      setCards((prev) =>
+        prev.map((c) => (c.id === cardId ? { ...c, group_label: label || null } : c))
+      );
+    },
+    [retro.id]
+  );
+
+  const updateCardNotes = useCallback(
+    async (cardId: string, notes: string) => {
+      await updateDiscussionNotesAction(cardId, retro.id, notes);
+      setCards((prev) =>
+        prev.map((c) => (c.id === cardId ? { ...c, discussion_notes: notes } : c))
+      );
+    },
+    [retro.id]
+  );
+
+  const refreshCards = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/retros/${retro.id}/cards`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.cards) setCards(data.cards);
+    } catch { /* ignore */ }
+  }, [retro.id]);
+
+  const goBackPhase = useCallback(async () => {
+    const currentIndex = PHASE_ORDER.indexOf(status);
+    if (currentIndex <= 1) return; // Don't go back to draft
+    const prevStatus = PHASE_ORDER[currentIndex - 1];
+
+    const res = await fetch(`/api/retros/${retro.id}/phase`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target_status: prevStatus }),
+    });
+
+    if (!res.ok) {
+      toast.error("Failed to go back");
+      return;
+    }
+
+    setStatus(prevStatus);
+  }, [status, retro.id]);
+
+  // Fetch action item count when retro completes
+  useEffect(() => {
+    if (status !== "completed") return;
+    getActionItemsAction(retro.id).then((r) =>
+      setActionItemCount(r?.items?.length ?? 0)
+    );
+  }, [status, retro.id]);
+
+  // Completion summary stats
+  const completionStats = useMemo(() => {
+    const totalCards = cards.length;
+    const totalVotes = votes.length;
+    const participants = new Set(cards.map((c) => c.author_id)).size;
+    const topCards = [...cards]
+      .map((c) => ({
+        ...c,
+        voteCount: votes.filter((v) => v.card_id === c.id).length,
+      }))
+      .filter((c) => c.voteCount > 0)
+      .sort((a, b) => b.voteCount - a.voteCount)
+      .slice(0, 3);
+    return { totalCards, totalVotes, participants, topCards };
+  }, [cards, votes]);
+
   return (
     <div className="space-y-4 -mx-4 -mt-4">
       <RetroPhaseBar status={status} />
@@ -316,20 +392,24 @@ export function RetroSession({
         {status === "draft" && (
           <RetroMetadata
             retroId={retro.id}
+            title={retroTitle}
             location={retro.location}
             photoUrl={null}
             date={retro.date}
             isFacilitator={isFacilitator}
             hidePhoto
+            onTitleChange={setRetroTitle}
           />
         )}
         {status === "actions" && (
           <RetroMetadata
             retroId={retro.id}
+            title={retroTitle}
             location={retro.location}
             photoUrl={retro.photo_url}
             date={retro.date}
             isFacilitator={isFacilitator}
+            onTitleChange={setRetroTitle}
           />
         )}
 
@@ -354,6 +434,11 @@ export function RetroSession({
             showVoting={status === "voting"}
             onToggleVote={toggleVote}
             maxVotes={retro.max_votes}
+            isFacilitator={isFacilitator}
+            retroId={retro.id}
+            isGroupingPhase={status === "grouping"}
+            onCardsRefresh={refreshCards}
+            onEditGroupLabel={status === "grouping" ? updateGroupLabel : undefined}
           />
         )}
 
@@ -365,8 +450,10 @@ export function RetroSession({
             currentUserId={currentUserId}
             showVoting={false}
             showDiscussed
+            showNotes
             onToggleVote={toggleVote}
             onToggleDiscussed={toggleDiscussed}
+            onEditNotes={updateCardNotes}
             maxVotes={retro.max_votes}
           />
         )}
@@ -375,15 +462,60 @@ export function RetroSession({
           <PhaseActions
             retroId={retro.id}
             currentUserId={currentUserId}
+            teamId={retro.team_id}
           />
         )}
 
         {status === "completed" && (
-          <div className="text-center py-8 space-y-3">
-            <h2 className="text-xl font-semibold mb-2">Retro complete!</h2>
-            <p className="text-muted-foreground">
-              This retrospective has been completed.
-            </p>
+          <div className="py-8 space-y-6">
+            <div className="text-center space-y-1">
+              <h2 className="text-xl font-semibold">Retro complete!</h2>
+              <p className="text-sm text-muted-foreground">
+                {retroTitle}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                { label: "Cards", value: completionStats.totalCards },
+                { label: "Votes", value: completionStats.totalVotes },
+                { label: "Participants", value: completionStats.participants },
+                { label: "Actions", value: actionItemCount },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="rounded-lg border bg-card p-3 text-center"
+                >
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {completionStats.topCards.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Top voted
+                </h3>
+                {completionStats.topCards.map((card, i) => (
+                  <div
+                    key={card.id}
+                    className="flex items-start gap-2 rounded-lg border bg-card p-3"
+                  >
+                    <span className="text-sm font-bold text-muted-foreground shrink-0">
+                      #{i + 1}
+                    </span>
+                    <p className="text-sm flex-1">{card.text}</p>
+                    <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">
+                      {card.voteCount} {card.voteCount === 1 ? "vote" : "votes"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="flex justify-center gap-2">
               <Button
                 variant="outline"
@@ -417,13 +549,20 @@ export function RetroSession({
                   <DeleteRetroButton retroId={retro.id} teamSlug={teamSlug} variant="full" />
                 </div>
               )}
-              <Button onClick={advancePhase} className="w-full">
-                {status === "actions"
-                  ? "Complete retro"
-                  : `Next: ${
-                      PHASE_ORDER[PHASE_ORDER.indexOf(status) + 1]
-                    }`}
-              </Button>
+              <div className="flex gap-2">
+                {status !== "draft" && status !== "writing" && (
+                  <Button variant="outline" onClick={goBackPhase} className="flex-1">
+                    Back: {PHASE_ORDER[PHASE_ORDER.indexOf(status) - 1]}
+                  </Button>
+                )}
+                <Button onClick={advancePhase} className="flex-1">
+                  {status === "actions"
+                    ? "Complete retro"
+                    : `Next: ${
+                        PHASE_ORDER[PHASE_ORDER.indexOf(status) + 1]
+                      }`}
+                </Button>
+              </div>
             </div>
           </div>
         )}

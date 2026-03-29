@@ -15,6 +15,7 @@ interface CardItemProps {
     author_id: string;
     group_label: string | null;
     is_discussed: boolean;
+    discussion_notes?: string | null;
     carried_from_retro_id?: string | null;
   };
   isOwn?: boolean;
@@ -24,11 +25,15 @@ interface CardItemProps {
   hasVoted?: boolean;
   showVoting?: boolean;
   showDiscussed?: boolean;
+  showNotes?: boolean;
+  isGroupingPhase?: boolean;
   tags?: string[];
   onDelete?: () => void;
   onEdit?: (text: string) => Promise<void>;
   onVote?: () => void;
   onToggleDiscussed?: () => void;
+  onEditNotes?: (notes: string) => Promise<void>;
+  onEditGroupLabel?: (label: string) => Promise<void>;
 }
 
 export function CardItem({
@@ -40,11 +45,15 @@ export function CardItem({
   hasVoted,
   showVoting,
   showDiscussed,
+  showNotes,
+  isGroupingPhase,
   tags,
   onDelete,
   onEdit,
   onVote,
   onToggleDiscussed,
+  onEditNotes,
+  onEditGroupLabel,
 }: CardItemProps) {
   const authorColor = colorFromUserId(card.author_id);
   const [editing, setEditing] = useState(false);
@@ -52,6 +61,11 @@ export function CardItem({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [votePending, startVoteTransition] = useTransition();
   const [discussedPending, startDiscussedTransition] = useTransition();
+  const [notesExpanded, setNotesExpanded] = useState(false);
+  const [notesText, setNotesText] = useState(card.discussion_notes ?? "");
+  const [editingGroupLabel, setEditingGroupLabel] = useState(false);
+  const [groupLabelText, setGroupLabelText] = useState(card.group_label ?? "");
+  const notesTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     if (editing && textareaRef.current) {
@@ -81,6 +95,19 @@ export function CardItem({
     }
   };
 
+  const handleNotesChange = (value: string) => {
+    setNotesText(value);
+    if (notesTimeoutRef.current) clearTimeout(notesTimeoutRef.current);
+    notesTimeoutRef.current = setTimeout(() => {
+      onEditNotes?.(value);
+    }, 800);
+  };
+
+  const handleGroupLabelSave = () => {
+    setEditingGroupLabel(false);
+    onEditGroupLabel?.(groupLabelText.trim());
+  };
+
   return (
     <Card
       className={cn(
@@ -96,7 +123,14 @@ export function CardItem({
       />
       <CardContent className="py-2 px-3 pl-4">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
+          <div
+            className={cn("flex-1 min-w-0", showNotes && onEditNotes && "cursor-pointer")}
+            onClick={() => {
+              if (showNotes && onEditNotes && !editing) {
+                setNotesExpanded((prev) => !prev);
+              }
+            }}
+          >
             {showContent && editing ? (
               <textarea
                 ref={textareaRef}
@@ -110,7 +144,12 @@ export function CardItem({
             ) : showContent ? (
               <p
                 className={cn("text-sm whitespace-pre-wrap break-words", onEdit && "cursor-text")}
-                onClick={() => onEdit && setEditing(true)}
+                onClick={(e) => {
+                  if (onEdit) {
+                    e.stopPropagation();
+                    setEditing(true);
+                  }
+                }}
               >
                 {card.text}
               </p>
@@ -121,10 +160,36 @@ export function CardItem({
             )}
 
             <div className="flex flex-wrap items-center gap-1 mt-1">
-              {card.group_label && (
-                <Badge variant="secondary" className="text-[10px] h-4 px-1">
+              {card.group_label && !editingGroupLabel && (
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    "text-[10px] h-4 px-1",
+                    isGroupingPhase && onEditGroupLabel && "cursor-pointer hover:bg-secondary/80"
+                  )}
+                  onClick={(e) => {
+                    if (isGroupingPhase && onEditGroupLabel) {
+                      e.stopPropagation();
+                      setEditingGroupLabel(true);
+                    }
+                  }}
+                >
                   {card.group_label}
                 </Badge>
+              )}
+              {editingGroupLabel && (
+                <input
+                  className="text-[10px] h-4 px-1 bg-secondary rounded border border-input outline-none w-24"
+                  value={groupLabelText}
+                  onChange={(e) => setGroupLabelText(e.target.value)}
+                  onBlur={handleGroupLabelSave}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleGroupLabelSave();
+                    if (e.key === "Escape") setEditingGroupLabel(false);
+                  }}
+                  autoFocus
+                  onClick={(e) => e.stopPropagation()}
+                />
               )}
               {tags &&
                 tags.map((tag) => (
@@ -150,22 +215,22 @@ export function CardItem({
               <Button
                 variant={hasVoted ? "default" : "outline"}
                 size="sm"
-                className="h-7 min-w-[40px] text-xs"
+                className="h-9 min-w-[48px] text-sm"
                 disabled={votePending}
                 onClick={() => startVoteTransition(() => { onVote?.() })}
               >
-                {votePending ? <Loader2 className="h-3 w-3 animate-spin" /> : voteCount}
+                {votePending ? <Loader2 className="h-4 w-4 animate-spin" /> : voteCount}
               </Button>
             )}
             {showDiscussed && onToggleDiscussed && (
               <Button
                 variant={card.is_discussed ? "default" : "outline"}
                 size="icon"
-                className="h-7 w-7"
+                className="h-9 w-9"
                 disabled={discussedPending}
                 onClick={() => startDiscussedTransition(() => { onToggleDiscussed?.() })}
               >
-                {discussedPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                {discussedPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               </Button>
             )}
             {isOwn && onEdit && !editing && (
@@ -190,6 +255,19 @@ export function CardItem({
             )}
           </div>
         </div>
+
+        {/* Discussion notes expandable area */}
+        {showNotes && onEditNotes && notesExpanded && (
+          <div className="mt-2 pt-2 border-t border-border/50" onClick={(e) => e.stopPropagation()}>
+            <textarea
+              className="w-full text-xs bg-muted/50 rounded p-2 resize-none outline-none placeholder:text-muted-foreground/60"
+              placeholder="Add discussion notes..."
+              rows={2}
+              value={notesText}
+              onChange={(e) => handleNotesChange(e.target.value)}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

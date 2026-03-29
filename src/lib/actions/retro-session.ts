@@ -7,7 +7,7 @@ import { requireRetroTeamMember } from '@/lib/auth/session'
 
 export async function updateRetroMetadataAction(
   retroId: string,
-  data: { location?: string | null; date?: string; photoUrl?: string | null }
+  data: { title?: string; location?: string | null; date?: string; photoUrl?: string | null }
 ) {
   const member = await requireRetroTeamMember(retroId)
   if ('error' in member) return { error: member.error }
@@ -66,13 +66,42 @@ export async function toggleDiscussedAction(cardId: string, retroId: string) {
   return { success: true }
 }
 
-export async function addActionItemAction(retroId: string, text: string, assigneeId: string) {
+export async function updateGroupLabelAction(cardId: string, retroId: string, groupLabel: string) {
+  const member = await requireRetroTeamMember(retroId)
+  if ('error' in member) return { error: member.error }
+
+  await db
+    .update(cards)
+    .set({ groupLabel: groupLabel || null, updatedAt: new Date() })
+    .where(eq(cards.id, cardId))
+
+  return { success: true }
+}
+
+export async function updateDiscussionNotesAction(cardId: string, retroId: string, notes: string) {
+  const member = await requireRetroTeamMember(retroId)
+  if ('error' in member) return { error: member.error }
+
+  await db
+    .update(cards)
+    .set({ discussionNotes: notes || null, updatedAt: new Date() })
+    .where(eq(cards.id, cardId))
+
+  return { success: true }
+}
+
+export async function addActionItemAction(retroId: string, text: string, assigneeId: string, dueDate?: string | null) {
   const member = await requireRetroTeamMember(retroId)
   if ('error' in member) return { error: member.error }
 
   const [item] = await db
     .insert(actionItems)
-    .values({ retroId, text, assigneeId })
+    .values({
+      retroId,
+      text,
+      assigneeId: assigneeId || undefined,
+      dueDate: dueDate || undefined,
+    })
     .returning()
 
   return { item }

@@ -70,11 +70,19 @@ export async function PATCH(
       return Response.json({ error: 'Invalid phase' }, { status: 400 })
     }
 
-    if (targetIndex !== currentIndex + 1) {
+    const diff = targetIndex - currentIndex
+    if (diff !== 1 && diff !== -1) {
       return Response.json(
         {
-          error: `Invalid phase transition: cannot go from '${retro.status}' to '${parsed.data.target_status}'. Next valid phase is '${PHASE_ORDER[currentIndex + 1] ?? 'none'}'.`,
+          error: `Invalid phase transition: can only move one step forward or backward.`,
         },
+        { status: 409 }
+      )
+    }
+
+    if (parsed.data.target_status === 'draft') {
+      return Response.json(
+        { error: 'Cannot go back to draft phase' },
         { status: 409 }
       )
     }
