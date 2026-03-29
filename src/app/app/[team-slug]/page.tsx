@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, Calendar, ListChecks, ChevronRight } from "lucide-react";
+import { Plus, ChevronRight } from "lucide-react";
 
 export default async function TeamDashboard({
   params,
@@ -89,25 +89,20 @@ export default async function TeamDashboard({
         ) : (
           <div className="space-y-2">
             {inProgressRetros.map((retro) => (
-              <Link key={retro.id} href={`/app/${teamSlug}/retros/${retro.id}`}>
-                <Card className="border-primary/50 hover:bg-accent/50 active:bg-accent transition-colors cursor-pointer">
-                  <CardHeader className="py-3 px-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="relative flex h-2 w-2 shrink-0">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+              <div key={retro.id}>
+                <Link href={`/app/${teamSlug}/retros/${retro.id}`}>
+                  <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+                    <CardHeader className="py-3 px-4">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm">{retro.title}</CardTitle>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary capitalize shrink-0">
+                          {retro.status}
                         </span>
-                        <CardTitle className="text-sm truncate">{retro.title}</CardTitle>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <CardDescription className="text-xs capitalize">{retro.status}</CardDescription>
-                        <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              </Link>
+                    </CardHeader>
+                  </Card>
+                </Link>
+              </div>
             ))}
           </div>
         )}

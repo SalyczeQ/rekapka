@@ -42,6 +42,20 @@
   --popover-foreground: oklch(0.8 0.15 145);
 }
 
+/* Scrollbars */
+[data-ui-theme="cli"] {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.35 0.15 145) oklch(0.88 0.01 145);
+}
+[data-ui-theme="cli"] ::-webkit-scrollbar { width: 8px; height: 8px; }
+[data-ui-theme="cli"] ::-webkit-scrollbar-track { background: oklch(0.88 0.01 145); }
+[data-ui-theme="cli"] ::-webkit-scrollbar-thumb { background: oklch(0.35 0.15 145); border-radius: 0; }
+[data-ui-theme="cli"] ::-webkit-scrollbar-thumb:hover { background: oklch(0.25 0.15 145); }
+.dark[data-ui-theme="cli"] { scrollbar-color: oklch(0.7 0.2 145) oklch(0.15 0 0); }
+.dark[data-ui-theme="cli"] ::-webkit-scrollbar-track { background: oklch(0.15 0 0); }
+.dark[data-ui-theme="cli"] ::-webkit-scrollbar-thumb { background: oklch(0.7 0.2 145); }
+.dark[data-ui-theme="cli"] ::-webkit-scrollbar-thumb:hover { background: oklch(0.8 0.2 145); }
+
 [data-ui-theme="cli"] * {
   font-family: "JetBrains Mono", ui-monospace, monospace !important;
   border-radius: 0 !important;
@@ -53,7 +67,7 @@
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 10;
   background: repeating-linear-gradient(
     0deg,
     transparent,

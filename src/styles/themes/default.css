@@ -44,6 +44,19 @@
   --ring: oklch(0.58 0.10 168);
 }
 
+/* Scrollbars */
+[data-ui-theme="default"] {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.42 0.10 168 / 0.4) transparent;
+}
+[data-ui-theme="default"] ::-webkit-scrollbar { width: 6px; height: 6px; }
+[data-ui-theme="default"] ::-webkit-scrollbar-track { background: transparent; }
+[data-ui-theme="default"] ::-webkit-scrollbar-thumb { background: oklch(0.42 0.10 168 / 0.4); border-radius: 3px; }
+[data-ui-theme="default"] ::-webkit-scrollbar-thumb:hover { background: oklch(0.42 0.10 168 / 0.7); }
+.dark[data-ui-theme="default"] { scrollbar-color: oklch(0.58 0.10 168 / 0.4) transparent; }
+.dark[data-ui-theme="default"] ::-webkit-scrollbar-thumb { background: oklch(0.58 0.10 168 / 0.4); }
+.dark[data-ui-theme="default"] ::-webkit-scrollbar-thumb:hover { background: oklch(0.58 0.10 168 / 0.7); }
+
 [data-ui-theme="default"] * {
   font-family: var(--font-dm-sans), var(--font-sans);
 }

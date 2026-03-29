@@ -203,7 +203,7 @@ export function PhaseActions({ retroId, currentUserId, teamId }: PhaseActionsPro
 
         {newText.trim() && members.length > 0 && (
           <div className="flex gap-2 items-center">
-            <Select value={assigneeId} onValueChange={setAssigneeId}>
+            <Select value={assigneeId} onValueChange={(v) => setAssigneeId(v ?? "")}>
               <SelectTrigger className="w-[160px] h-8 text-xs">
                 <SelectValue placeholder="Assignee (optional)" />
               </SelectTrigger>

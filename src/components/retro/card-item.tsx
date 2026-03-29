@@ -65,7 +65,7 @@ export function CardItem({
   const [notesText, setNotesText] = useState(card.discussion_notes ?? "");
   const [editingGroupLabel, setEditingGroupLabel] = useState(false);
   const [groupLabelText, setGroupLabelText] = useState(card.group_label ?? "");
-  const notesTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const notesTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (editing && textareaRef.current) {

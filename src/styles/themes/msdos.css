@@ -44,6 +44,20 @@
   --destructive: oklch(0.7 0.2 25);
 }
 
+/* Scrollbars */
+[data-ui-theme="msdos"] {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.5 0 0) oklch(0.72 0 0);
+}
+[data-ui-theme="msdos"] ::-webkit-scrollbar { width: 8px; height: 8px; }
+[data-ui-theme="msdos"] ::-webkit-scrollbar-track { background: oklch(0.72 0 0); }
+[data-ui-theme="msdos"] ::-webkit-scrollbar-thumb { background: oklch(0.5 0 0); border-radius: 0; }
+[data-ui-theme="msdos"] ::-webkit-scrollbar-thumb:hover { background: oklch(0.35 0 0); }
+.dark[data-ui-theme="msdos"] { scrollbar-color: oklch(0.95 0.05 90) oklch(0.25 0.08 260); }
+.dark[data-ui-theme="msdos"] ::-webkit-scrollbar-track { background: oklch(0.25 0.08 260); }
+.dark[data-ui-theme="msdos"] ::-webkit-scrollbar-thumb { background: oklch(0.95 0.05 90); }
+.dark[data-ui-theme="msdos"] ::-webkit-scrollbar-thumb:hover { background: oklch(1 0.08 90); }
+
 [data-ui-theme="msdos"] * {
   font-family: "Courier New", Courier, monospace !important;
   border-radius: 0 !important;

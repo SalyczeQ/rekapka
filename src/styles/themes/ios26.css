@@ -43,6 +43,19 @@
   --ring: oklch(0.65 0.22 240 / 0.5);
 }
 
+/* Scrollbars — minimal iOS style */
+[data-ui-theme="ios26"] {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.55 0.22 240 / 0.3) transparent;
+}
+[data-ui-theme="ios26"] ::-webkit-scrollbar { width: 4px; height: 4px; }
+[data-ui-theme="ios26"] ::-webkit-scrollbar-track { background: transparent; }
+[data-ui-theme="ios26"] ::-webkit-scrollbar-thumb { background: oklch(0.55 0.22 240 / 0.3); border-radius: 2px; }
+[data-ui-theme="ios26"] ::-webkit-scrollbar-thumb:hover { background: oklch(0.55 0.22 240 / 0.5); }
+.dark[data-ui-theme="ios26"] { scrollbar-color: oklch(0.65 0.22 240 / 0.3) transparent; }
+.dark[data-ui-theme="ios26"] ::-webkit-scrollbar-thumb { background: oklch(0.65 0.22 240 / 0.3); }
+.dark[data-ui-theme="ios26"] ::-webkit-scrollbar-thumb:hover { background: oklch(0.65 0.22 240 / 0.5); }
+
 /* System font stack */
 [data-ui-theme="ios26"] * {
   font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;

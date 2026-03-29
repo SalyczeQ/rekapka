@@ -38,10 +38,19 @@
   --ring: oklch(0.7 0.15 270);
 }
 
-/* Ensure card list spacing */
-[data-ui-theme="material3"] .space-y-2 > * + * {
-  margin-top: 0.75rem !important;
+
+/* Scrollbars */
+[data-ui-theme="material3"] {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.5 0.2 270 / 0.4) transparent;
 }
+[data-ui-theme="material3"] ::-webkit-scrollbar { width: 6px; height: 6px; }
+[data-ui-theme="material3"] ::-webkit-scrollbar-track { background: transparent; }
+[data-ui-theme="material3"] ::-webkit-scrollbar-thumb { background: oklch(0.5 0.2 270 / 0.4); border-radius: 3px; }
+[data-ui-theme="material3"] ::-webkit-scrollbar-thumb:hover { background: oklch(0.5 0.2 270 / 0.7); }
+.dark[data-ui-theme="material3"] { scrollbar-color: oklch(0.7 0.15 270 / 0.4) transparent; }
+.dark[data-ui-theme="material3"] ::-webkit-scrollbar-thumb { background: oklch(0.7 0.15 270 / 0.4); }
+.dark[data-ui-theme="material3"] ::-webkit-scrollbar-thumb:hover { background: oklch(0.7 0.15 270 / 0.7); }
 
 /* M3 ripple on interactive elements */
 [data-ui-theme="material3"] button,

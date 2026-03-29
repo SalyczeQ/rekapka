@@ -542,7 +542,7 @@ export function RetroSession({
         )}
 
         {isFacilitator && status !== "completed" && (
-          <div className="fixed bottom-16 left-0 right-0 px-4 pb-2 safe-bottom">
+          <div className="fixed bottom-14 left-0 right-0 px-4 pb-2 safe-bottom">
             <div className="max-w-lg mx-auto space-y-2">
               {status === "draft" && (
                 <div className="flex justify-center">

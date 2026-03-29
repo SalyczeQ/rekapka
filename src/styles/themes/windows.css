@@ -42,6 +42,19 @@
   --popover-foreground: oklch(0.92 0 0);
 }
 
+/* Scrollbars — classic Win95 style */
+[data-ui-theme="windows"] {
+  scrollbar-width: auto;
+  scrollbar-color: oklch(0.78 0.02 220) oklch(0.78 0.02 220);
+}
+[data-ui-theme="windows"] ::-webkit-scrollbar { width: 16px; height: 16px; }
+[data-ui-theme="windows"] ::-webkit-scrollbar-track { background: oklch(0.78 0.02 220); border: 1px inset oklch(0.5 0 0); }
+[data-ui-theme="windows"] ::-webkit-scrollbar-thumb { background: oklch(0.78 0.02 220); border-style: outset; border-width: 2px; border-color: oklch(0.9 0 0) oklch(0.4 0 0) oklch(0.4 0 0) oklch(0.9 0 0); }
+[data-ui-theme="windows"] ::-webkit-scrollbar-button { background: oklch(0.78 0.02 220); border-style: outset; border-width: 2px; border-color: oklch(0.9 0 0) oklch(0.4 0 0) oklch(0.4 0 0) oklch(0.9 0 0); display: block; height: 16px; width: 16px; }
+.dark[data-ui-theme="windows"] { scrollbar-color: oklch(0.27 0.01 220) oklch(0.22 0.01 220); }
+.dark[data-ui-theme="windows"] ::-webkit-scrollbar-track { background: oklch(0.22 0.01 220); }
+.dark[data-ui-theme="windows"] ::-webkit-scrollbar-thumb { background: oklch(0.32 0.01 220); border-color: oklch(0.5 0 0) oklch(0.15 0 0) oklch(0.15 0 0) oklch(0.5 0 0); }
+
 [data-ui-theme="windows"] * {
   font-family: "Tahoma", "MS Sans Serif", Arial, sans-serif !important;
   border-radius: 0 !important;
