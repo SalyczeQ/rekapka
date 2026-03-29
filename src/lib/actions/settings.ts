@@ -3,7 +3,7 @@
 import { db } from '@/lib/db'
 import { teams, teamMembers, users } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { requireTeamMember } from '@/lib/auth/session'
+import { requireTeamMember, getSessionUser } from '@/lib/auth/session'
 
 export async function updateTeamNameAction(teamId: string, name: string) {
   const member = await requireTeamMember(teamId)
@@ -58,4 +58,42 @@ export async function inviteMemberAction(teamId: string, email: string) {
   })
 
   return { success: true }
+}
+
+export async function generateInviteTokenAction(teamId: string) {
+  const member = await requireTeamMember(teamId)
+  if (member.error) return { error: member.error }
+  if (member.role !== 'owner') return { error: 'Only owners can generate invite links.' }
+
+  const { randomUUID } = await import('crypto')
+  const token = randomUUID()
+
+  await db.update(teams).set({ inviteToken: token, updatedAt: new Date() }).where(eq(teams.id, teamId))
+
+  return { success: true, token }
+}
+
+export async function joinTeamByInviteAction(token: string) {
+  const user = await getSessionUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const [team] = await db
+    .select({ id: teams.id, slug: teams.slug })
+    .from(teams)
+    .where(eq(teams.inviteToken, token))
+    .limit(1)
+
+  if (!team) return { error: 'Invalid invite link.' }
+
+  const [existing] = await db
+    .select({ id: teamMembers.id })
+    .from(teamMembers)
+    .where(and(eq(teamMembers.teamId, team.id), eq(teamMembers.userId, user.id)))
+    .limit(1)
+
+  if (!existing) {
+    await db.insert(teamMembers).values({ teamId: team.id, userId: user.id, role: 'member' })
+  }
+
+  return { success: true, slug: team.slug }
 }

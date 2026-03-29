@@ -107,6 +107,7 @@ export const teams = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'restrict' }),
     icsToken: uuid('ics_token').notNull().unique().defaultRandom(),
+    inviteToken: uuid('invite_token').unique().defaultRandom(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

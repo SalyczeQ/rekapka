@@ -20,6 +20,7 @@ export default async function TeamSettingsPage({
       name: teamsTable.name,
       slug: teamsTable.slug,
       icsToken: teamsTable.icsToken,
+      inviteToken: teamsTable.inviteToken,
     })
     .from(teamsTable)
     .where(eq(teamsTable.slug, teamSlug))
@@ -40,5 +41,5 @@ export default async function TeamSettingsPage({
 
   if (!membership) notFound();
 
-  return <SettingsClient team={team} />;
+  return <SettingsClient team={team} role={membership.role} />;
 }
