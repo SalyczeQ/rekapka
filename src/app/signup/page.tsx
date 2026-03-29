@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 import Link from "next/link";
 import { signUpAction, signInWithGoogleAction } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -15,18 +15,13 @@ import {
 } from "@/components/ui/card";
 
 export default function SignupPage() {
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function handleSignup(formData: FormData) {
-    setError("");
-    setLoading(true);
-    const result = await signUpAction(formData);
-    if (result?.error) {
-      setError(result.error);
-      setLoading(false);
-    }
-  }
+  const [state, formAction, isPending] = useActionState(
+    async (_prev: { error: string } | null, formData: FormData) => {
+      const result = await signUpAction(formData);
+      return result ?? null;
+    },
+    null
+  );
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
@@ -69,7 +64,7 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <form action={handleSignup} className="space-y-3">
+          <form action={formAction} className="space-y-3">
             <div className="space-y-1">
               <Label htmlFor="name">Name</Label>
               <Input
@@ -101,9 +96,9 @@ export default function SignupPage() {
                 required
               />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Create account"}
+            {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? "Creating account..." : "Create account"}
             </Button>
           </form>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signInAction, signInWithGoogleAction } from "@/lib/actions/auth";
@@ -16,21 +16,17 @@ import {
 } from "@/components/ui/card";
 
 export default function LoginPage() {
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/app";
 
-  async function handleEmailLogin(formData: FormData) {
-    setError("");
-    setLoading(true);
-    formData.set("redirectTo", redirectTo);
-    const result = await signInAction(formData);
-    if (result?.error) {
-      setError(result.error);
-      setLoading(false);
-    }
-  }
+  const [state, formAction, isPending] = useActionState(
+    async (_prev: { error: string } | null, formData: FormData) => {
+      formData.set("redirectTo", redirectTo);
+      const result = await signInAction(formData);
+      return result ?? null;
+    },
+    null
+  );
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
@@ -73,7 +69,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <form action={handleEmailLogin} className="space-y-3">
+          <form action={formAction} className="space-y-3">
             <div className="space-y-1">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -93,9 +89,9 @@ export default function LoginPage() {
                 required
               />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign in"}
+            {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? "Signing in..." : "Sign in"}
             </Button>
           </form>
 

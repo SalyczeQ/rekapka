@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 import { users } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
+import { isRedirectError } from 'next/dist/client/components/redirect-error'
 
 export async function signUpAction(formData: FormData) {
   const name = (formData.get('name') as string)?.trim()
@@ -52,26 +53,19 @@ export async function signInAction(formData: FormData) {
   }
 
   try {
-    await signIn('credentials', {
+    console.log('[auth] signIn attempt for', email, '-> redirectTo:', redirectTo)
+    const result = await signIn('credentials', {
       email,
       password,
       redirectTo,
     })
+    console.log('[auth] signIn returned (unexpected):', result)
   } catch (error: unknown) {
-    // Auth.js throws a NEXT_REDIRECT on success — rethrow it
-    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+    if (isRedirectError(error)) {
+      console.log('[auth] signIn success — redirect caught, rethrowing')
       throw error
     }
-    // Check for the redirect digest that Next.js uses
-    if (
-      error &&
-      typeof error === 'object' &&
-      'digest' in error &&
-      typeof (error as Record<string, unknown>).digest === 'string' &&
-      ((error as Record<string, unknown>).digest as string).startsWith('NEXT_REDIRECT')
-    ) {
-      throw error
-    }
+    console.error('[auth] signIn failed:', error)
     return { error: 'Invalid email or password.' }
   }
 }
