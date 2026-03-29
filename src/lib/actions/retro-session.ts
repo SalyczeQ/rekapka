@@ -20,6 +20,21 @@ export async function updateRetroMetadataAction(
   return { success: true }
 }
 
+export async function updateCardTextAction(cardId: string, retroId: string, text: string) {
+  const member = await requireRetroTeamMember(retroId)
+  if ('error' in member) return { error: member.error }
+
+  const trimmed = text.trim()
+  if (!trimmed) return { error: 'Card text cannot be empty' }
+
+  await db
+    .update(cards)
+    .set({ text: trimmed, updatedAt: new Date() })
+    .where(and(eq(cards.id, cardId), eq(cards.authorId, member.userId)))
+
+  return { success: true }
+}
+
 export async function deleteCardAction(cardId: string, retroId: string) {
   const member = await requireRetroTeamMember(retroId)
   if ('error' in member) return { error: member.error }

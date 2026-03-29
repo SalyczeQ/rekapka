@@ -1,9 +1,10 @@
 "use client";
 
+import { useState, useRef, useEffect, useTransition } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Check, ArrowRight } from "lucide-react";
+import { Trash2, Check, ArrowRight, Pencil, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { colorFromUserId } from "@/lib/colors";
 
@@ -25,6 +26,7 @@ interface CardItemProps {
   showDiscussed?: boolean;
   tags?: string[];
   onDelete?: () => void;
+  onEdit?: (text: string) => Promise<void>;
   onVote?: () => void;
   onToggleDiscussed?: () => void;
 }
@@ -40,15 +42,49 @@ export function CardItem({
   showDiscussed,
   tags,
   onDelete,
+  onEdit,
   onVote,
   onToggleDiscussed,
 }: CardItemProps) {
   const authorColor = colorFromUserId(card.author_id);
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(card.text);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [votePending, startVoteTransition] = useTransition();
+  const [discussedPending, startDiscussedTransition] = useTransition();
+
+  useEffect(() => {
+    if (editing && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.selectionStart = textareaRef.current.value.length;
+    }
+  }, [editing]);
+
+  const handleEditSave = async () => {
+    const trimmed = editText.trim();
+    if (!trimmed || trimmed === card.text) {
+      setEditText(card.text);
+      setEditing(false);
+      return;
+    }
+    await onEdit?.(trimmed);
+    setEditing(false);
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleEditSave();
+    } else if (e.key === "Escape") {
+      setEditText(card.text);
+      setEditing(false);
+    }
+  };
 
   return (
     <Card
       className={cn(
-        "relative overflow-hidden transition-all",
+        "relative overflow-hidden transition-all duration-150 hover:shadow-md",
         card.is_discussed && "opacity-60",
         card.carried_from_retro_id && "ring-1 ring-amber-400/40"
       )}
@@ -61,8 +97,21 @@ export function CardItem({
       <CardContent className="py-2 px-3 pl-4">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            {showContent ? (
-              <p className="text-sm whitespace-pre-wrap break-words">
+            {showContent && editing ? (
+              <textarea
+                ref={textareaRef}
+                className="w-full text-sm bg-transparent resize-none outline-none border-b border-primary"
+                value={editText}
+                rows={2}
+                onChange={(e) => setEditText(e.target.value)}
+                onKeyDown={handleEditKeyDown}
+                onBlur={handleEditSave}
+              />
+            ) : showContent ? (
+              <p
+                className={cn("text-sm whitespace-pre-wrap break-words", onEdit && "cursor-text")}
+                onClick={() => onEdit && setEditing(true)}
+              >
                 {card.text}
               </p>
             ) : (
@@ -102,9 +151,10 @@ export function CardItem({
                 variant={hasVoted ? "default" : "outline"}
                 size="sm"
                 className="h-7 min-w-[40px] text-xs"
-                onClick={onVote}
+                disabled={votePending}
+                onClick={() => startVoteTransition(() => { onVote?.() })}
               >
-                {voteCount}
+                {votePending ? <Loader2 className="h-3 w-3 animate-spin" /> : voteCount}
               </Button>
             )}
             {showDiscussed && onToggleDiscussed && (
@@ -112,9 +162,20 @@ export function CardItem({
                 variant={card.is_discussed ? "default" : "outline"}
                 size="icon"
                 className="h-7 w-7"
-                onClick={onToggleDiscussed}
+                disabled={discussedPending}
+                onClick={() => startDiscussedTransition(() => { onToggleDiscussed?.() })}
               >
-                <Check className="h-3 w-3" />
+                {discussedPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+              </Button>
+            )}
+            {isOwn && onEdit && !editing && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setEditing(true)}
+              >
+                <Pencil className="h-3 w-3" />
               </Button>
             )}
             {isOwn && onDelete && (
