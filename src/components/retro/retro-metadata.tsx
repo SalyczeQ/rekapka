@@ -7,8 +7,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Camera, Calendar } from "lucide-react";
-import Image from "next/image";
 import { toast } from "sonner";
+
+function resizeImage(file: File, maxSize: number, quality: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxSize || height > maxSize) {
+        if (width > height) {
+          height = Math.round((height * maxSize) / width);
+          width = maxSize;
+        } else {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject(new Error("no canvas")); return; }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("canvas toBlob failed"));
+      }, "image/jpeg", quality);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
 
 interface RetroMetadataProps {
   retroId: string;
@@ -16,6 +47,7 @@ interface RetroMetadataProps {
   photoUrl: string | null;
   date: string;
   isFacilitator: boolean;
+  hidePhoto?: boolean;
 }
 
 export function RetroMetadata({
@@ -24,6 +56,7 @@ export function RetroMetadata({
   photoUrl: initialPhotoUrl,
   date: initialDate,
   isFacilitator,
+  hidePhoto = false,
 }: RetroMetadataProps) {
   const [location, setLocation] = useState(initialLocation ?? "");
   const [date, setDate] = useState(initialDate);
@@ -58,107 +91,110 @@ export function RetroMetadata({
 
     setUploading(true);
 
-    const formData = new FormData();
-    formData.set("file", file);
-    formData.set("retroId", retroId);
-
-    const res = await fetch("/api/uploads/retro-photo", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!res.ok) {
-      toast.error("Upload failed");
-      setUploading(false);
-      return;
+    // Resize image client-side before upload (max 1600px, 85% quality)
+    let uploadFile: File | Blob = file;
+    try {
+      uploadFile = await resizeImage(file, 1600, 0.85);
+    } catch {
+      // fall back to original file on resize failure
     }
 
-    const { url } = await res.json();
+    const formData = new FormData();
+    formData.set("file", new File([uploadFile], "photo.jpg", { type: "image/jpeg" }));
+    formData.set("retroId", retroId);
 
-    await updateRetroMetadataAction(retroId, { photoUrl: url });
+    try {
+      const res = await fetch("/api/uploads/retro-photo", {
+        method: "POST",
+        body: formData,
+      });
 
-    setPhotoUrl(url);
-    setUploading(false);
-    toast.success("Photo uploaded");
+      if (!res.ok) {
+        const body = await res.text();
+        toast.error(`Upload failed (${res.status}): ${body.slice(0, 100)}`);
+        setUploading(false);
+        return;
+      }
+
+      const { url } = await res.json();
+      await updateRetroMetadataAction(retroId, { photoUrl: url });
+      setPhotoUrl(url);
+      setUploading(false);
+      toast.success("Photo uploaded");
+    } catch (err) {
+      toast.error(`Upload error: ${err instanceof Error ? err.message : String(err)}`);
+      setUploading(false);
+    }
   }
 
   if (!isFacilitator) {
     return (
-      <Card>
-        <CardContent className="py-3 px-4">
-          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-            {location && (
-              <span className="flex items-center gap-1">
-                <MapPin className="h-3 w-3" /> {location}
-              </span>
-            )}
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" /> {date}
-            </span>
-            {photoUrl && (
-              <span className="flex items-center gap-1">
-                <Camera className="h-3 w-3" /> Photo attached
-              </span>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground px-1 pb-1">
+        <span className="flex items-center gap-1">
+          <Calendar className="h-3 w-3" /> {date}
+        </span>
+        {location && (
+          <span className="flex items-center gap-1">
+            <MapPin className="h-3 w-3" /> {location}
+          </span>
+        )}
+        {photoUrl && (
+          <span className="flex items-center gap-1">
+            <Camera className="h-3 w-3" /> Photo attached
+          </span>
+        )}
+      </div>
     );
   }
 
   return (
     <Card>
       <CardHeader className="py-2 px-4">
-        <CardTitle className="text-xs text-muted-foreground">
+        <CardTitle className="text-xs text-muted-foreground uppercase tracking-wide">
           Retro details
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-4 pb-3 space-y-2">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <Label className="text-xs" htmlFor="location">
-              Location
-            </Label>
-            <Input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Office, Room 3..."
-              className="h-7 text-xs"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs" htmlFor="date">
-              Date
-            </Label>
-            <Input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="h-7 text-xs"
-            />
-          </div>
+      <CardContent className="px-4 pb-4 space-y-3">
+        <div className="space-y-1">
+          <Label className="text-xs" htmlFor="location">
+            Location
+          </Label>
+          <Input
+            id="location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="Office, Room 3..."
+            className="h-8 text-sm"
+          />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs" htmlFor="date">
+            Date
+          </Label>
+          <Input
+            id="date"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="h-8 text-sm w-full"
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2 pt-1">
           <div className="flex-1">
-            {photoUrl ? (
+            {!hidePhoto && photoUrl ? (
               <div className="flex items-center gap-2">
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={photoUrl}
                   alt="Retro photo"
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 rounded object-cover"
+                  className="h-9 w-9 rounded-sm object-cover border border-border"
                 />
-                <span className="text-xs text-muted-foreground">
-                  Photo attached
-                </span>
+                <span className="text-xs text-muted-foreground">Photo attached</span>
               </div>
-            ) : (
-              <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer hover:text-foreground">
-                <Camera className="h-3 w-3" />
-                {uploading ? "Uploading..." : "Add photo"}
+            ) : !hidePhoto ? (
+              <label className="inline-flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                <Camera className="h-3.5 w-3.5" />
+                {uploading ? "Uploading…" : "Add photo"}
                 <input
                   type="file"
                   accept="image/*"
@@ -167,10 +203,10 @@ export function RetroMetadata({
                   className="hidden"
                 />
               </label>
-            )}
+            ) : null}
           </div>
-          <Button size="sm" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving..." : "Save"}
+          <Button size="sm" onClick={handleSave} disabled={saving} className="shrink-0">
+            {saving ? "Saving…" : "Save"}
           </Button>
         </div>
       </CardContent>

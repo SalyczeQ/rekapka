@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { deleteCardAction, toggleDiscussedAction } from "@/lib/actions/retro-session";
+import { deleteCardAction, toggleDiscussedAction, updateCardTextAction } from "@/lib/actions/retro-session";
 import { RetroPhaseBar } from "./retro-phase-bar";
 import { PhaseWriting } from "./phase-writing";
 import { PhaseDiscussing } from "./phase-discussing";
@@ -9,6 +9,7 @@ import { PhaseActions } from "./phase-actions";
 import { TimerDisplay } from "./timer-display";
 import { ParticipantBar } from "./participant-bar";
 import { RetroMetadata } from "./retro-metadata";
+import { DeleteRetroButton } from "./delete-retro-button";
 import { RetroCompletionModal } from "@/components/shared/retro-completion-modal";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -43,6 +44,7 @@ interface RetroSessionProps {
     date: string;
     max_votes: number;
     phase_timer_seconds: number | null;
+    created_by: string;
   };
   categories: {
     id: string;
@@ -67,6 +69,7 @@ interface RetroSessionProps {
     user_id: string;
   }[];
   currentUserId: string;
+  currentUserName: string;
   userRole: string;
   teamSlug: string;
 }
@@ -77,6 +80,7 @@ export function RetroSession({
   initialCards,
   initialVotes,
   currentUserId,
+  currentUserName,
   userRole,
   teamSlug,
 }: RetroSessionProps) {
@@ -86,7 +90,10 @@ export function RetroSession({
   const [cards, setCards] = useState(initialCards);
   const [votes, setVotes] = useState(initialVotes);
   const [showCompletion, setShowCompletion] = useState(false);
-  const isFacilitator = userRole === "owner" || userRole === "facilitator";
+  const isFacilitator =
+    userRole === "owner" ||
+    userRole === "facilitator" ||
+    retro.created_by === currentUserId;
   const statusRef = useRef(status);
 
   useEffect(() => {
@@ -218,6 +225,20 @@ export function RetroSession({
     [retro.id]
   );
 
+  const editCard = useCallback(
+    async (cardId: string, text: string) => {
+      const result = await updateCardTextAction(cardId, retro.id, text);
+      if (result?.error) {
+        toast.error("Failed to update card");
+        return;
+      }
+      setCards((prev) =>
+        prev.map((c) => (c.id === cardId ? { ...c, text } : c))
+      );
+    },
+    [retro.id]
+  );
+
   const toggleVote = useCallback(
     async (cardId: string) => {
       const existing = votes.find(
@@ -290,9 +311,19 @@ export function RetroSession({
 
       <div className="px-4">
         {status !== "completed" && (
-          <ParticipantBar retroId={retro.id} currentUserId={currentUserId} />
+          <ParticipantBar retroId={retro.id} currentUserId={currentUserId} currentUserName={currentUserName} />
         )}
         {status === "draft" && (
+          <RetroMetadata
+            retroId={retro.id}
+            location={retro.location}
+            photoUrl={null}
+            date={retro.date}
+            isFacilitator={isFacilitator}
+            hidePhoto
+          />
+        )}
+        {status === "actions" && (
           <RetroMetadata
             retroId={retro.id}
             location={retro.location}
@@ -310,6 +341,7 @@ export function RetroSession({
             status={status}
             onAddCard={addCard}
             onDeleteCard={deleteCard}
+            onEditCard={editCard}
           />
         )}
 
@@ -379,7 +411,12 @@ export function RetroSession({
 
         {isFacilitator && status !== "completed" && (
           <div className="fixed bottom-16 left-0 right-0 px-4 pb-2 safe-bottom">
-            <div className="max-w-lg mx-auto">
+            <div className="max-w-lg mx-auto space-y-2">
+              {status === "draft" && (
+                <div className="flex justify-center">
+                  <DeleteRetroButton retroId={retro.id} teamSlug={teamSlug} variant="full" />
+                </div>
+              )}
               <Button onClick={advancePhase} className="w-full">
                 {status === "actions"
                   ? "Complete retro"

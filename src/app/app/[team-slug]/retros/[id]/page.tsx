@@ -34,7 +34,6 @@ export default async function RetroPage({
     .where(and(eq(retros.id, id), eq(retros.teamId, team.id)))
     .limit(1);
   if (!retro) notFound();
-
   const retroCategories = await db
     .select()
     .from(categories)
@@ -80,6 +79,7 @@ export default async function RetroPage({
         date: retro.date,
         max_votes: retro.maxVotes,
         phase_timer_seconds: retro.phaseTimerSeconds,
+        created_by: retro.createdBy,
       }}
       categories={retroCategories.map((c) => ({
         id: c.id,
@@ -104,6 +104,7 @@ export default async function RetroPage({
         user_id: v.userId,
       }))}
       currentUserId={session.user.id}
+      currentUserName={session.user.name ?? "User"}
       userRole={membership?.role ?? "member"}
       teamSlug={teamSlug}
     />

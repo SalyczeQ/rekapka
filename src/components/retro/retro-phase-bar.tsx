@@ -21,7 +21,7 @@ export function RetroPhaseBar({ status }: RetroPhaseBarProps) {
 
   return (
     <div className="sticky top-[49px] z-30 bg-background border-b px-4 py-2">
-      <div className="flex items-center gap-1 overflow-x-auto max-w-lg mx-auto">
+      <div className="flex items-center gap-1 overflow-x-auto max-w-lg mx-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {PHASES.map((phase, i) => (
           <div key={phase.key} className="flex items-center">
             {i > 0 && (
