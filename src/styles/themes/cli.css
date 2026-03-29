@@ -1,8 +1,28 @@
-/* CLI / Terminal theme - green-on-black hacker aesthetic */
-[data-ui-theme="cli"],
-.dark[data-ui-theme="cli"] {
+/* CLI / Terminal theme - light mode: paper terminal */
+[data-ui-theme="cli"] {
   --font-family: "JetBrains Mono", ui-monospace, monospace;
   --radius: 0;
+  --background: oklch(0.96 0.01 145);
+  --foreground: oklch(0.15 0.12 145);
+  --card: oklch(0.93 0.015 145);
+  --card-foreground: oklch(0.15 0.12 145);
+  --primary: oklch(0.35 0.15 145);
+  --primary-foreground: oklch(0.96 0 0);
+  --secondary: oklch(0.88 0.02 145);
+  --secondary-foreground: oklch(0.15 0.12 145);
+  --muted: oklch(0.88 0.01 145);
+  --muted-foreground: oklch(0.4 0.08 145);
+  --accent: oklch(0.85 0.03 145);
+  --accent-foreground: oklch(0.15 0.12 145);
+  --border: oklch(0.5 0.08 145);
+  --input: oklch(0.98 0 0);
+  --ring: oklch(0.35 0.15 145);
+  --popover: oklch(0.96 0.01 145);
+  --popover-foreground: oklch(0.15 0.12 145);
+}
+
+/* CLI dark mode - classic black terminal */
+.dark[data-ui-theme="cli"] {
   --background: oklch(0.1 0 0);
   --foreground: oklch(0.8 0.15 145);
   --card: oklch(0.12 0 0);
@@ -58,4 +78,37 @@
 /* Card borders as terminal blocks */
 [data-ui-theme="cli"] [data-slot="card"] {
   border: 1px solid oklch(0.3 0.08 145);
+}
+
+/* Buttons — light */
+[data-ui-theme="cli"] button,
+[data-ui-theme="cli"] [role="button"] {
+  background: oklch(0.88 0.02 145) !important;
+  color: oklch(0.15 0.12 145) !important;
+  border: 1px solid oklch(0.5 0.08 145) !important;
+}
+
+[data-ui-theme="cli"] button[data-slot="button"][class*="bg-primary"],
+[data-ui-theme="cli"] button[class*="bg-primary"] {
+  background: oklch(0.35 0.15 145) !important;
+  color: oklch(0.96 0 0) !important;
+}
+
+/* Buttons — dark */
+.dark[data-ui-theme="cli"] button,
+.dark[data-ui-theme="cli"] [role="button"] {
+  background: oklch(0.15 0.02 145) !important;
+  color: oklch(0.8 0.15 145) !important;
+  border: 1px solid oklch(0.3 0.08 145) !important;
+}
+
+.dark[data-ui-theme="cli"] button[data-slot="button"][class*="bg-primary"],
+.dark[data-ui-theme="cli"] button[class*="bg-primary"] {
+  background: oklch(0.7 0.2 145) !important;
+  color: oklch(0.1 0 0) !important;
+}
+
+.dark[data-ui-theme="cli"] button:hover,
+.dark[data-ui-theme="cli"] [role="button"]:hover {
+  background: oklch(0.2 0.03 145) !important;
 }

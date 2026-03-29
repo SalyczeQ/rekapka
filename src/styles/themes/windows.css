@@ -1,6 +1,5 @@
 /* Windows 95/98 Classic theme - beveled borders, system gray */
-[data-ui-theme="windows"],
-.dark[data-ui-theme="windows"] {
+[data-ui-theme="windows"] {
   --font-family: "Tahoma", "MS Sans Serif", Arial, sans-serif;
   --radius: 0;
   --background: oklch(0.78 0.02 220);
@@ -12,7 +11,7 @@
   --secondary: oklch(0.82 0.01 220);
   --secondary-foreground: oklch(0.1 0 0);
   --muted: oklch(0.75 0.01 220);
-  --muted-foreground: oklch(0.4 0 0);
+  --muted-foreground: oklch(0.35 0 0);
   --accent: oklch(0.35 0.1 260);
   --accent-foreground: oklch(0.95 0 0);
   --border: oklch(0.5 0 0);
@@ -22,12 +21,33 @@
   --popover-foreground: oklch(0.1 0 0);
 }
 
+/* Windows dark mode — Win NT / dark charcoal style */
+.dark[data-ui-theme="windows"] {
+  --background: oklch(0.22 0.01 220);
+  --foreground: oklch(0.92 0 0);
+  --card: oklch(0.27 0.01 220);
+  --card-foreground: oklch(0.92 0 0);
+  --primary: oklch(0.45 0.12 260);
+  --primary-foreground: oklch(0.96 0 0);
+  --secondary: oklch(0.32 0.01 220);
+  --secondary-foreground: oklch(0.92 0 0);
+  --muted: oklch(0.3 0.01 220);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.45 0.12 260);
+  --accent-foreground: oklch(0.96 0 0);
+  --border: oklch(0.45 0 0);
+  --input: oklch(0.18 0.01 220);
+  --ring: oklch(0.45 0.12 260);
+  --popover: oklch(0.27 0.01 220);
+  --popover-foreground: oklch(0.92 0 0);
+}
+
 [data-ui-theme="windows"] * {
   font-family: "Tahoma", "MS Sans Serif", Arial, sans-serif !important;
   border-radius: 0 !important;
 }
 
-/* 3D beveled buttons */
+/* 3D beveled buttons — light */
 [data-ui-theme="windows"] button,
 [data-ui-theme="windows"] [role="button"] {
   border-style: outset !important;
@@ -45,33 +65,62 @@
   border-color: oklch(0.4 0 0) oklch(0.9 0 0) oklch(0.9 0 0) oklch(0.4 0 0) !important;
 }
 
-/* Primary buttons get blue background */
+/* 3D beveled buttons — dark */
+.dark[data-ui-theme="windows"] button,
+.dark[data-ui-theme="windows"] [role="button"] {
+  border-color: oklch(0.5 0 0) oklch(0.15 0 0) oklch(0.15 0 0) oklch(0.5 0 0) !important;
+  background: oklch(0.27 0.01 220) !important;
+  color: oklch(0.92 0 0) !important;
+}
+
+.dark[data-ui-theme="windows"] button:active,
+.dark[data-ui-theme="windows"] [role="button"]:active {
+  border-color: oklch(0.15 0 0) oklch(0.5 0 0) oklch(0.5 0 0) oklch(0.15 0 0) !important;
+}
+
+/* Primary buttons */
 [data-ui-theme="windows"] button[data-slot="button"][class*="bg-primary"] {
   background: oklch(0.35 0.1 260) !important;
   color: oklch(0.95 0 0) !important;
 }
 
-/* Window-chrome style cards */
+.dark[data-ui-theme="windows"] button[data-slot="button"][class*="bg-primary"] {
+  background: oklch(0.45 0.12 260) !important;
+  color: oklch(0.96 0 0) !important;
+}
+
+/* Window-chrome style cards — light */
 [data-ui-theme="windows"] [data-slot="card"] {
   border: 2px solid;
   border-color: oklch(0.9 0 0) oklch(0.4 0 0) oklch(0.4 0 0) oklch(0.9 0 0);
   box-shadow: 1px 1px 0 oklch(0.2 0 0);
+  padding-top: 0 !important;
+}
+
+/* Window-chrome style cards — dark */
+.dark[data-ui-theme="windows"] [data-slot="card"] {
+  border-color: oklch(0.5 0 0) oklch(0.12 0 0) oklch(0.12 0 0) oklch(0.5 0 0);
+  box-shadow: 1px 1px 0 oklch(0.1 0 0);
 }
 
 /* Title bar gradient for card headers */
 [data-ui-theme="windows"] [data-slot="card-header"] {
-  background: linear-gradient(
-    90deg,
-    oklch(0.35 0.1 260),
-    oklch(0.5 0.1 200)
-  );
+  background: linear-gradient(90deg, oklch(0.35 0.1 260), oklch(0.5 0.1 200));
   color: oklch(0.95 0 0) !important;
   padding: 2px 4px;
   font-weight: bold;
   font-size: 11px;
 }
 
-/* Input fields - inset border */
+.dark[data-ui-theme="windows"] [data-slot="card-header"] {
+  background: linear-gradient(90deg, oklch(0.3 0.12 260), oklch(0.4 0.1 200));
+}
+
+[data-ui-theme="windows"] [data-slot="card-header"] * {
+  color: oklch(0.95 0 0) !important;
+}
+
+/* Input fields — light */
 [data-ui-theme="windows"] input,
 [data-ui-theme="windows"] textarea,
 [data-ui-theme="windows"] select {
@@ -82,8 +131,23 @@
   color: oklch(0.1 0 0) !important;
 }
 
-/* Bottom nav as taskbar */
+/* Input fields — dark */
+.dark[data-ui-theme="windows"] input,
+.dark[data-ui-theme="windows"] textarea,
+.dark[data-ui-theme="windows"] select {
+  border-color: oklch(0.25 0 0) oklch(0.55 0 0) oklch(0.55 0 0) oklch(0.25 0 0) !important;
+  background: oklch(0.18 0.01 220) !important;
+  color: oklch(0.92 0 0) !important;
+}
+
+/* Bottom nav as taskbar — light */
 [data-ui-theme="windows"] nav {
   border-top: 2px outset oklch(0.78 0.02 220) !important;
   background: oklch(0.78 0.02 220) !important;
+}
+
+/* Bottom nav as taskbar — dark */
+.dark[data-ui-theme="windows"] nav {
+  border-top: 2px outset oklch(0.27 0.01 220) !important;
+  background: oklch(0.22 0.01 220) !important;
 }

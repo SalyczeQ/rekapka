@@ -1,8 +1,29 @@
-/* MS-DOS theme - blue background, VGA-style text */
-[data-ui-theme="msdos"],
-.dark[data-ui-theme="msdos"] {
+/* MS-DOS theme - light mode: classic Norton Commander gray */
+[data-ui-theme="msdos"] {
   --font-family: "Courier New", Courier, monospace;
   --radius: 0;
+  --background: oklch(0.75 0 0);
+  --foreground: oklch(0.1 0 0);
+  --card: oklch(0.78 0 0);
+  --card-foreground: oklch(0.1 0 0);
+  --primary: oklch(0.2 0.1 260);
+  --primary-foreground: oklch(0.95 0 0);
+  --secondary: oklch(0.7 0 0);
+  --secondary-foreground: oklch(0.1 0 0);
+  --muted: oklch(0.72 0 0);
+  --muted-foreground: oklch(0.35 0 0);
+  --accent: oklch(0.65 0 0);
+  --accent-foreground: oklch(0.1 0 0);
+  --border: oklch(0.5 0 0);
+  --input: oklch(0.98 0 0);
+  --ring: oklch(0.2 0.1 260);
+  --popover: oklch(0.78 0 0);
+  --popover-foreground: oklch(0.1 0 0);
+  --destructive: oklch(0.5 0.2 25);
+}
+
+/* MS-DOS dark mode - classic blue VGA */
+.dark[data-ui-theme="msdos"] {
   --background: oklch(0.2 0.1 260);
   --foreground: oklch(0.95 0 0);
   --card: oklch(0.2 0.1 260);
@@ -12,7 +33,7 @@
   --secondary: oklch(0.25 0.08 260);
   --secondary-foreground: oklch(0.95 0 0);
   --muted: oklch(0.25 0.08 260);
-  --muted-foreground: oklch(0.7 0 0);
+  --muted-foreground: oklch(0.75 0 0);
   --accent: oklch(0.3 0.08 260);
   --accent-foreground: oklch(0.95 0.05 90);
   --border: oklch(0.6 0 0);
@@ -35,10 +56,38 @@
   box-shadow: 2px 2px 0 oklch(0.3 0 0);
 }
 
-/* Blocky button style with keyboard hints */
+/* Blocky button style — light */
 [data-ui-theme="msdos"] button,
 [data-ui-theme="msdos"] [role="button"] {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: bold;
+  background: oklch(0.78 0 0) !important;
+  color: oklch(0.1 0 0) !important;
+  border: 2px outset oklch(0.78 0 0) !important;
+}
+
+[data-ui-theme="msdos"] button[data-slot="button"][class*="bg-primary"],
+[data-ui-theme="msdos"] button[class*="bg-primary"] {
+  background: oklch(0.2 0.1 260) !important;
+  color: oklch(0.95 0 0) !important;
+}
+
+/* Blocky button style — dark */
+.dark[data-ui-theme="msdos"] button,
+.dark[data-ui-theme="msdos"] [role="button"] {
+  background: oklch(0.25 0.08 260) !important;
+  color: oklch(0.95 0 0) !important;
+  border: 2px outset oklch(0.35 0.08 260) !important;
+}
+
+.dark[data-ui-theme="msdos"] button[data-slot="button"][class*="bg-primary"],
+.dark[data-ui-theme="msdos"] button[class*="bg-primary"] {
+  background: oklch(0.95 0.05 90) !important;
+  color: oklch(0.2 0.1 260) !important;
+}
+
+.dark[data-ui-theme="msdos"] button:hover,
+.dark[data-ui-theme="msdos"] [role="button"]:hover {
+  background: oklch(0.3 0.08 260) !important;
 }
