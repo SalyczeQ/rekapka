@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const { retro_id } = parsed.data
 
     const [retro] = await db
-      .select({ id: retros.id, teamId: retros.teamId })
+      .select({ id: retros.id, teamId: retros.teamId, statsCache: retros.statsCache })
       .from(retros)
       .where(eq(retros.id, retro_id))
       .limit(1)
@@ -42,6 +42,11 @@ export async function POST(request: NextRequest) {
 
     if (!membership) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Return cached stats if available
+    if (retro.statsCache) {
+      return Response.json({ stats: JSON.parse(retro.statsCache), cached: true })
     }
 
     const retroCategories = await db
@@ -85,6 +90,12 @@ export async function POST(request: NextRequest) {
         vote_count: voteCountMap.get(c.id) ?? 0,
       })),
     })
+
+    // Persist stats so they won't be regenerated on next request
+    await db
+      .update(retros)
+      .set({ statsCache: JSON.stringify(stats) })
+      .where(eq(retros.id, retro_id))
 
     return Response.json({ stats })
   } catch {

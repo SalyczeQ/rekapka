@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { BarChart3, Download, Loader2 } from "lucide-react";
+import { BarChart3, Download, Loader2, RefreshCw } from "lucide-react";
 
 interface Stats {
   themes: string[];
@@ -17,11 +17,13 @@ interface Stats {
 export function StatsClient({
   retroId,
   retroTitle,
+  initialStats = null,
 }: {
   retroId: string;
   retroTitle: string;
+  initialStats?: Stats | null;
 }) {
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<Stats | null>(initialStats);
   const [loading, setLoading] = useState(false);
 
   async function generateStats() {
@@ -53,10 +55,27 @@ export function StatsClient({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">{retroTitle} Stats</h1>
-        <Button size="sm" variant="outline" onClick={exportCsv}>
-          <Download className="h-3 w-3 mr-1" />
-          CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          {stats && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={generateStats}
+              disabled={loading}
+              title="Regenerate stats"
+            >
+              {loading ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3 w-3" />
+              )}
+            </Button>
+          )}
+          <Button size="sm" variant="outline" onClick={exportCsv}>
+            <Download className="h-3 w-3 mr-1" />
+            CSV
+          </Button>
+        </div>
       </div>
 
       {!stats ? (

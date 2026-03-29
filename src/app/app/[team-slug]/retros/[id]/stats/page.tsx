@@ -15,12 +15,22 @@ export default async function RetroStatsPage({
   if (!session?.user?.id) notFound();
 
   const [retro] = await db
-    .select({ id: retros.id, title: retros.title })
+    .select({ id: retros.id, title: retros.title, statsCache: retros.statsCache })
     .from(retros)
     .where(eq(retros.id, retroId))
     .limit(1);
 
   if (!retro) notFound();
 
-  return <StatsClient retroId={retro.id} retroTitle={retro.title} />;
+  const initialStats = retro.statsCache
+    ? JSON.parse(retro.statsCache)
+    : null;
+
+  return (
+    <StatsClient
+      retroId={retro.id}
+      retroTitle={retro.title}
+      initialStats={initialStats}
+    />
+  );
 }
