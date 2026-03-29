@@ -9,6 +9,7 @@ const themes: { id: UITheme; label: string }[] = [
   { id: "msdos", label: "MS-DOS" },
   { id: "material3", label: "Material" },
   { id: "windows", label: "Windows" },
+  { id: "ios26", label: "iOS 26" },
 ];
 
 function MiniCard({ theme }: { theme: UITheme }) {

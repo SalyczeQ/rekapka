@@ -9,7 +9,7 @@ import {
   useCallback,
 } from "react";
 
-export type UITheme = "default" | "cli" | "msdos" | "material3" | "windows";
+export type UITheme = "default" | "cli" | "msdos" | "material3" | "windows" | "ios26";
 
 interface UIThemeContextValue {
   uiTheme: UITheme;
