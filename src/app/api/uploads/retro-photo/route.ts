@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
   const member = await requireRetroTeamMember(retroId)
   if (member.error) {
     const status = member.error === 'Not authenticated' ? 401 : 403
+    console.error('[upload] auth failed:', member.error, 'retroId:', retroId)
     return Response.json({ error: member.error }, { status })
   }
 
@@ -38,8 +39,13 @@ export async function POST(request: NextRequest) {
 
   await mkdir(dir, { recursive: true })
 
-  const buffer = Buffer.from(await file.arrayBuffer())
-  await writeFile(join(dir, filename), buffer)
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer())
+    await writeFile(join(dir, filename), buffer)
+  } catch (err) {
+    console.error('[upload] write failed:', err)
+    return Response.json({ error: 'Failed to save file' }, { status: 500 })
+  }
 
   const publicUrl = `/uploads/retros/${filename}`
 

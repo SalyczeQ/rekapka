@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
 
 // Routes that don't require authentication
-const publicPaths = ['/', '/login', '/signup']
-const publicApiPaths = ['/api/ics', '/api/health', '/api/auth']
+const publicPaths = ['/', '/login', '/signup', '/invite']
+const publicApiPaths = ['/api/ics', '/api/health', '/api/auth', '/api/uploads']
+
+// All known NextAuth v5 session cookie names (secure + non-secure variants)
+const SESSION_COOKIE_NAMES = [
+  'authjs.session-token',
+  '__Secure-authjs.session-token',
+  'next-auth.session-token',
+  '__Secure-next-auth.session-token',
+]
 
 function isPublicPath(pathname: string): boolean {
-  if (publicPaths.includes(pathname)) return true
-  if (pathname.startsWith('/api/auth/')) return true
+  if (publicPaths.some((p) => pathname === p || pathname.startsWith(p + '/'))) return true
   if (publicApiPaths.some((p) => pathname.startsWith(p))) return true
   return false
 }
@@ -17,15 +23,11 @@ export async function proxy(req: NextRequest) {
 
   if (isPublicPath(pathname)) return NextResponse.next()
 
-  const secureCookie = req.headers.get('x-forwarded-proto') === 'https' || req.nextUrl.protocol === 'https:'
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET,
-    secureCookie,
-  })
-  if (!token) {
-    console.log('[proxy] no token for', pathname, '— redirecting to /login (secure:', secureCookie, ')')
-    console.log('[proxy] cookies:', req.cookies.getAll().map(c => c.name).join(', '))
+  // Check for session cookie existence — actual JWT validation happens in each route/action
+  const cookies = req.cookies.getAll()
+  const hasSession = SESSION_COOKIE_NAMES.some((name) => cookies.some((c) => c.name === name))
+
+  if (!hasSession) {
     const url = req.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirectTo', pathname)

@@ -38,6 +38,8 @@ RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 
+RUN mkdir -p /app/public/uploads/retros && chown -R nextjs:nodejs /app/public/uploads
+
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 

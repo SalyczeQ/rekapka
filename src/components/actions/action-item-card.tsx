@@ -47,7 +47,7 @@ export function ActionItemCard({ action, onStatusChange }: ActionItemCardProps) 
   return (
     <Card
       className={cn(
-        "transition-all",
+        "transition-all duration-150 hover:shadow-md",
         action.status === "done" && "opacity-60"
       )}
     >

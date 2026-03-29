@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EmojiPicker } from "./emoji-picker";
 import { replaceEmojiShortcodes } from "@/lib/emoji";
-import { Send } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 
 interface CardInputProps {
   placeholder?: string;
@@ -77,7 +77,10 @@ export function CardInput({ placeholder, onSubmit, onCancel }: CardInputProps) {
             disabled={!text.trim() || submitting}
             className="h-8 w-8"
           >
-            <Send className="h-3 w-3" />
+            {submitting
+              ? <Loader2 className="h-3 w-3 animate-spin" />
+              : <Send className="h-3 w-3" />
+            }
           </Button>
           <Button
             size="icon"
