@@ -40,10 +40,10 @@ export default async function TeamLayout({
   if (!membership) notFound();
 
   return (
-    <div className="min-h-screen pb-16">
+    <div className="min-h-screen pb-16 md:pb-0 md:pl-16">
       <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-2 border-b bg-background/95 backdrop-blur">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-sm">{team.name}</span>
+          <span className="font-semibold text-sm">Rekapka</span>
         </div>
         <div className="flex items-center gap-1">
           <ThemeToggle />

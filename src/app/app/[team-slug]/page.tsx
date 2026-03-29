@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, Calendar, ListChecks } from "lucide-react";
+import { Plus, Calendar, ListChecks, ChevronRight } from "lucide-react";
 
 export default async function TeamDashboard({
   params,
@@ -66,8 +66,11 @@ export default async function TeamDashboard({
 
   const activeRetro = recentRetros.find((r) => r.status !== "completed");
 
+  const completedRetros = recentRetros.filter((r) => r.status === "completed");
+  const inProgressRetros = recentRetros.filter((r) => r.status !== "completed");
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Dashboard</h1>
         <Button size="sm" render={<Link href={`/app/${teamSlug}/retros/new`} />}>
@@ -76,84 +79,97 @@ export default async function TeamDashboard({
         </Button>
       </div>
 
-      {activeRetro && (
-        <Link href={`/app/${teamSlug}/retros/${activeRetro.id}`}>
-          <Card className="border-primary/50 hover:bg-accent/50 transition-colors cursor-pointer">
-            <CardHeader className="py-3 px-4">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-                </span>
-                <CardTitle className="text-sm">Active retro</CardTitle>
+      {/* Active / in-progress retros */}
+      <section>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+          Active
+        </h2>
+        {inProgressRetros.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No active retros.</p>
+        ) : (
+          <div className="space-y-2">
+            {inProgressRetros.map((retro) => (
+              <Link key={retro.id} href={`/app/${teamSlug}/retros/${retro.id}`}>
+                <Card className="border-primary/50 hover:bg-accent/50 active:bg-accent transition-colors cursor-pointer">
+                  <CardHeader className="py-3 px-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="relative flex h-2 w-2 shrink-0">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                        </span>
+                        <CardTitle className="text-sm truncate">{retro.title}</CardTitle>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <CardDescription className="text-xs capitalize">{retro.status}</CardDescription>
+                        <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Recent completed retros */}
+      <section>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+          Recent retros
+        </h2>
+        <Card>
+          <CardContent className="px-0 py-0">
+            {completedRetros.length === 0 ? (
+              <p className="text-sm text-muted-foreground px-4 py-3">No completed retros yet.</p>
+            ) : (
+              <div className="divide-y divide-border">
+                {completedRetros.map((retro) => (
+                  <Link
+                    key={retro.id}
+                    href={`/app/${teamSlug}/retros/${retro.id}`}
+                    className="flex items-center justify-between px-4 py-2.5 text-sm hover:bg-accent/50 active:bg-accent transition-colors"
+                  >
+                    <span className="truncate">{retro.title}</span>
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                      <span className="text-xs text-muted-foreground capitalize">{retro.status}</span>
+                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                    </div>
+                  </Link>
+                ))}
               </div>
-              <CardDescription>
-                {activeRetro.title} &mdash;{" "}
-                <span className="capitalize">{activeRetro.status}</span>
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-      )}
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
-      <Card>
-        <CardHeader className="py-3 px-4">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-sm">Recent retros</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="px-4 pb-3">
-          {!recentRetros.length ? (
-            <p className="text-sm text-muted-foreground">No retros yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {recentRetros.map((retro) => (
-                <Link
-                  key={retro.id}
-                  href={`/app/${teamSlug}/retros/${retro.id}`}
-                  className="flex items-center justify-between py-1 text-sm hover:text-primary transition-colors"
-                >
-                  <span>{retro.title}</span>
-                  <span className="text-xs text-muted-foreground capitalize">
-                    {retro.status}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="py-3 px-4">
-          <div className="flex items-center gap-2">
-            <ListChecks className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-sm">Open action items</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="px-4 pb-3">
-          {!openActions.length ? (
-            <p className="text-sm text-muted-foreground">
-              No open action items.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {openActions.map((action) => (
-                <div
-                  key={action.id}
-                  className="flex items-center justify-between py-1 text-sm"
-                >
-                  <span>{action.text}</span>
-                  <span className="text-xs text-muted-foreground capitalize">
-                    {action.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Open action items */}
+      <section>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+          Open actions
+        </h2>
+        <Card>
+          <CardContent className="px-0 py-0">
+            {openActions.length === 0 ? (
+              <p className="text-sm text-muted-foreground px-4 py-3">No open action items.</p>
+            ) : (
+              <div className="divide-y divide-border">
+                {openActions.map((action) => (
+                  <div
+                    key={action.id}
+                    className="flex items-center justify-between px-4 py-2.5 text-sm"
+                  >
+                    <span className="truncate">{action.text}</span>
+                    <span className="text-xs text-muted-foreground capitalize ml-2 shrink-0">
+                      {action.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }
