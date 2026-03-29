@@ -15,14 +15,6 @@ import {
 } from "@/components/ui/card";
 
 export default function SignupPage() {
-  const [state, formAction, isPending] = useActionState(
-    async (_prev: { error: string } | null, formData: FormData) => {
-      const result = await signUpAction(formData);
-      return result ?? null;
-    },
-    null
-  );
-
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-sm">
@@ -64,43 +56,7 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <form action={formAction} className="space-y-3">
-            <div className="space-y-1">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Your name"
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Min 6 characters"
-                minLength={6}
-                required
-              />
-            </div>
-            {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? "Creating account..." : "Create account"}
-            </Button>
-          </form>
+          <SignupForm />
 
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
@@ -111,5 +67,49 @@ export default function SignupPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function SignupForm() {
+  const [state, formAction, isPending] = useActionState(signUpAction, null);
+
+  return (
+    <form action={formAction} className="space-y-3">
+      <div className="space-y-1">
+        <Label htmlFor="name">Name</Label>
+        <Input
+          id="name"
+          name="name"
+          type="text"
+          placeholder="Your name"
+          required
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="you@example.com"
+          required
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          placeholder="Min 6 characters"
+          minLength={6}
+          required
+        />
+      </div>
+      {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+      <Button type="submit" className="w-full" disabled={isPending}>
+        {isPending ? "Creating account..." : "Create account"}
+      </Button>
+    </form>
   );
 }

@@ -7,7 +7,10 @@ import { eq } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
 import { isRedirectError } from 'next/dist/client/components/redirect-error'
 
-export async function signUpAction(formData: FormData) {
+export async function signUpAction(
+  _prevState: { error: string } | null | undefined,
+  formData: FormData
+) {
   const name = (formData.get('name') as string)?.trim()
   const email = (formData.get('email') as string)?.trim().toLowerCase()
   const password = formData.get('password') as string
@@ -43,7 +46,10 @@ export async function signUpAction(formData: FormData) {
   })
 }
 
-export async function signInAction(formData: FormData) {
+export async function signInAction(
+  _prevState: { error: string } | null | undefined,
+  formData: FormData
+) {
   const email = (formData.get('email') as string)?.trim().toLowerCase()
   const password = formData.get('password') as string
   const redirectTo = (formData.get('redirectTo') as string) || '/app'
@@ -53,21 +59,17 @@ export async function signInAction(formData: FormData) {
   }
 
   try {
-    console.log('[auth] signIn attempt for', email, '-> redirectTo:', redirectTo)
-    const result = await signIn('credentials', {
+    await signIn('credentials', {
       email,
       password,
       redirectTo,
     })
-    console.log('[auth] signIn returned (unexpected):', result)
   } catch (error: unknown) {
-    if (isRedirectError(error)) {
-      console.log('[auth] signIn success — redirect caught, rethrowing')
-      throw error
-    }
-    console.error('[auth] signIn failed:', error)
+    if (isRedirectError(error)) throw error
     return { error: 'Invalid email or password.' }
   }
+
+  return null
 }
 
 export async function signInWithGoogleAction() {
