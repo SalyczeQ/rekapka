@@ -88,3 +88,32 @@ export async function createRetroAction(formData: FormData) {
 
   redirect(`/app/${teamSlug}/retros/${retro.id}`)
 }
+
+export async function deleteRetroAction(retroId: string) {
+  const session = await auth()
+  if (!session?.user?.id) return { error: 'Not authenticated' }
+
+  const [retro] = await db
+    .select({ teamId: retros.teamId, status: retros.status, createdBy: retros.createdBy })
+    .from(retros)
+    .where(eq(retros.id, retroId))
+    .limit(1)
+
+  if (!retro) return { error: 'Not found' }
+  if (retro.status !== 'draft') return { error: 'Only draft retros can be deleted' }
+
+  const [membership] = await db
+    .select({ role: teamMembers.role })
+    .from(teamMembers)
+    .where(and(eq(teamMembers.teamId, retro.teamId), eq(teamMembers.userId, session.user.id)))
+    .limit(1)
+
+  if (!membership) return { error: 'Forbidden' }
+
+  const isCreator = retro.createdBy === session.user.id
+  const isOwnerOrAdmin = membership.role === 'owner' || membership.role === 'admin'
+  if (!isCreator && !isOwnerOrAdmin) return { error: 'Forbidden' }
+
+  await db.delete(retros).where(eq(retros.id, retroId))
+  return { success: true }
+}
