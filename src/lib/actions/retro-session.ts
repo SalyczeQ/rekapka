@@ -101,10 +101,19 @@ export async function advancePhase(retroId: string, newPhase: string) {
   };
 
   if (newPhase === "writing") {
-    // Reset timer when going back to writing
+    // Reset retro timer
     updates.startedAt = new Date();
     updates.completedAt = null;
     updates.totalDurationSec = null;
+
+    // Reset all card discussion data for a clean slate
+    await db.update(cards).set({
+      isDiscussed: false,
+      isSkipped: false,
+      discussionStartedAt: null,
+      discussionEndedAt: null,
+      discussionDurationSec: null,
+    }).where(eq(cards.retroId, retroId));
   }
 
   if (newPhase === "completed") {
