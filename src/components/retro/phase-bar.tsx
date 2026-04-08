@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { advancePhase } from "@/lib/actions/retro-session";
 import { vibrate } from "@/lib/haptics";
 import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Undo2 } from "lucide-react";
 import { RETRO_STATUSES } from "@/types";
 import { useTranslations } from "next-intl";
 
@@ -12,9 +12,10 @@ interface PhaseBarProps {
   currentPhase: string;
   retroId: string;
   onPhaseChange: (phase: string) => void;
+  currentUserEmail?: string;
 }
 
-export function PhaseBar({ currentPhase, retroId, onPhaseChange }: PhaseBarProps) {
+export function PhaseBar({ currentPhase, retroId, onPhaseChange, currentUserEmail }: PhaseBarProps) {
   const t = useTranslations("phase");
   const currentIndex = RETRO_STATUSES.indexOf(currentPhase as typeof RETRO_STATUSES[number]);
   const nextPhase = RETRO_STATUSES[currentIndex + 1];
@@ -45,19 +46,35 @@ export function PhaseBar({ currentPhase, retroId, onPhaseChange }: PhaseBarProps
           ))}
         </nav>
 
-        {nextPhase && (
-          <form
-            action={async () => {
-              await advancePhase(retroId, nextPhase);
-              vibrate(80);
-              onPhaseChange(nextPhase);
-            }}
-          >
-            <Button type="submit" size="sm">
-              {t("next", { phase: phaseLabel(nextPhase) })}
-            </Button>
-          </form>
-        )}
+        <div className="flex items-center gap-2">
+          {currentPhase === "discussing" && currentUserEmail === "salay14@gmail.com" && (
+            <form
+              action={async () => {
+                await advancePhase(retroId, "writing");
+                vibrate(80);
+                onPhaseChange("writing");
+              }}
+            >
+              <Button type="submit" size="sm" variant="outline">
+                <Undo2 className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
+                {phaseLabel("writing")}
+              </Button>
+            </form>
+          )}
+          {nextPhase && (
+            <form
+              action={async () => {
+                await advancePhase(retroId, nextPhase);
+                vibrate(80);
+                onPhaseChange(nextPhase);
+              }}
+            >
+              <Button type="submit" size="sm">
+                {t("next", { phase: phaseLabel(nextPhase) })}
+              </Button>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );

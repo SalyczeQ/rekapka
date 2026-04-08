@@ -136,7 +136,7 @@ export function RetroSession({
 
   return (
     <div className="flex flex-col h-full">
-      <PhaseBar currentPhase={currentPhase} retroId={retro.id} onPhaseChange={setCurrentPhase} />
+      <PhaseBar currentPhase={currentPhase} retroId={retro.id} onPhaseChange={setCurrentPhase} currentUserEmail={currentUserEmail} />
       <div className="px-4 py-1 flex items-center justify-end gap-2">
         {!connected && (
           <span className="text-xs text-muted-foreground">{t("common.reconnecting")}</span>
