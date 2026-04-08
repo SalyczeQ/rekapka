@@ -190,6 +190,7 @@
     "name": "Jméno",
     "email": "E-mail",
     "emailHint": "E-mail je spravován přes Google OAuth.",
+    "appearance": "Vzhled",
     "theme": "Téma",
     "language": "Jazyk",
     "dictation": "Povolit hlasové diktování",

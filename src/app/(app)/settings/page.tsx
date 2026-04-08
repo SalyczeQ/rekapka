@@ -40,14 +40,15 @@ export default async function SettingsPage() {
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-balance">{tNav("settings")}</h1>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("profile")}</CardTitle>
-          <CardDescription>{t("yourSettings")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ActionForm action={updateUserSettings} className="space-y-4" successMessage={t("saved")}>
-            <div className="space-y-1.5">
+      <ActionForm action={updateUserSettings} successMessage={t("saved")}>
+        {/* Account section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("profile")}</CardTitle>
+            <CardDescription>{t("yourSettings")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6 pb-8">
+            <div className="space-y-2">
               <Label htmlFor="settings-name">{t("name")}</Label>
               <input
                 key={user.name}
@@ -56,11 +57,11 @@ export default async function SettingsPage() {
                 defaultValue={user.name}
                 autoComplete="name"
                 required
-                className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+                className="h-10 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label htmlFor="settings-email">{t("email")}</Label>
               <input
                 id="settings-email"
@@ -68,21 +69,29 @@ export default async function SettingsPage() {
                 disabled
                 autoComplete="email"
                 spellCheck={false}
-                className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30"
+                className="h-10 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-2 text-sm transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30"
               />
               <p className="text-xs text-muted-foreground">
                 {t("emailHint")}
               </p>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-1.5">
+        {/* Appearance section */}
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle>{t("appearance")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6 pb-8">
+            <div className="space-y-2">
               <Label htmlFor="settings-theme">{t("theme")}</Label>
               <select
                 key={user.uiTheme}
                 id="settings-theme"
                 name="uiTheme"
                 defaultValue={user.uiTheme}
-                className="h-8 w-full text-sm bg-transparent border border-input rounded-lg px-2.5 py-1 focus:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="h-10 w-full text-sm bg-transparent border border-input rounded-lg px-3 py-2 focus:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 {THEMES.map((theme) => (
                   <option key={theme.value} value={theme.value}>
@@ -92,14 +101,14 @@ export default async function SettingsPage() {
               </select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label htmlFor="settings-locale">{t("language")}</Label>
               <select
                 key={user.locale}
                 id="settings-locale"
                 name="locale"
                 defaultValue={user.locale}
-                className="h-8 w-full text-sm bg-transparent border border-input rounded-lg px-2.5 py-1 focus:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="h-10 w-full text-sm bg-transparent border border-input rounded-lg px-3 py-2 focus:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 {LOCALES.map((l) => (
                   <option key={l.value} value={l.value}>
@@ -109,25 +118,32 @@ export default async function SettingsPage() {
               </select>
             </div>
 
-            <div className="flex items-center gap-3">
-              <input
-                key={String(user.dictationEnabled)}
-                type="checkbox"
-                id="settings-dictation"
-                name="dictationEnabled"
-                defaultChecked={user.dictationEnabled}
-                className="h-4 w-4 rounded border-input accent-primary"
-              />
-              <Label htmlFor="settings-dictation">{t("dictation")}</Label>
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <input
+                  key={String(user.dictationEnabled)}
+                  type="checkbox"
+                  id="settings-dictation"
+                  name="dictationEnabled"
+                  defaultChecked={user.dictationEnabled}
+                  className="h-4 w-4 shrink-0 rounded border-input accent-primary"
+                />
+                <Label htmlFor="settings-dictation" className="leading-none">
+                  {t("dictation")}
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground pl-7">
+                {t("dictationHint")}
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground -mt-2">
-              {t("dictationHint")}
-            </p>
+          </CardContent>
+        </Card>
 
-            <Button type="submit">{t("saveSettings")}</Button>
-          </ActionForm>
-        </CardContent>
-      </Card>
+        {/* Save */}
+        <div className="mt-6">
+          <Button type="submit" className="w-full sm:w-auto">{t("saveSettings")}</Button>
+        </div>
+      </ActionForm>
     </div>
   );
 }
