@@ -80,10 +80,13 @@ export function PhaseDiscussing({
     setAssigneeId("");
   }, [currentCard?.id]);
 
-  // Count-up timer
+  // Count-up timer — resume from discussionStartedAt if available
   useEffect(() => {
     if (!currentCard) return;
-    setCardTimer(0);
+    const elapsed = currentCard.discussionStartedAt
+      ? Math.max(0, Math.floor((Date.now() - new Date(currentCard.discussionStartedAt).getTime()) / 1000))
+      : 0;
+    setCardTimer(elapsed);
     const interval = setInterval(() => {
       setCardTimer((prev) => {
         const next = prev + 1;
