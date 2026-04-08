@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import type { SerializedRetro, SerializedCategory, SerializedCard, SerializedActionItem } from "@/types/serialized";
 import type { SSEEvent } from "@/types/realtime";
+import { vibrate } from "@/lib/haptics";
 import { useRetroStream } from "@/hooks/use-retro-stream";
 import { PhaseBar } from "./phase-bar";
 import { PhaseWriting } from "./phase-writing";
@@ -43,6 +44,7 @@ export function RetroSession({
       case "card_added":
         setCards((prev) => {
           if (prev.some((c) => c.id === event.card.id)) return prev;
+          vibrate(30);
           return [...prev, event.card];
         });
         break;

@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { vibrate } from "@/lib/haptics";
 
 interface CompletionModalProps {
   retro: SerializedRetro;
@@ -54,6 +55,11 @@ export function CompletionModal({
   const [photoUploaded, setPhotoUploaded] = useState(!!retro.photoUrl);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(initialPhotoUrl ?? null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // Celebration haptic on mount
+  useEffect(() => {
+    vibrate([50, 50, 50, 50, 100]);
+  }, []);
 
   // Trigger stats generation on mount if not cached
   useEffect(() => {

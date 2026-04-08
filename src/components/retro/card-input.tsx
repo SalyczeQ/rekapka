@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createCard } from "@/lib/actions/retro-session";
+import { vibrate } from "@/lib/haptics";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send } from "lucide-react";
@@ -36,6 +37,7 @@ export function CardInput({ retroId, categoryId, currentUser, onCardAdded }: Car
 
       const card = await createCard(formData);
       if (card) {
+        vibrate(20);
         setText("");
         onCardAdded?.({
           id: card.id,

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { vibrate } from "@/lib/haptics";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2 } from "lucide-react";
 import type { SerializedCard } from "@/types/serialized";
@@ -47,6 +48,7 @@ export function AiGroupButton({ retroId, cards, onCardsChange }: AiGroupButtonPr
           return newLabel ? { ...card, groupLabel: newLabel } : card;
         })
       );
+      vibrate([30, 40, 30]);
     } catch {
       setError(t("failed"));
     } finally {

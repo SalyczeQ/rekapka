@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { advancePhase } from "@/lib/actions/retro-session";
+import { vibrate } from "@/lib/haptics";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import { RETRO_STATUSES } from "@/types";
@@ -48,6 +49,7 @@ export function PhaseBar({ currentPhase, retroId, onPhaseChange }: PhaseBarProps
           <form
             action={async () => {
               await advancePhase(retroId, nextPhase);
+              vibrate(80);
               onPhaseChange(nextPhase);
             }}
           >

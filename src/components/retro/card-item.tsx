@@ -8,6 +8,7 @@ import { Trash2, Eye, EyeOff, Pencil, Check, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { vibrate } from "@/lib/haptics";
 import { ReadAloudButton } from "./read-aloud-button";
 
 interface CardItemProps {
@@ -61,6 +62,7 @@ export function CardItem({
     setDeleting(true);
     try {
       await deleteCard(card.id);
+      vibrate([40, 30, 40]);
       onDelete?.(card.id);
     } catch {
       toast.error(t("error.failedDeleteCard"));

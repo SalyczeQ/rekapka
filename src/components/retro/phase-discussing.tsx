@@ -13,6 +13,7 @@ import {
 import { createActionItem } from "@/lib/actions/action-items";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { vibrate } from "@/lib/haptics";
 import { AiGroupButton } from "./ai-group-button";
 import { AiReadButton } from "./ai-read-button";
 import { ReadAloudButton } from "./read-aloud-button";
@@ -81,7 +82,11 @@ export function PhaseDiscussing({
     if (!currentCard) return;
     setCardTimer(0);
     const interval = setInterval(() => {
-      setCardTimer((prev) => prev + 1);
+      setCardTimer((prev) => {
+        const next = prev + 1;
+        if (next > 0 && next % 60 === 0) vibrate(15);
+        return next;
+      });
     }, 1000);
     return () => clearInterval(interval);
   }, [currentCard?.id]);
@@ -102,6 +107,7 @@ export function PhaseDiscussing({
         await updateCard(currentCard.id, fd);
       }
       await markCardDiscussed(currentCard.id);
+      vibrate(50);
       onCardsChange(
         cards.map((c) =>
           c.id === currentCard.id
@@ -110,6 +116,7 @@ export function PhaseDiscussing({
         )
       );
     } catch {
+      vibrate([100, 50, 100]);
       toast.error(t("discussion.failedMarkDiscussed"));
     } finally {
       setBusy(false);
@@ -121,12 +128,14 @@ export function PhaseDiscussing({
     setBusy(true);
     try {
       await skipCard(currentCard.id);
+      vibrate([20, 20, 20]);
       onCardsChange(
         cards.map((c) =>
           c.id === currentCard.id ? { ...c, isSkipped: true } : c
         )
       );
     } catch {
+      vibrate([100, 50, 100]);
       toast.error(t("discussion.failedSkip"));
     } finally {
       setBusy(false);
@@ -178,6 +187,7 @@ export function PhaseDiscussing({
       setActionText("");
       setAssigneeId("");
     } catch {
+      vibrate([100, 50, 100]);
       toast.error(t("discussion.failedAddAction"));
     }
   }, [actionText, assigneeId, currentCard, retro.id, actionItems, allUsers, onActionItemsChange]);
