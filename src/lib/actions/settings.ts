@@ -5,6 +5,7 @@ import { users, appSettings } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth/session";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 export async function updateUserSettings(_prev: unknown, formData: FormData) {
   try {
@@ -20,6 +21,12 @@ export async function updateUserSettings(_prev: unknown, formData: FormData) {
     if (uiTheme) updates.uiTheme = uiTheme;
 
     await db.update(users).set(updates).where(eq(users.id, user.id!));
+
+    // Set locale cookie so next-intl picks it up
+    if (locale) {
+      const cookieStore = await cookies();
+      cookieStore.set("locale", locale, { path: "/", maxAge: 60 * 60 * 24 * 365 });
+    }
 
     // Revalidate the app layout so UIThemeSetter picks up the new theme
     revalidatePath("/", "layout");
