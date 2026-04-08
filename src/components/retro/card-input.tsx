@@ -9,6 +9,7 @@ import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { EmojiPicker } from "./emoji-picker";
+import { DictationButton } from "./dictation-button";
 
 import type { SerializedCard } from "@/types/serialized";
 
@@ -82,9 +83,10 @@ export function CardInput({ retroId, categoryId, currentUser, onCardAdded }: Car
               handleSubmit();
             }
           }}
-          className="min-h-[60px] resize-none pr-10"
+          className="min-h-[60px] resize-none pr-20"
         />
-        <div className="absolute right-1 bottom-1">
+        <div className="absolute right-1 bottom-1 flex items-center gap-0.5">
+          <DictationButton onTranscript={(t) => setText((prev) => prev + (prev ? " " : "") + t)} />
           <EmojiPicker onSelect={(emoji) => setText((t) => t + emoji)} />
         </div>
       </div>

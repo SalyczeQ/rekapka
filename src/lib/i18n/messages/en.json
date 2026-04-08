@@ -67,7 +67,11 @@
     "markDiscussed": "Mark Discussed",
     "cardOf": "Card {current} of {total} remaining ({discussed} discussed)",
     "skipped": "Skipped",
-    "skippedCards": "{count} skipped cards at end of queue"
+    "skippedCards": "{count} skipped cards at end of queue",
+    "startDictation": "Start dictation",
+    "stopDictation": "Stop dictation",
+    "listening": "Listening\u2026",
+    "dictationNotSupported": "Voice input not supported in this browser"
   },
   "discussion": {
     "notes": "Discussion Notes",
@@ -111,9 +115,11 @@
     "dismiss": "Dismiss",
     "failed": "Failed to analyze cards",
     "focusPoints": "Suggested discussion focus",
-    "mood.positive": "Positive",
-    "mood.mixed": "Mixed",
-    "mood.concerned": "Concerned"
+    "mood": {
+      "positive": "Positive",
+      "mixed": "Mixed",
+      "concerned": "Concerned"
+    }
   },
   "completion": {
     "retroComplete": "Retro Complete!",

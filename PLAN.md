@@ -805,6 +805,30 @@ function vibrate(pattern: number | number[]) {
 
 ---
 
+## Voice Dictation
+
+Voice-to-text input using the browser's Web Speech API (`SpeechRecognition`). Users tap a mic button, speak, and transcribed text is appended to the input field. Locale-aware — recognizes Czech or English based on the app locale.
+
+**Where it appears:**
+- Card input (writing phase) — next to the emoji picker button
+- Discussion notes textarea (discussing phase)
+- Action item input (discussing phase)
+
+**Hook** (`src/hooks/use-speech-recognition.ts`):
+- Maps app locale to speech locale (`"cs"` → `"cs-CZ"`, `"en"` → `"en-US"`)
+- Uses `webkitSpeechRecognition` (Chrome) with `SpeechRecognition` fallback (Safari)
+- `continuous: false`, `interimResults: true` — single utterance, shows interim text
+- Returns `{ isListening, isSupported, transcript, start, stop, toggle }`
+
+**Component** (`src/components/retro/dictation-button.tsx`):
+- Mic icon (idle) or MicOff icon with pulsing red ring (listening)
+- Hidden if browser doesn't support Speech API (graceful degradation)
+- Haptic feedback: `vibrate(20)` on start, `vibrate(30)` on transcript received
+
+**Browser support**: Chrome (desktop + Android), Safari (iOS 14.5+ / macOS). Not supported on Firefox — button hidden.
+
+---
+
 ## Docker Compose Services
 
 ```yaml

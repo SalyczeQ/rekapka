@@ -67,7 +67,11 @@
     "markDiscussed": "Označit jako prodiskutované",
     "cardOf": "Karta {current} z {total} zbývajících ({discussed} prodiskutovaných)",
     "skipped": "Přeskočeno",
-    "skippedCards": "{count} přeskočených karet na konci fronty"
+    "skippedCards": "{count} přeskočených karet na konci fronty",
+    "startDictation": "Začít diktování",
+    "stopDictation": "Zastavit diktování",
+    "listening": "Poslouchám\u2026",
+    "dictationNotSupported": "Hlasový vstup není v tomto prohlížeči podporován"
   },
   "discussion": {
     "notes": "Poznámky k diskusi",
@@ -111,9 +115,11 @@
     "dismiss": "Zavřít",
     "failed": "Nepodařilo se analyzovat karty",
     "focusPoints": "Doporučené body k diskusi",
-    "mood.positive": "Pozitivní",
-    "mood.mixed": "Smíšené",
-    "mood.concerned": "Znepokojivé"
+    "mood": {
+      "positive": "Pozitivní",
+      "mixed": "Smíšené",
+      "concerned": "Znepokojivé"
+    }
   },
   "completion": {
     "retroComplete": "Retro dokončeno!",

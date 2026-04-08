@@ -17,6 +17,7 @@ import { vibrate } from "@/lib/haptics";
 import { AiGroupButton } from "./ai-group-button";
 import { AiReadButton } from "./ai-read-button";
 import { ReadAloudButton } from "./read-aloud-button";
+import { DictationButton } from "./dictation-button";
 import { CardItem } from "./card-item";
 import { deleteActionItem } from "@/lib/actions/action-items";
 import { CardInput } from "./card-input";
@@ -256,10 +257,13 @@ export function PhaseDiscussing({
       {/* Discussion notes */}
       {showNotes ? (
         <div className="space-y-2">
-          <label htmlFor="discussion-notes" className="text-xs text-muted-foreground flex items-center gap-1">
-            <StickyNote className="h-3 w-3" aria-hidden="true" />
-            {t("discussion.notes")}
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor="discussion-notes" className="text-xs text-muted-foreground flex items-center gap-1">
+              <StickyNote className="h-3 w-3" aria-hidden="true" />
+              {t("discussion.notes")}
+            </label>
+            <DictationButton onTranscript={(text) => setNotes((prev) => prev + (prev ? " " : "") + text)} className="h-6 w-6" />
+          </div>
           <textarea
             id="discussion-notes"
             value={notes}
@@ -283,6 +287,7 @@ export function PhaseDiscussing({
 
       {/* Inline action item creation */}
       <div className="flex gap-2">
+        <DictationButton onTranscript={(text) => setActionText((prev) => prev + (prev ? " " : "") + text)} className="h-8 w-8 shrink-0" />
         <input
           type="text"
           value={actionText}
