@@ -44,13 +44,9 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy drizzle-kit, schema, and migration files for DB migrate at startup
-COPY --from=builder /app/node_modules/drizzle-kit ./node_modules/drizzle-kit
-COPY --from=builder /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
-COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
+# Copy migration files and runner script
 COPY --from=builder /app/drizzle ./drizzle
-COPY --from=builder /app/src/lib/db/schema.ts ./src/lib/db/schema.ts
-
+COPY --from=builder /app/migrate.mjs ./migrate.mjs
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
 
 USER nextjs
