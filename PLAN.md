@@ -548,11 +548,34 @@ src/
 
 ### Phase 8: ICS, Settings & Team Stats
 - ICS calendar feed: `GET /api/ics/[token]` returns iCalendar with retro events
-- Admin page: edit group name, view/rotate ICS token, manage invite links, list all registered users (name, email, avatar, color, join date). No user deletion — just a read-only member list so you know who has access.
-- User settings page: edit name, select theme, toggle dark mode, switch locale
-- Team stats page (`/stats`): aggregated metrics across all retros with time range filter. Instant stats computed from DB (trends, participation, action items, timing, tags). "Generate AI Analysis" button for on-demand LLM insights (recurring themes, sentiment trend, unresolved patterns). Cached per time range.
-- `POST /api/ai/team-stats` route: accepts retroIds + time range, calls OpenAI, returns and caches analysis
+- Admin page: edit group name, view/rotate ICS token, manage invite links. AI Author Guessing section with recalculate button and stats.
+- User settings page: split into Profile (name, email) and Appearance (theme, card color picker, language, dictation toggle) cards
+- Card color picker: 10 predefined colors from `CARD_COLORS` palette, clickable circles with checkmark
+- Team stats page (`/stats`): aggregated metrics across all retros with time range filter. Instant stats computed from DB (trends, participation, action items, timing, tags). "Generate AI Analysis" button for on-demand LLM insights (recurring themes, sentiment trend, unresolved patterns).
+- `POST /api/ai/team-stats` route: accepts retroIds + time range, calls OpenAI, returns analysis
 - Add "Stats" link to sidebar navigation
+
+### Phase 8.5: AI Features
+- **AI Read Cards**: `POST /api/ai/read-cards` — summary, themes, mood, focus points. Button in writing + discussing phases.
+- **AI Voice Read**: `POST /api/ai/read-aloud` — OpenAI TTS. Speaker button on each card and discussion view.
+- **AI Guess Authors**: `POST /api/ai/guess-authors` — re-guesses anonymous card authors. Admin recalculate button.
+- **Speech Dictation**: Web Speech API mic button on card inputs (toggle in settings). SSR-safe with deferred `isSupported` check.
+- **Haptic Feedback**: `navigator.vibrate()` on card actions, phase transitions, AI grouping, timer ticks, errors, completion.
+
+### Phase 8.6: Legacy Data Import
+- 22 retros (#2-#30) imported via SQL migrations from CSV exports and pasted data
+- Anonymous user system (`00000000-...`) for cards without known author
+- `guessed_author` column with GPT-4o-mini guesses based on writing style
+- Cards page (`/retros/[id]/cards`): author filter pills, confirm/change/assign with 5-second undo
+- Migration generator script: `scripts/generate-migrations.mjs`
+- Docker entrypoint runs `migrate.mjs` (drizzle-orm migrator) at startup
+
+### Phase 8.7: Completion & Dashboard Polish
+- Completion page: upload photo, edit location, carry over undiscussed+skipped cards, clickable Total Cards → cards list
+- Dashboard: active/completed sections, card counts, duration, photo thumbnails, locale-aware dates
+- Admin-only: delete retro (2-step confirmation), revert to writing phase (resets timer + card data)
+- Favicon: SVG "R" on teal background, apple-touch-icon
+- Brand: logo component (mirrored R), teal `#1A6B5A` primary color, matching retro.vtichy.com
 
 ### Phase 9: i18n
 - `next-intl` setup: `i18n/request.ts` reads locale from cookie, loads messages

@@ -318,8 +318,8 @@ export function CompletionModal({
             </p>
           </CardContent>
         </Card>
-        <Link href={`/retros/${retro.id}/cards`}>
-          <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+        <Link href={`/retros/${retro.id}/cards`} className="block">
+          <Card className="hover:bg-accent/50 transition-colors cursor-pointer h-full">
             <CardContent className="py-3 text-center">
               <p className="text-2xl font-bold tabular-nums">{stats.total}</p>
               <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
