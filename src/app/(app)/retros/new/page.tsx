@@ -21,7 +21,7 @@ export default async function NewRetroPage() {
               <Input
                 id="title"
                 name="title"
-                placeholder="Sprint 42 Retro\u2026"
+                placeholder="Sprint 42 Retro…"
                 required
                 autoComplete="off"
               />
@@ -41,7 +41,7 @@ export default async function NewRetroPage() {
               <Input
                 id="location"
                 name="location"
-                placeholder="Office / Remote\u2026"
+                placeholder="Office / Remote…"
                 autoComplete="off"
               />
             </div>

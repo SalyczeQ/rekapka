@@ -34,7 +34,7 @@ export function EmojiPicker({ onSelect }: EmojiPickerProps) {
       <PopoverContent className="w-64 p-2" align="start">
         <Input
           ref={inputRef}
-          placeholder="Search emoji\u2026"
+          placeholder="Search emoji…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="mb-2 h-8 text-sm"
