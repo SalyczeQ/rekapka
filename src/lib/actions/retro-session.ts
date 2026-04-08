@@ -100,6 +100,13 @@ export async function advancePhase(retroId: string, newPhase: string) {
     updatedAt: new Date(),
   };
 
+  if (newPhase === "writing") {
+    // Reset timer when going back to writing
+    updates.startedAt = new Date();
+    updates.completedAt = null;
+    updates.totalDurationSec = null;
+  }
+
   if (newPhase === "completed") {
     const completedAt = new Date();
     updates.completedAt = completedAt;
