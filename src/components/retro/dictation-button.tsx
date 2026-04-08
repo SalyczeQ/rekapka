@@ -10,9 +10,10 @@ import { cn } from "@/lib/utils";
 interface DictationButtonProps {
   onTranscript: (text: string) => void;
   className?: string;
+  enabled?: boolean;
 }
 
-export function DictationButton({ onTranscript, className }: DictationButtonProps) {
+export function DictationButton({ onTranscript, className, enabled = true }: DictationButtonProps) {
   const locale = useLocale();
   const t = useTranslations("card");
 
@@ -27,7 +28,7 @@ export function DictationButton({ onTranscript, className }: DictationButtonProp
     },
   });
 
-  if (!isSupported) return null;
+  if (!isSupported || !enabled) return null;
 
   return (
     <Button

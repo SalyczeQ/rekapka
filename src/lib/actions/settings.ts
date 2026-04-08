@@ -14,11 +14,14 @@ export async function updateUserSettings(_prev: unknown, formData: FormData) {
     const name = formData.get("name") as string;
     const locale = formData.get("locale") as string;
     const uiTheme = formData.get("uiTheme") as string;
+    const dictationEnabled = formData.get("dictationEnabled");
 
     const updates: Record<string, unknown> = { updatedAt: new Date() };
     if (name) updates.name = name;
     if (locale) updates.locale = locale;
     if (uiTheme) updates.uiTheme = uiTheme;
+    // Checkbox: present in form = "on", absent = null
+    updates.dictationEnabled = dictationEnabled === "on";
 
     await db.update(users).set(updates).where(eq(users.id, user.id!));
 

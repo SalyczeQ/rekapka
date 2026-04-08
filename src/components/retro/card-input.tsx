@@ -18,9 +18,10 @@ interface CardInputProps {
   categoryId: string;
   currentUser: { id: string; name: string; color: string; image: string | null };
   onCardAdded?: (card: SerializedCard) => void;
+  dictationEnabled?: boolean;
 }
 
-export function CardInput({ retroId, categoryId, currentUser, onCardAdded }: CardInputProps) {
+export function CardInput({ retroId, categoryId, currentUser, onCardAdded, dictationEnabled = true }: CardInputProps) {
   const t = useTranslations("card");
   const tErr = useTranslations("error");
   const [text, setText] = useState("");
@@ -86,7 +87,7 @@ export function CardInput({ retroId, categoryId, currentUser, onCardAdded }: Car
           className="min-h-[60px] resize-none pr-20"
         />
         <div className="absolute right-1 bottom-1 flex items-center gap-0.5">
-          <DictationButton onTranscript={(t) => setText((prev) => prev + (prev ? " " : "") + t)} />
+          <DictationButton enabled={dictationEnabled} onTranscript={(t) => setText((prev) => prev + (prev ? " " : "") + t)} />
           <EmojiPicker onSelect={(emoji) => setText((t) => t + emoji)} />
         </div>
       </div>

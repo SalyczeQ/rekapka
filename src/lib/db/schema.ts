@@ -23,6 +23,7 @@ export const users = pgTable(
     color: text("color").notNull().default("#3B82F6"),
     locale: text("locale").notNull().default("cs"),
     uiTheme: text("ui_theme").notNull().default("default"),
+    dictationEnabled: boolean("dictation_enabled").notNull().default(true),
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   },

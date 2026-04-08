@@ -176,6 +176,8 @@
     "emailHint": "Email is managed by Google OAuth.",
     "theme": "Theme",
     "language": "Language",
+    "dictation": "Enable voice dictation",
+    "dictationHint": "Show microphone button on card inputs for speech-to-text",
     "saveSettings": "Save Settings",
     "saved": "Settings saved",
     "groupSettings": "Group Settings",

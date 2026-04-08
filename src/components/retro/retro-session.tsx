@@ -23,6 +23,7 @@ interface RetroSessionProps {
   currentUserEmail?: string;
   allUsers: { id: string; name: string; color: string; image: string | null }[];
   photoUrl?: string | null;
+  dictationEnabled?: boolean;
 }
 
 export function RetroSession({
@@ -34,6 +35,7 @@ export function RetroSession({
   currentUserEmail,
   allUsers,
   photoUrl,
+  dictationEnabled = true,
 }: RetroSessionProps) {
   const t = useTranslations();
   const [currentCards, setCards] = useState(initialCards);
@@ -151,6 +153,7 @@ export function RetroSession({
             currentUserId={currentUserId}
             currentUser={allUsers.find((u) => u.id === currentUserId) ?? { id: currentUserId, name: t("common.you"), color: "#888", image: null }}
             onCardsChange={setCards}
+            dictationEnabled={dictationEnabled}
           />
         )}
 
@@ -164,6 +167,7 @@ export function RetroSession({
             allUsers={allUsers}
             onCardsChange={setCards}
             onActionItemsChange={setActionItems}
+            dictationEnabled={dictationEnabled}
           />
         )}
 

@@ -109,6 +109,21 @@ export default async function SettingsPage() {
               </select>
             </div>
 
+            <div className="flex items-center gap-3">
+              <input
+                key={String(user.dictationEnabled)}
+                type="checkbox"
+                id="settings-dictation"
+                name="dictationEnabled"
+                defaultChecked={user.dictationEnabled}
+                className="h-4 w-4 rounded border-input accent-primary"
+              />
+              <Label htmlFor="settings-dictation">{t("dictation")}</Label>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-2">
+              {t("dictationHint")}
+            </p>
+
             <Button type="submit">{t("saveSettings")}</Button>
           </ActionForm>
         </CardContent>

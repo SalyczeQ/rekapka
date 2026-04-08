@@ -25,6 +25,13 @@ export default async function RetroPage({ params }: RetroPageProps) {
     notFound();
   }
 
+  // Fetch current user's dictation preference
+  const [currentUserRecord] = await db
+    .select({ dictationEnabled: users.dictationEnabled })
+    .from(users)
+    .where(eq(users.id, currentUser.id!))
+    .limit(1);
+
   const [retroCategories, retroCards, allUsers, retroActionItems] = await Promise.all([
     db
       .select()
@@ -90,6 +97,7 @@ export default async function RetroPage({ params }: RetroPageProps) {
       currentUserEmail={currentUser.email ?? ""}
       allUsers={serialize<{ id: string; name: string; color: string; image: string | null }[]>(allUsers)}
       photoUrl={photoSignedUrl}
+      dictationEnabled={currentUserRecord?.dictationEnabled ?? true}
     />
   );
 }

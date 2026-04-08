@@ -17,6 +17,7 @@ interface PhaseWritingProps {
   currentUserId: string;
   currentUser: { id: string; name: string; color: string; image: string | null };
   onCardsChange: (cards: SerializedCard[]) => void;
+  dictationEnabled?: boolean;
 }
 
 function CategoryColumn({
@@ -28,12 +29,14 @@ function CategoryColumn({
   onCardAdded,
   onCardDeleted,
   onCardUpdated,
+  dictationEnabled,
 }: {
   category: SerializedCategory;
   cards: SerializedCard[];
   retroId: string;
   currentUserId: string;
   currentUser: { id: string; name: string; color: string; image: string | null };
+  dictationEnabled?: boolean;
   onCardAdded: (card: SerializedCard) => void;
   onCardDeleted: (cardId: string) => void;
   onCardUpdated: (cardId: string, changes: Partial<SerializedCard>) => void;
@@ -53,6 +56,7 @@ function CategoryColumn({
         categoryId={category.id}
         currentUser={currentUser}
         onCardAdded={onCardAdded}
+        dictationEnabled={dictationEnabled}
       />
 
       <div className="space-y-2">
@@ -79,6 +83,7 @@ export function PhaseWriting({
   currentUserId,
   currentUser,
   onCardsChange,
+  dictationEnabled = true,
 }: PhaseWritingProps) {
   const t = useTranslations("card");
   const [activeTab, setActiveTab] = useState(categories[0]?.id ?? "");
@@ -143,6 +148,7 @@ export function PhaseWriting({
             onCardAdded={handleCardAdded}
             onCardDeleted={handleCardDeleted}
             onCardUpdated={handleCardUpdated}
+            dictationEnabled={dictationEnabled}
           />
         ))}
       </div>
@@ -165,6 +171,7 @@ export function PhaseWriting({
                 categoryId={cat.id}
                 currentUser={currentUser}
                 onCardAdded={handleCardAdded}
+                dictationEnabled={dictationEnabled}
               />
 
               <div className="space-y-2">

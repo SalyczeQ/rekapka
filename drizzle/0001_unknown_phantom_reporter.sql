@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "dictation_enabled" boolean DEFAULT true NOT NULL;

@@ -192,6 +192,8 @@
     "emailHint": "E-mail je spravován přes Google OAuth.",
     "theme": "Téma",
     "language": "Jazyk",
+    "dictation": "Povolit hlasové diktování",
+    "dictationHint": "Zobrazit tlačítko mikrofonu na vstupech karet pro převod řeči na text",
     "saveSettings": "Uložit nastavení",
     "saved": "Nastavení uloženo",
     "groupSettings": "Nastavení skupiny",

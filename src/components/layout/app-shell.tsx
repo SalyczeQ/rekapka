@@ -10,6 +10,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { LocaleToggle } from "./locale-toggle";
 import { BottomNav } from "./bottom-nav";
 import { SignOutButton } from "@/components/shared/sign-out-button";
+import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -28,8 +29,9 @@ function SidebarContent() {
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b">
-        <Link href="/retros" className="text-xl font-bold">
-          Rekapka
+        <Link href="/retros" className="flex items-center gap-2">
+          <Logo size="sm" />
+          <span className="text-xl font-bold" style={{ color: "#1A6B5A" }}>Rekapka</span>
         </Link>
       </div>
       <nav className="flex-1 p-2 space-y-1">

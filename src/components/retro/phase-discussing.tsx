@@ -34,6 +34,7 @@ interface PhaseDiscussingProps {
   allUsers: { id: string; name: string; color: string; image: string | null }[];
   onCardsChange: (cards: SerializedCard[]) => void;
   onActionItemsChange: (items: SerializedActionItem[]) => void;
+  dictationEnabled?: boolean;
 }
 
 export function PhaseDiscussing({
@@ -45,6 +46,7 @@ export function PhaseDiscussing({
   allUsers,
   onCardsChange,
   onActionItemsChange,
+  dictationEnabled = true,
 }: PhaseDiscussingProps) {
   const t = useTranslations();
   const activeCards = cards.filter((c) => !c.isDiscussed && !c.isSkipped);
@@ -262,7 +264,7 @@ export function PhaseDiscussing({
               <StickyNote className="h-3 w-3" aria-hidden="true" />
               {t("discussion.notes")}
             </label>
-            <DictationButton onTranscript={(text) => setNotes((prev) => prev + (prev ? " " : "") + text)} className="h-6 w-6" />
+            <DictationButton enabled={dictationEnabled} onTranscript={(text) => setNotes((prev) => prev + (prev ? " " : "") + text)} className="h-6 w-6" />
           </div>
           <textarea
             id="discussion-notes"
@@ -287,7 +289,7 @@ export function PhaseDiscussing({
 
       {/* Inline action item creation */}
       <div className="flex gap-2">
-        <DictationButton onTranscript={(text) => setActionText((prev) => prev + (prev ? " " : "") + text)} className="h-8 w-8 shrink-0" />
+        <DictationButton enabled={dictationEnabled} onTranscript={(text) => setActionText((prev) => prev + (prev ? " " : "") + text)} className="h-8 w-8 shrink-0" />
         <input
           type="text"
           value={actionText}
