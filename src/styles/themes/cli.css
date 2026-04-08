@@ -61,8 +61,8 @@
   border-radius: 0 !important;
 }
 
-/* Scanline overlay effect */
-[data-ui-theme="cli"]::after {
+/* Scanline overlay — dark mode only */
+.dark[data-ui-theme="cli"]::after {
   content: "";
   position: fixed;
   inset: 0;
@@ -77,7 +77,12 @@
   );
 }
 
-/* Blinking cursor on inputs */
+/* Blinking cursor on focused inputs */
+@keyframes cli-blink {
+  0%, 100% { border-right-color: transparent; }
+  50% { border-right-color: oklch(0.7 0.2 145); }
+}
+
 [data-ui-theme="cli"] input::placeholder,
 [data-ui-theme="cli"] textarea::placeholder {
   color: oklch(0.5 0.1 145);
@@ -87,6 +92,15 @@
 [data-ui-theme="cli"] textarea:focus {
   border-color: oklch(0.7 0.2 145) !important;
   box-shadow: 0 0 8px rgba(0, 255, 0, 0.2) !important;
+  animation: cli-blink 1s step-end infinite;
+  border-right-width: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-ui-theme="cli"] input:focus,
+  [data-ui-theme="cli"] textarea:focus {
+    animation: none;
+  }
 }
 
 /* Card borders as terminal blocks */

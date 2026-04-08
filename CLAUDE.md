@@ -1,65 +1,72 @@
-# CLAUDE.md
+# Rekapka
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Retrospective app for small teams (~5 users). Single-group, real-time, with AI-powered stats.
 
-## Project
+## Tech Stack
 
-Rekapka is a mobile-first retrospective tool for agile teams with real-time collaboration, AI-powered card grouping, and team management. Built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, and PostgreSQL via Drizzle ORM.
+- **Frontend**: Next.js 16.2.1 (App Router), React 19, TypeScript 5
+- **UI**: shadcn/ui (base-nova style), Tailwind CSS 4, next-themes, 6 themes
+- **Backend**: Standard Next.js server (no custom server)
+- **Database**: PostgreSQL 16 + Drizzle ORM
+- **Auth**: NextAuth v5 (Google OAuth + invite token links)
+- **Real-time**: SSE (Server-Sent Events) for server→client push + Server Actions for client→server mutations
+- **AI**: OpenAI API (gpt-4o-mini) for card grouping and stats
+- **Storage**: MinIO (S3-compatible) for retro photos
+- **Testing**: Vitest + React Testing Library
+- **i18n**: CS/EN translation files (next-intl ready)
+- **Deployment**: Docker Compose (app + postgres + minio)
 
 ## Commands
 
 ```bash
-npm run dev          # Start dev server (localhost:3000)
-npm run build        # Production build (standalone output for Docker)
-npm run lint         # ESLint
-npm run db:generate  # Generate Drizzle migrations from schema changes
-npm run db:migrate   # Run migrations against DATABASE_URL
-npm run db:push      # Push schema directly (no migration files)
-npm run db:studio    # Open Drizzle Studio GUI
+pnpm dev              # Dev server
+pnpm build            # Next.js production build
+pnpm start            # Production server
+pnpm lint             # ESLint
+pnpm test             # Run tests
+pnpm test:watch       # Watch mode
+pnpm test:coverage    # Coverage report
+pnpm db:generate      # Generate Drizzle migration
+pnpm db:migrate       # Run migrations
+pnpm db:push          # Push schema to DB
+pnpm db:seed          # Seed app settings
+pnpm db:studio        # Drizzle Studio
+docker compose up     # Start full stack (db + minio + app)
 ```
-
-Deployment uses Docker multi-stage build via `Dockerfile` + `docker-compose.yml` (PostgreSQL 15 + Next.js).
 
 ## Architecture
 
-### Database & ORM
-- **Schema**: `src/lib/db/schema.ts` — 12+ tables (users, teams, retros, cards, votes, action items, tags, etc.) using UUIDs, with Drizzle ORM type-safe queries
-- **Connection**: `src/lib/db/index.ts` — single postgres.js pool (`max: 10`)
-- **Migrations**: `drizzle/` directory, configured in `drizzle.config.ts`
-- Enum-like patterns use `as const` string union arrays (e.g., `retroStatuses`, `retroTemplates`, `teamRoles`)
+### Retro Phase Flow
+```
+Draft → Writing → Grouping (optional) → Discussing → Completed
+```
 
-### Authentication
-- NextAuth.js v5 beta (`src/lib/auth/index.ts`) with JWT sessions, DrizzleAdapter
-- Providers: Google OAuth + email/password (bcrypt)
-- Session helper: `src/lib/auth/session.ts`
-- Custom sign-in page at `/login`
+### Database Schema
+Tables: `users`, `accounts`, `verification_tokens`, `app_settings`, `invite_tokens`, `retros`, `categories`, `cards`, `tags`, `card_tags`, `action_items`
 
-### Server Actions & Validation
-- Server actions in `src/lib/actions/` (auth, retro, retro-session, team, settings, action-items)
-- Zod schemas in `src/lib/validators.ts` for input validation
-- All mutations go through server actions, not direct API calls
+Schema defined in `src/lib/db/schema.ts`
 
-### API Routes (`src/app/api/`)
-- `/api/auth/[...nextauth]` — Auth.js handler
-- `/api/retros/[id]/{cards,votes,phase,complete,status,export}` — retro operations
-- `/api/ai/{group,stats}` — OpenAI GPT-4o-mini integration for card grouping and stats
-- `/api/teams/[id]/members` — team management
-- `/api/uploads/retro-photo` — file uploads (local filesystem)
-- `/api/tags/search`, `/api/ics/[token]`, `/api/health`
+### Real-time (SSE + Server Actions)
+- **Event bus**: `src/lib/realtime/event-bus.ts` — in-memory EventEmitter keyed by retroId
+- **Stream factory**: `src/lib/realtime/stream.ts` — creates ReadableStream subscribed to event bus
+- **SSE endpoint**: `GET /api/retros/[id]/stream` — returns SSE stream, authenticated via session
+- **Client hook**: `src/hooks/use-retro-stream.ts` — EventSource with auto-reconnect
+- Server Actions in `src/lib/actions/` emit events on the bus after each mutation
 
-### Frontend
-- **Pages**: `src/app/` — App Router with layouts for `/app/*` (authenticated), `/login`, `/signup`
-- **Components**: `src/components/` organized by feature (cards, retro, team, actions, layout, shared, ui)
-- **UI**: shadcn/ui + Base UI React, Lucide icons, Sonner toasts
-- **Themes**: 5 themes (default, cli, msdos, material3, windows) via CSS variables in `src/styles/themes/`
-- **Hooks**: `src/hooks/` — `use-realtime-cards`, `use-realtime-presence`, `use-retro-phase`, `use-theme`, `use-timer`
+### Key Patterns
+- **shadcn/ui base-nova**: Uses `@base-ui/react` — use `render` prop instead of `asChild` for composition
+- **Server Actions**: In `src/lib/actions/` — used for form submissions and mutations, emit SSE events
+- **API Routes**: In `src/app/api/` — used for data fetching and external integrations
+- **AI modules**: Lazy-init OpenAI client (no top-level instantiation to avoid build errors)
 
-### Real-time
-Currently polling-based (hooks poll API endpoints). Retro phases: draft → writing → grouping → voting → discussing → actions → completed.
+## File Structure
 
-### Path alias
-`@/*` maps to `./src/*` (tsconfig paths).
-
-## Environment Variables
-
-Key env vars (see `docker-compose.yml`): `DATABASE_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `OPENAI_API_KEY`.
+```
+src/app/          — Next.js App Router pages
+src/components/   — React components (ui/, layout/, retro/, shared/, stats/)
+src/hooks/        — Client-side hooks (SSE stream, presence, timer, swipe)
+src/lib/          — Server-side logic (db, auth, ai, actions, realtime, csv, ics, s3)
+src/lib/realtime/ — SSE event bus and stream factory
+src/styles/       — Theme CSS files
+src/types/        — TypeScript types (including realtime.ts for SSE events)
+```

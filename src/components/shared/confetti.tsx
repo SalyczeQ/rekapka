@@ -3,20 +3,38 @@
 import { useEffect } from "react";
 import confetti from "canvas-confetti";
 
-export function triggerConfetti() {
-  confetti({
-    particleCount: 120,
-    spread: 80,
-    origin: { x: 0.5, y: 0.5 },
-    gravity: 0.8,
-    ticks: 200,
-  });
+interface ConfettiProps {
+  trigger: boolean;
 }
 
-export function Confetti() {
+export function Confetti({ trigger }: ConfettiProps) {
   useEffect(() => {
-    triggerConfetti();
-  }, []);
+    if (!trigger) return;
+
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+
+    frame();
+  }, [trigger]);
 
   return null;
 }

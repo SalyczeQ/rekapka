@@ -1,19 +1,18 @@
 "use client";
 
-import { signOutAction } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function SignOutButton() {
-  async function handleSignOut() {
-    if (!confirm("Sign out?")) return;
-    await signOutAction();
-  }
+  const t = useTranslations("common");
 
   return (
-    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSignOut}>
-      <LogOut className="h-4 w-4" />
-      <span className="sr-only">Sign out</span>
-    </Button>
+    <form action="/api/auth/signout" method="POST">
+      <Button variant="ghost" size="sm" type="submit">
+        <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
+        {t("signOut")}
+      </Button>
+    </form>
   );
 }

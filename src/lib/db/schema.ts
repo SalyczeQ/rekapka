@@ -1,288 +1,237 @@
 import {
   pgTable,
-  uuid,
   text,
   timestamp,
+  uuid,
   integer,
   boolean,
   date,
-  unique,
+  uniqueIndex,
   index,
-  primaryKey,
-} from 'drizzle-orm/pg-core'
-import type { AdapterAccountType } from 'next-auth/adapters'
+} from "drizzle-orm/pg-core";
 
-// --- Enums as string unions (matching current CHECK constraints) ---
-
-export const retroStatuses = [
-  'draft',
-  'writing',
-  'grouping',
-  'voting',
-  'discussing',
-  'actions',
-  'completed',
-] as const
-export type RetroStatus = (typeof retroStatuses)[number]
-
-export const retroTemplates = [
-  'went_well_improve',
-  'mad_sad_glad',
-  'start_stop_continue',
-  'four_ls',
-  'custom',
-] as const
-export type RetroTemplate = (typeof retroTemplates)[number]
-
-export const teamRoles = ['owner', 'facilitator', 'member'] as const
-export type TeamRole = (typeof teamRoles)[number]
-
-export const actionStatuses = ['open', 'in_progress', 'done'] as const
-export type ActionStatus = (typeof actionStatuses)[number]
-
-export const uiThemes = ['default', 'cli', 'msdos', 'material3', 'windows'] as const
-export type UiTheme = (typeof uiThemes)[number]
-
-// --- Tables ---
+// ─── Auth.js adapter tables ───────────────────────────────────────────────────
 
 export const users = pgTable(
-  'users',
+  "users",
   {
-    id: uuid('id').primaryKey().defaultRandom(),
-    email: text('email').notNull(),
-    name: text('name').notNull(),
-    emailVerified: timestamp('email_verified', { withTimezone: true }),
-    image: text('image'), // Auth.js adapter column; also serves as avatar URL
-    passwordHash: text('password_hash'),
-    color: text('color').notNull().default('#3B82F6'),
-    uiTheme: text('ui_theme').notNull().default('default'),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    id: uuid("id").defaultRandom().primaryKey(),
+    email: text("email").notNull(),
+    name: text("name").notNull(),
+    emailVerified: timestamp("email_verified", { mode: "date", withTimezone: true }),
+    image: text("image"),
+    color: text("color").notNull().default("#3B82F6"),
+    locale: text("locale").notNull().default("cs"),
+    uiTheme: text("ui_theme").notNull().default("default"),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('idx_users_email').on(t.email)]
-)
-
-// --- Auth.js adapter tables ---
+  (table) => [
+    uniqueIndex("users_email_idx").on(table.email),
+  ]
+);
 
 export const accounts = pgTable(
-  'accounts',
+  "accounts",
   {
-    userId: uuid('user_id')
+    userId: uuid("user_id")
       .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    type: text('type').$type<AdapterAccountType>().notNull(),
-    provider: text('provider').notNull(),
-    providerAccountId: text('provider_account_id').notNull(),
-    refresh_token: text('refresh_token'),
-    access_token: text('access_token'),
-    expires_at: integer('expires_at'),
-    token_type: text('token_type'),
-    scope: text('scope'),
-    id_token: text('id_token'),
-    session_state: text('session_state'),
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    provider: text("provider").notNull(),
+    providerAccountId: text("provider_account_id").notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: text("token_type"),
+    scope: text("scope"),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
   },
-  (t) => [
-    primaryKey({ columns: [t.provider, t.providerAccountId] }),
-    index('idx_accounts_user_id').on(t.userId),
+  (table) => [
+    {
+      pk: { columns: [table.provider, table.providerAccountId] },
+    },
   ]
-)
+);
 
 export const verificationTokens = pgTable(
-  'verification_tokens',
+  "verification_tokens",
   {
-    identifier: text('identifier').notNull(),
-    token: text('token').notNull(),
-    expires: timestamp('expires', { withTimezone: true }).notNull(),
+    identifier: text("identifier").notNull(),
+    token: text("token").notNull(),
+    expires: timestamp("expires", { mode: "date", withTimezone: true }).notNull(),
   },
-  (t) => [primaryKey({ columns: [t.identifier, t.token] })]
-)
-
-export const teams = pgTable(
-  'teams',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    name: text('name').notNull(),
-    slug: text('slug').notNull().unique(),
-    createdBy: uuid('created_by')
-      .notNull()
-      .references(() => users.id, { onDelete: 'restrict' }),
-    icsToken: uuid('ics_token').notNull().unique().defaultRandom(),
-    inviteToken: uuid('invite_token').unique().defaultRandom(),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [
-    index('idx_teams_slug').on(t.slug),
-    index('idx_teams_created_by').on(t.createdBy),
+  (table) => [
+    {
+      pk: { columns: [table.identifier, table.token] },
+    },
   ]
-)
+);
 
-export const teamMembers = pgTable(
-  'team_members',
+// ─── App settings (singleton) ─────────────────────────────────────────────────
+
+export const appSettings = pgTable("app_settings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  icsToken: uuid("ics_token").defaultRandom().notNull().unique(),
+  groupName: text("group_name").notNull().default("Rekapka"),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Invite tokens ────────────────────────────────────────────────────────────
+
+export const inviteTokens = pgTable(
+  "invite_tokens",
   {
-    id: uuid('id').primaryKey().defaultRandom(),
-    teamId: uuid('team_id')
+    id: uuid("id").defaultRandom().primaryKey(),
+    token: uuid("token").defaultRandom().notNull().unique(),
+    createdBy: uuid("created_by")
       .notNull()
-      .references(() => teams.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    role: text('role').notNull().default('member'),
-    joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true }),
+    isReusable: boolean("is_reusable").notNull().default(true),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    unique().on(t.teamId, t.userId),
-    index('idx_team_members_team_id').on(t.teamId),
-    index('idx_team_members_user_id').on(t.userId),
+  (table) => [
+    index("invite_tokens_token_idx").on(table.token),
   ]
-)
+);
+
+// ─── Retros ───────────────────────────────────────────────────────────────────
 
 export const retros = pgTable(
-  'retros',
+  "retros",
   {
-    id: uuid('id').primaryKey().defaultRandom(),
-    teamId: uuid('team_id')
+    id: uuid("id").defaultRandom().primaryKey(),
+    title: text("title").notNull(),
+    status: text("status").notNull().default("writing"),
+    location: text("location"),
+    photoUrl: text("photo_url"),
+    date: date("date", { mode: "date" }).notNull().defaultNow(),
+    createdBy: uuid("created_by")
       .notNull()
-      .references(() => teams.id, { onDelete: 'cascade' }),
-    title: text('title').notNull(),
-    status: text('status').notNull().default('draft'),
-    template: text('template').notNull().default('went_well_improve'),
-    location: text('location'),
-    photoUrl: text('photo_url'),
-    date: date('date').notNull().defaultNow(),
-    phaseTimerSeconds: integer('phase_timer_seconds'),
-    maxVotes: integer('max_votes').notNull().default(5),
-    createdBy: uuid('created_by')
-      .notNull()
-      .references(() => users.id, { onDelete: 'restrict' }),
-    statsCache: text('stats_cache'),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    completedAt: timestamp('completed_at', { withTimezone: true }),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+      .references(() => users.id, { onDelete: "restrict" }),
+    statsCache: text("stats_cache"),
+    startedAt: timestamp("started_at", { mode: "date", withTimezone: true }),
+    completedAt: timestamp("completed_at", { mode: "date", withTimezone: true }),
+    totalDurationSec: integer("total_duration_sec"),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index('idx_retros_team_id').on(t.teamId),
-    index('idx_retros_created_by').on(t.createdBy),
-    index('idx_retros_status').on(t.status),
-    index('idx_retros_date').on(t.date),
+  (table) => [
+    index("retros_status_idx").on(table.status),
+    index("retros_date_idx").on(table.date),
+    index("retros_created_by_idx").on(table.createdBy),
   ]
-)
+);
+
+// ─── Categories (always 3 per retro: Mad, Sad, Glad) ─────────────────────────
 
 export const categories = pgTable(
-  'categories',
+  "categories",
   {
-    id: uuid('id').primaryKey().defaultRandom(),
-    retroId: uuid('retro_id')
+    id: uuid("id").defaultRandom().primaryKey(),
+    retroId: uuid("retro_id")
       .notNull()
-      .references(() => retros.id, { onDelete: 'cascade' }),
-    name: text('name').notNull(),
-    icon: text('icon'),
-    sortOrder: integer('sort_order').notNull().default(0),
-    color: text('color'),
+      .references(() => retros.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    icon: text("icon"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    color: text("color"),
   },
-  (t) => [index('idx_categories_retro_id').on(t.retroId)]
-)
+  (table) => [
+    index("categories_retro_id_idx").on(table.retroId),
+  ]
+);
+
+// ─── Cards ────────────────────────────────────────────────────────────────────
 
 export const cards = pgTable(
-  'cards',
+  "cards",
   {
-    id: uuid('id').primaryKey().defaultRandom(),
-    retroId: uuid('retro_id')
+    id: uuid("id").defaultRandom().primaryKey(),
+    retroId: uuid("retro_id")
       .notNull()
-      .references(() => retros.id, { onDelete: 'cascade' }),
-    categoryId: uuid('category_id')
+      .references(() => retros.id, { onDelete: "cascade" }),
+    categoryId: uuid("category_id")
       .notNull()
-      .references(() => categories.id, { onDelete: 'cascade' }),
-    authorId: uuid('author_id')
+      .references(() => categories.id, { onDelete: "cascade" }),
+    authorId: uuid("author_id")
       .notNull()
-      .references(() => users.id, { onDelete: 'restrict' }),
-    text: text('text').notNull(),
-    sortOrder: integer('sort_order').notNull().default(0),
-    groupLabel: text('group_label'),
-    isDiscussed: boolean('is_discussed').notNull().default(false),
-    discussionNotes: text('discussion_notes'),
-    carriedFromRetroId: uuid('carried_from_retro_id').references(() => retros.id, {
-      onDelete: 'set null',
+      .references(() => users.id, { onDelete: "restrict" }),
+    text: text("text").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    groupLabel: text("group_label"),
+    isDiscussed: boolean("is_discussed").notNull().default(false),
+    isSkipped: boolean("is_skipped").notNull().default(false),
+    discussionNotes: text("discussion_notes"),
+    discussionStartedAt: timestamp("discussion_started_at", { mode: "date", withTimezone: true }),
+    discussionEndedAt: timestamp("discussion_ended_at", { mode: "date", withTimezone: true }),
+    discussionDurationSec: integer("discussion_duration_sec"),
+    carriedFromRetroId: uuid("carried_from_retro_id").references(() => retros.id, {
+      onDelete: "set null",
     }),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index('idx_cards_retro_id').on(t.retroId),
-    index('idx_cards_category_id').on(t.categoryId),
-    index('idx_cards_author_id').on(t.authorId),
+  (table) => [
+    index("cards_retro_id_idx").on(table.retroId),
+    index("cards_category_id_idx").on(table.categoryId),
+    index("cards_author_id_idx").on(table.authorId),
   ]
-)
+);
+
+// ─── Tags ─────────────────────────────────────────────────────────────────────
 
 export const tags = pgTable(
-  'tags',
+  "tags",
   {
-    id: uuid('id').primaryKey().defaultRandom(),
-    teamId: uuid('team_id')
-      .notNull()
-      .references(() => teams.id, { onDelete: 'cascade' }),
-    name: text('name').notNull(),
-    usageCount: integer('usage_count').notNull().default(0),
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull().unique(),
+    usageCount: integer("usage_count").notNull().default(0),
   },
-  (t) => [index('idx_tags_team_id').on(t.teamId)]
-)
+  (table) => [
+    index("tags_name_idx").on(table.name),
+  ]
+);
 
 export const cardTags = pgTable(
-  'card_tags',
+  "card_tags",
   {
-    id: uuid('id').primaryKey().defaultRandom(),
-    cardId: uuid('card_id')
+    id: uuid("id").defaultRandom().primaryKey(),
+    cardId: uuid("card_id")
       .notNull()
-      .references(() => cards.id, { onDelete: 'cascade' }),
-    tagId: uuid('tag_id')
+      .references(() => cards.id, { onDelete: "cascade" }),
+    tagId: uuid("tag_id")
       .notNull()
-      .references(() => tags.id, { onDelete: 'cascade' }),
+      .references(() => tags.id, { onDelete: "cascade" }),
   },
-  (t) => [
-    unique().on(t.cardId, t.tagId),
-    index('idx_card_tags_card_id').on(t.cardId),
-    index('idx_card_tags_tag_id').on(t.tagId),
+  (table) => [
+    uniqueIndex("card_tags_card_tag_idx").on(table.cardId, table.tagId),
   ]
-)
+);
 
-export const votes = pgTable(
-  'votes',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    cardId: uuid('card_id')
-      .notNull()
-      .references(() => cards.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [
-    unique().on(t.cardId, t.userId),
-    index('idx_votes_card_id').on(t.cardId),
-    index('idx_votes_user_id').on(t.userId),
-  ]
-)
+// ─── Action Items ─────────────────────────────────────────────────────────────
 
 export const actionItems = pgTable(
-  'action_items',
+  "action_items",
   {
-    id: uuid('id').primaryKey().defaultRandom(),
-    retroId: uuid('retro_id')
+    id: uuid("id").defaultRandom().primaryKey(),
+    retroId: uuid("retro_id")
       .notNull()
-      .references(() => retros.id, { onDelete: 'cascade' }),
-    text: text('text').notNull(),
-    assigneeId: uuid('assignee_id').references(() => users.id, {
-      onDelete: 'set null',
-    }),
-    dueDate: date('due_date'),
-    status: text('status').notNull().default('open'),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+      .references(() => retros.id, { onDelete: "cascade" }),
+    cardId: uuid("card_id").references(() => cards.id, { onDelete: "set null" }),
+    text: text("text").notNull(),
+    assigneeId: uuid("assignee_id").references(() => users.id, { onDelete: "set null" }),
+    dueDate: date("due_date", { mode: "date" }),
+    status: text("status").notNull().default("open"),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index('idx_action_items_retro_id').on(t.retroId),
-    index('idx_action_items_assignee_id').on(t.assigneeId),
-    index('idx_action_items_status').on(t.status),
+  (table) => [
+    index("action_items_retro_id_idx").on(table.retroId),
+    index("action_items_assignee_id_idx").on(table.assigneeId),
+    index("action_items_status_idx").on(table.status),
   ]
-)
+);

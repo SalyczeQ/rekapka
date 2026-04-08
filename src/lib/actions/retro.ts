@@ -1,119 +1,135 @@
-'use server'
+"use server";
 
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { teams, teamMembers, retros, categories } from '@/lib/db/schema'
-import { eq, and } from 'drizzle-orm'
-import { redirect } from 'next/navigation'
+import { db } from "@/lib/db";
+import { retros, categories, cards } from "@/lib/db/schema";
+import { requireAuth } from "@/lib/auth/session";
+import { createRetroSchema, updateRetroSchema } from "@/lib/validators";
+import { eq, and } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { CATEGORY_NAMES } from "@/types";
+import { emit } from "@/lib/realtime/event-bus";
 
-const TEMPLATES: Record<string, { name: string; icon: string; color: string }[]> = {
-  went_well_improve: [
-    { name: 'Went Well', icon: '✅', color: '#22C55E' },
-    { name: 'Needs Improvement', icon: '❌', color: '#EF4444' },
-  ],
-  mad_sad_glad: [
-    { name: 'Mad', icon: '😡', color: '#EF4444' },
-    { name: 'Sad', icon: '😢', color: '#3B82F6' },
-    { name: 'Glad', icon: '😊', color: '#22C55E' },
-  ],
-  start_stop_continue: [
-    { name: 'Start', icon: '🟢', color: '#22C55E' },
-    { name: 'Stop', icon: '🔴', color: '#EF4444' },
-    { name: 'Continue', icon: '🔵', color: '#3B82F6' },
-  ],
-  four_ls: [
-    { name: 'Liked', icon: '💚', color: '#22C55E' },
-    { name: 'Learned', icon: '📚', color: '#3B82F6' },
-    { name: 'Lacked', icon: '🔧', color: '#F97316' },
-    { name: 'Longed For', icon: '🙏', color: '#8B5CF6' },
-  ],
-}
+const CATEGORY_DEFAULTS = [
+  { name: "Mad", icon: "😡", color: "#EF4444", sortOrder: 0 },
+  { name: "Sad", icon: "😢", color: "#3B82F6", sortOrder: 1 },
+  { name: "Glad", icon: "😊", color: "#10B981", sortOrder: 2 },
+] as const;
 
-export async function createRetroAction(formData: FormData) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return { error: 'Not authenticated' }
-  }
+export async function createRetro(formData: FormData) {
+  const user = await requireAuth();
+  const fromRetroId = formData.get("fromRetroId") as string | null;
 
-  const title = (formData.get('title') as string)?.trim()
-  const template = (formData.get('template') as string) || 'went_well_improve'
-  const teamSlug = formData.get('teamSlug') as string
-
-  if (!title) {
-    return { error: 'Title is required.' }
-  }
-
-  const [team] = await db
-    .select({ id: teams.id })
-    .from(teams)
-    .where(eq(teams.slug, teamSlug))
-    .limit(1)
-
-  if (!team) {
-    return { error: 'Team not found' }
-  }
-
-  const [membership] = await db
-    .select({ id: teamMembers.id })
-    .from(teamMembers)
-    .where(and(eq(teamMembers.teamId, team.id), eq(teamMembers.userId, session.user.id)))
-    .limit(1)
-
-  if (!membership) {
-    return { error: 'Forbidden' }
-  }
+  const input = createRetroSchema.parse({
+    title: formData.get("title"),
+    date: formData.get("date"),
+    location: formData.get("location") || undefined,
+  });
 
   const [retro] = await db
     .insert(retros)
     .values({
-      teamId: team.id,
-      title,
-      template,
-      createdBy: session.user.id,
+      title: input.title,
+      date: input.date,
+      location: input.location ?? null,
+      createdBy: user.id!,
+      status: "writing",
+      startedAt: new Date(),
     })
-    .returning({ id: retros.id })
+    .returning();
 
-  const tmplCategories = TEMPLATES[template]
-  if (tmplCategories) {
-    await db.insert(categories).values(
-      tmplCategories.map((cat, i) => ({
+  // Create the 3 default categories
+  const newCategories = await db
+    .insert(categories)
+    .values(
+      CATEGORY_DEFAULTS.map((cat) => ({
         retroId: retro.id,
         name: cat.name,
         icon: cat.icon,
         color: cat.color,
-        sortOrder: i,
+        sortOrder: cat.sortOrder,
       }))
     )
+    .returning();
+
+  // Carry over undiscussed + skipped cards from previous retro
+  if (fromRetroId) {
+    const cardsToCarry = await db
+      .select()
+      .from(cards)
+      .where(and(eq(cards.retroId, fromRetroId), eq(cards.isDiscussed, false)));
+
+    if (cardsToCarry.length > 0) {
+      const oldCategories = await db
+        .select()
+        .from(categories)
+        .where(eq(categories.retroId, fromRetroId));
+
+      const categoryMap = new Map<string, string>();
+      for (const oldCat of oldCategories) {
+        const newCat = newCategories.find((nc) => nc.name === oldCat.name);
+        if (newCat) {
+          categoryMap.set(oldCat.id, newCat.id);
+        }
+      }
+
+      for (const card of cardsToCarry) {
+        const newCategoryId = categoryMap.get(card.categoryId);
+        if (newCategoryId) {
+          await db.insert(cards).values({
+            retroId: retro.id,
+            categoryId: newCategoryId,
+            authorId: card.authorId,
+            text: card.text,
+            groupLabel: null,
+            isDiscussed: false,
+            isSkipped: false,
+            carriedFromRetroId: fromRetroId,
+          });
+        }
+      }
+    }
   }
 
-  redirect(`/app/${teamSlug}/retros/${retro.id}`)
+  revalidatePath("/");
+  redirect(`/retros/${retro.id}`);
 }
 
-export async function deleteRetroAction(retroId: string) {
-  const session = await auth()
-  if (!session?.user?.id) return { error: 'Not authenticated' }
+export async function updateRetro(retroId: string, formData: FormData) {
+  await requireAuth();
 
+  const input = updateRetroSchema.parse({
+    title: formData.get("title") || undefined,
+    location: formData.get("location") || undefined,
+    date: formData.get("date") || undefined,
+  });
+
+  await db
+    .update(retros)
+    .set({
+      ...input,
+      updatedAt: new Date(),
+    })
+    .where(eq(retros.id, retroId));
+
+  emit(retroId, { type: "retro_updated", changes: { ...input } });
+  revalidatePath(`/retros/${retroId}`);
+}
+
+export async function deleteRetro(retroId: string) {
+  await requireAuth();
+
+  // Only allow deletion of retros still in writing phase
   const [retro] = await db
-    .select({ teamId: retros.teamId, status: retros.status, createdBy: retros.createdBy })
+    .select()
     .from(retros)
-    .where(eq(retros.id, retroId))
-    .limit(1)
+    .where(and(eq(retros.id, retroId), eq(retros.status, "writing")));
 
-  if (!retro) return { error: 'Not found' }
-  if (retro.status !== 'draft') return { error: 'Only draft retros can be deleted' }
+  if (!retro) {
+    throw new Error("Can only delete retros in writing phase");
+  }
 
-  const [membership] = await db
-    .select({ role: teamMembers.role })
-    .from(teamMembers)
-    .where(and(eq(teamMembers.teamId, retro.teamId), eq(teamMembers.userId, session.user.id)))
-    .limit(1)
-
-  if (!membership) return { error: 'Forbidden' }
-
-  const isCreator = retro.createdBy === session.user.id
-  const isOwnerOrAdmin = membership.role === 'owner' || membership.role === 'admin'
-  if (!isCreator && !isOwnerOrAdmin) return { error: 'Forbidden' }
-
-  await db.delete(retros).where(eq(retros.id, retroId))
-  return { success: true }
+  await db.delete(retros).where(eq(retros.id, retroId));
+  revalidatePath("/");
+  redirect("/");
 }

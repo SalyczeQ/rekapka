@@ -1,61 +1,39 @@
-import NextAuth from 'next-auth'
-import Credentials from 'next-auth/providers/credentials'
-import Google from 'next-auth/providers/google'
-import { DrizzleAdapter } from '@auth/drizzle-adapter'
-import { db } from '@/lib/db'
-import * as schema from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
-import bcrypt from 'bcryptjs'
+import NextAuth from "next-auth";
+import Google from "next-auth/providers/google";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import { db } from "@/lib/db";
+import { users, accounts, verificationTokens } from "@/lib/db/schema";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: DrizzleAdapter(db, {
-    usersTable: schema.users,
-    accountsTable: schema.accounts,
-    verificationTokensTable: schema.verificationTokens,
+    usersTable: users,
+    accountsTable: accounts,
+    verificationTokensTable: verificationTokens,
   }),
-  session: { strategy: 'jwt' },
-  pages: {
-    signIn: '/login',
-  },
   providers: [
-    Google,
-    Credentials({
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-      },
-      async authorize(credentials) {
-        const email = credentials.email as string
-        const password = credentials.password as string
-        if (!email || !password) return null
-
-        const [user] = await db
-          .select()
-          .from(schema.users)
-          .where(eq(schema.users.email, email))
-          .limit(1)
-
-        if (!user?.passwordHash) return null
-
-        const valid = await bcrypt.compare(password, user.passwordHash)
-        if (!valid) return null
-
-        return { id: user.id, name: user.name, email: user.email, image: user.image }
-      },
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET,
     }),
   ],
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
+        token.id = user.id;
       }
-      return token
+      return token;
     },
-    session({ session, token }) {
+    async session({ session, token }) {
       if (token.id) {
-        session.user.id = token.id as string
+        session.user.id = token.id as string;
       }
-      return session
+      return session;
     },
   },
-})
+  pages: {
+    signIn: "/login",
+  },
+});

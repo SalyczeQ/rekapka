@@ -1,180 +1,99 @@
-import { NextRequest } from 'next/server'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { retros, teamMembers, categories, cards } from '@/lib/db/schema'
-import { eq, and, asc } from 'drizzle-orm'
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { retros, cards, categories } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
+import { emit } from "@/lib/realtime/event-bus";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { id: retroId } = await params
-    const session = await auth()
-    if (!session?.user?.id) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    const [retro] = await db
-      .select({
-        id: retros.id,
-        teamId: retros.teamId,
-        status: retros.status,
-        createdBy: retros.createdBy,
-        title: retros.title,
-        template: retros.template,
-      })
-      .from(retros)
-      .where(eq(retros.id, retroId))
-      .limit(1)
+  const { id } = await params;
+  const body = await request.json();
+  const { nextRetroId } = body;
 
-    if (!retro) {
-      return Response.json({ error: 'Retro not found' }, { status: 404 })
-    }
+  // Get current retro
+  const [retro] = await db.select().from(retros).where(eq(retros.id, id));
+  if (!retro) {
+    return NextResponse.json({ error: "Retro not found" }, { status: 404 });
+  }
 
-    const [membership] = await db
-      .select({ role: teamMembers.role })
-      .from(teamMembers)
-      .where(and(eq(teamMembers.teamId, retro.teamId), eq(teamMembers.userId, session.user.id)))
-      .limit(1)
+  // Validate required fields
+  if (!retro.location || !retro.date || !retro.photoUrl) {
+    return NextResponse.json(
+      { error: "Missing required fields: location, date, and photo must be set before completing" },
+      { status: 400 }
+    );
+  }
 
-    if (!membership) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 })
-    }
+  // Complete the retro
+  const completedAt = new Date();
+  const startedAt = retro.startedAt ?? retro.createdAt;
+  const totalDurationSec = Math.round(
+    (completedAt.getTime() - startedAt.getTime()) / 1000
+  );
 
-    const isCreator = retro.createdBy === session.user.id
-    const isFacilitatorOrOwner =
-      membership.role === 'owner' || membership.role === 'facilitator'
+  await db
+    .update(retros)
+    .set({
+      status: "completed",
+      completedAt,
+      totalDurationSec,
+      updatedAt: new Date(),
+    })
+    .where(eq(retros.id, id));
 
-    if (!isCreator && !isFacilitatorOrOwner) {
-      return Response.json(
-        { error: 'Only the facilitator or owner can complete a retro' },
-        { status: 403 }
-      )
-    }
-
-    if (retro.status !== 'actions') {
-      return Response.json(
-        { error: 'Retro must be in the actions phase to be completed' },
-        { status: 409 }
-      )
-    }
-
-    const [completedRetro] = await db
-      .update(retros)
-      .set({
-        status: 'completed',
-        completedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(retros.id, retroId))
-      .returning()
-
-    // Find undiscussed cards to carry over
+  // Carry over undiscussed cards to next retro if provided
+  if (nextRetroId) {
     const undiscussedCards = await db
-      .select({
-        id: cards.id,
-        categoryId: cards.categoryId,
-        authorId: cards.authorId,
-        text: cards.text,
-        sortOrder: cards.sortOrder,
-      })
+      .select()
       .from(cards)
-      .where(and(eq(cards.retroId, retroId), eq(cards.isDiscussed, false)))
-
-    let carryOverRetroId: string | null = null
+      .where(and(eq(cards.retroId, id), eq(cards.isDiscussed, false)));
 
     if (undiscussedCards.length > 0) {
-      const [newRetro] = await db
-        .insert(retros)
-        .values({
-          teamId: retro.teamId,
-          title: `Follow-up: ${retro.title}`,
-          status: 'draft',
-          template: retro.template,
-          createdBy: session.user.id,
-        })
-        .returning({ id: retros.id })
+      // Get categories of next retro to map old→new
+      const oldCategories = await db
+        .select()
+        .from(categories)
+        .where(eq(categories.retroId, id));
+      const newCategories = await db
+        .select()
+        .from(categories)
+        .where(eq(categories.retroId, nextRetroId));
 
-      if (!newRetro) {
-        return Response.json({
-          retro: completedRetro,
-          carry_over: { error: 'Failed to create follow-up retro' },
-        })
+      const categoryMap = new Map<string, string>();
+      for (const oldCat of oldCategories) {
+        const newCat = newCategories.find((nc) => nc.name === oldCat.name);
+        if (newCat) {
+          categoryMap.set(oldCat.id, newCat.id);
+        }
       }
 
-      carryOverRetroId = newRetro.id
-
-      const originalCategories = await db
-        .select({
-          id: categories.id,
-          name: categories.name,
-          icon: categories.icon,
-          sortOrder: categories.sortOrder,
-          color: categories.color,
-        })
-        .from(categories)
-        .where(eq(categories.retroId, retroId))
-        .orderBy(asc(categories.sortOrder))
-
-      if (originalCategories.length > 0) {
-        const insertedCategories = await db
-          .insert(categories)
-          .values(
-            originalCategories.map((cat) => ({
-              retroId: newRetro.id,
-              name: cat.name,
-              icon: cat.icon,
-              sortOrder: cat.sortOrder,
-              color: cat.color,
-            }))
-          )
-          .returning({ id: categories.id, name: categories.name })
-
-        // Map old category name -> new category id
-        const categoryMap = new Map<string, string>()
-        for (const cat of insertedCategories) {
-          categoryMap.set(cat.name, cat.id)
-        }
-
-        // Map old category id -> name
-        const oldCatIdToName = new Map<string, string>()
-        for (const c of originalCategories) {
-          oldCatIdToName.set(c.id, c.name)
-        }
-
-        const newCards = undiscussedCards
-          .map((card, index) => {
-            const catName = oldCatIdToName.get(card.categoryId)
-            const newCatId = catName ? categoryMap.get(catName) : undefined
-            if (!newCatId) return null
-            return {
-              retroId: newRetro.id,
-              categoryId: newCatId,
-              authorId: card.authorId,
-              text: card.text,
-              sortOrder: index,
-              carriedFromRetroId: retroId,
-            }
-          })
-          .filter((c): c is NonNullable<typeof c> => c !== null)
-
-        if (newCards.length > 0) {
-          await db.insert(cards).values(newCards)
+      for (const card of undiscussedCards) {
+        const newCategoryId = categoryMap.get(card.categoryId);
+        if (newCategoryId) {
+          await db.insert(cards).values({
+            retroId: nextRetroId,
+            categoryId: newCategoryId,
+            authorId: card.authorId,
+            text: card.text,
+            groupLabel: null,
+            isDiscussed: false,
+            isSkipped: false,
+            carriedFromRetroId: id,
+          });
         }
       }
     }
-
-    return Response.json({
-      retro: completedRetro,
-      carry_over: carryOverRetroId
-        ? {
-            retro_id: carryOverRetroId,
-            cards_carried: undiscussedCards.length,
-          }
-        : null,
-    })
-  } catch {
-    return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
+
+  emit(id, { type: "phase_changed", phase: "completed" });
+
+  return NextResponse.json({ success: true, totalDurationSec });
 }

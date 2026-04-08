@@ -1,10 +1,7 @@
 node_modules
 .next
 .git
-.env
-.env.local
-.env.*.local
-*.md
-!README.md
 data
-tsconfig.tsbuildinfo
+coverage
+.env*
+!.env.example

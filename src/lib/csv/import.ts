@@ -1,7 +1,27 @@
 interface ImportedCard {
   category: string;
   text: string;
-  tags: string[];
+}
+
+export function importCardsFromCsv(csv: string): ImportedCard[] {
+  const lines = csv.split("\n").filter((l) => l.trim());
+  if (lines.length < 2) return [];
+
+  // Skip header row
+  const dataLines = lines.slice(1);
+  const results: ImportedCard[] = [];
+
+  for (const line of dataLines) {
+    const fields = parseCsvLine(line);
+    if (fields.length >= 2) {
+      results.push({
+        category: fields[0].trim(),
+        text: fields[1].trim(),
+      });
+    }
+  }
+
+  return results;
 }
 
 function parseCsvLine(line: string): string[] {
@@ -11,6 +31,7 @@ function parseCsvLine(line: string): string[] {
 
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
+
     if (inQuotes) {
       if (char === '"' && line[i + 1] === '"') {
         current += '"';
@@ -24,41 +45,14 @@ function parseCsvLine(line: string): string[] {
       if (char === '"') {
         inQuotes = true;
       } else if (char === ",") {
-        fields.push(current.trim());
+        fields.push(current);
         current = "";
       } else {
         current += char;
       }
     }
   }
-  fields.push(current.trim());
+
+  fields.push(current);
   return fields;
-}
-
-export function parseCsvImport(csv: string): ImportedCard[] {
-  const lines = csv.split(/\r?\n/).filter((l) => l.trim());
-  if (lines.length < 2) return [];
-
-  // Skip header row
-  const header = parseCsvLine(lines[0]).map((h) => h.toLowerCase());
-  const catIdx = header.indexOf("category");
-  const textIdx = header.indexOf("text");
-  const tagsIdx = header.indexOf("tags");
-
-  if (catIdx === -1 || textIdx === -1) return [];
-
-  return lines.slice(1).map((line) => {
-    const fields = parseCsvLine(line);
-    return {
-      category: fields[catIdx] ?? "",
-      text: fields[textIdx] ?? "",
-      tags:
-        tagsIdx !== -1
-          ? (fields[tagsIdx] ?? "")
-              .split(",")
-              .map((t) => t.trim())
-              .filter(Boolean)
-          : [],
-    };
-  });
 }

@@ -1,59 +1,50 @@
-import { describe, it, expect } from 'vitest'
-import { replaceEmojiShortcodes, getEmojiSuggestions } from '../emoji'
+import { describe, it, expect } from "vitest";
+import { replaceEmojiShortcodes, searchEmoji } from "@/lib/emoji";
 
-describe('replaceEmojiShortcodes', () => {
-  it('replaces known shortcodes', () => {
-    expect(replaceEmojiShortcodes(':fire:')).toBe('\u{1F525}')
-    expect(replaceEmojiShortcodes(':rocket:')).toBe('\u{1F680}')
-  })
+describe("replaceEmojiShortcodes", () => {
+  it("replaces known shortcodes", () => {
+    expect(replaceEmojiShortcodes(":smile:")).toBe("😊");
+    expect(replaceEmojiShortcodes(":fire:")).toBe("🔥");
+    expect(replaceEmojiShortcodes(":rocket:")).toBe("🚀");
+  });
 
-  it('replaces multiple shortcodes in text', () => {
-    const result = replaceEmojiShortcodes('Great :fire: work :star:!')
-    expect(result).toBe('Great \u{1F525} work \u{2B50}!')
-  })
+  it("replaces multiple shortcodes in text", () => {
+    expect(replaceEmojiShortcodes("Hello :smile: world :fire:")).toBe(
+      "Hello 😊 world 🔥"
+    );
+  });
 
-  it('leaves unknown shortcodes unchanged', () => {
-    expect(replaceEmojiShortcodes(':unknown_code:')).toBe(':unknown_code:')
-  })
+  it("leaves unknown shortcodes unchanged", () => {
+    expect(replaceEmojiShortcodes(":unknown:")).toBe(":unknown:");
+  });
 
-  it('leaves text without shortcodes unchanged', () => {
-    expect(replaceEmojiShortcodes('no emoji here')).toBe('no emoji here')
-  })
+  it("handles text without shortcodes", () => {
+    expect(replaceEmojiShortcodes("Hello world")).toBe("Hello world");
+  });
 
-  it('handles empty string', () => {
-    expect(replaceEmojiShortcodes('')).toBe('')
-  })
+  it("handles empty string", () => {
+    expect(replaceEmojiShortcodes("")).toBe("");
+  });
 
-  it('handles adjacent shortcodes', () => {
-    const result = replaceEmojiShortcodes(':heart::star:')
-    expect(result).toBe('\u{2764}\u{FE0F}\u{2B50}')
-  })
-})
+  it("handles shortcodes at boundaries", () => {
+    expect(replaceEmojiShortcodes(":heart:text:star:")).toBe("❤️text⭐");
+  });
+});
 
-describe('getEmojiSuggestions', () => {
-  it('returns matching suggestions', () => {
-    const results = getEmojiSuggestions('fire')
-    expect(results).toEqual([{ code: 'fire', emoji: '\u{1F525}' }])
-  })
+describe("searchEmoji", () => {
+  it("returns matching emoji", () => {
+    const results = searchEmoji("smi");
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].code).toBe("smile");
+    expect(results[0].emoji).toBe("😊");
+  });
 
-  it('returns partial matches', () => {
-    const results = getEmojiSuggestions('thu')
-    const codes = results.map((r) => r.code)
-    expect(codes).toContain('thumbsup')
-    expect(codes).toContain('thumbsdown')
-  })
+  it("returns empty for no match", () => {
+    expect(searchEmoji("zzzzz")).toEqual([]);
+  });
 
-  it('limits results to 8', () => {
-    const results = getEmojiSuggestions('')
-    expect(results.length).toBeLessThanOrEqual(8)
-  })
-
-  it('returns empty for no matches', () => {
-    expect(getEmojiSuggestions('zzzzzzz')).toEqual([])
-  })
-
-  it('is case insensitive', () => {
-    const results = getEmojiSuggestions('FIRE')
-    expect(results).toEqual([{ code: 'fire', emoji: '\u{1F525}' }])
-  })
-})
+  it("limits results to 10", () => {
+    const results = searchEmoji("a");
+    expect(results.length).toBeLessThanOrEqual(10);
+  });
+});

@@ -1,15 +1,12 @@
 version: "3.8"
 
-# Minimal stack: plain PostgreSQL + app. No Supabase services.
-# Usage: docker compose -f docker-compose.clean.yml up
-
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
     volumes:
-      - ./data/postgres-clean:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: rekapka
       POSTGRES_USER: rekapka
@@ -21,6 +18,41 @@ services:
       retries: 10
     restart: unless-stopped
 
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - ./data/minio:/data
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
+      mc mb local/$${S3_BUCKET} --ignore-existing;
+      mc anonymous set download local/$${S3_BUCKET}/photos;
+      exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-rekapka}
+
   app:
     build:
       context: .
@@ -30,15 +62,20 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       DATABASE_URL: postgres://rekapka:${DB_PASSWORD:-rekapka_dev}@db:5432/rekapka
       AUTH_SECRET: ${AUTH_SECRET}
-      AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID:-${GOOGLE_CLIENT_ID:-${GOOGLE_ID:-${AUTH_SECRET}}}}
-      AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET:-${GOOGLE_SECRET:-${GOOGLE_CLIENT_SECRET:-${OPENAI_API_KEY}}}}
+      AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID}
+      AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET}
       AUTH_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-    volumes:
-      - ./data/uploads:/app/public/uploads
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-rekapka}
+      S3_REGION: ${S3_REGION:-us-east-1}
     restart: unless-stopped

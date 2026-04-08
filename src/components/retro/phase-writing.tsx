@@ -1,117 +1,189 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { CardItem } from "./card-item";
+import { useTranslations } from "next-intl";
+import type { SerializedRetro, SerializedCategory, SerializedCard } from "@/types/serialized";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CardInput } from "./card-input";
-import { Plus } from "lucide-react";
+import { CardItem } from "./card-item";
+import { AiGroupButton } from "./ai-group-button";
+import { AiReadButton } from "./ai-read-button";
+import { useSwipe } from "@/hooks/use-swipe";
 
 interface PhaseWritingProps {
-  categories: {
-    id: string;
-    name: string;
-    icon: string | null;
-    color: string | null;
-    sort_order: number;
-  }[];
-  cards: {
-    id: string;
-    category_id: string;
-    author_id: string;
-    text: string;
-    group_label: string | null;
-    is_discussed: boolean;
-    created_at: string;
-  }[];
+  retro: SerializedRetro;
+  categories: SerializedCategory[];
+  cards: SerializedCard[];
   currentUserId: string;
-  status: string;
-  onAddCard: (categoryId: string, text: string) => Promise<void>;
-  onDeleteCard: (cardId: string) => Promise<void>;
-  onEditCard: (cardId: string, text: string) => Promise<void>;
+  currentUser: { id: string; name: string; color: string; image: string | null };
+  onCardsChange: (cards: SerializedCard[]) => void;
+}
+
+function CategoryColumn({
+  category,
+  cards,
+  retroId,
+  currentUserId,
+  currentUser,
+  onCardAdded,
+  onCardDeleted,
+  onCardUpdated,
+}: {
+  category: SerializedCategory;
+  cards: SerializedCard[];
+  retroId: string;
+  currentUserId: string;
+  currentUser: { id: string; name: string; color: string; image: string | null };
+  onCardAdded: (card: SerializedCard) => void;
+  onCardDeleted: (cardId: string) => void;
+  onCardUpdated: (cardId: string, changes: Partial<SerializedCard>) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        {category.icon && <span>{category.icon}</span>}
+        <h3 className="font-medium">{category.name}</h3>
+        <span className="text-xs text-muted-foreground tabular-nums">
+          ({cards.length})
+        </span>
+      </div>
+
+      <CardInput
+        retroId={retroId}
+        categoryId={category.id}
+        currentUser={currentUser}
+        onCardAdded={onCardAdded}
+      />
+
+      <div className="space-y-2">
+        {cards.map((card) => (
+          <CardItem
+            key={card.id}
+            card={card}
+            isOwn={card.authorId === currentUserId}
+            showContent={card.authorId === currentUserId}
+            editable={card.authorId === currentUserId}
+            onDelete={onCardDeleted}
+            onUpdate={onCardUpdated}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function PhaseWriting({
+  retro,
   categories,
   cards,
   currentUserId,
-  status,
-  onAddCard,
-  onDeleteCard,
-  onEditCard,
+  currentUser,
+  onCardsChange,
 }: PhaseWritingProps) {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const t = useTranslations("card");
+  const [activeTab, setActiveTab] = useState(categories[0]?.id ?? "");
+
+  const currentTabIndex = categories.findIndex((c) => c.id === activeTab);
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: () => {
+      if (currentTabIndex < categories.length - 1) {
+        setActiveTab(categories[currentTabIndex + 1].id);
+      }
+    },
+    onSwipeRight: () => {
+      if (currentTabIndex > 0) {
+        setActiveTab(categories[currentTabIndex - 1].id);
+      }
+    },
+  });
+
+  const cardsByCategory = (categoryId: string) =>
+    cards.filter((c) => c.categoryId === categoryId);
+
+  const myCardCount = cards.filter((c) => c.authorId === currentUserId).length;
+  const othersCount = cards.filter((c) => c.authorId !== currentUserId).length;
+
+  const handleCardAdded = (card: SerializedCard) => {
+    onCardsChange([...cards, card]);
+  };
+
+  const handleCardDeleted = (cardId: string) => {
+    onCardsChange(cards.filter((c) => c.id !== cardId));
+  };
+
+  const handleCardUpdated = (cardId: string, changes: Partial<SerializedCard>) => {
+    onCardsChange(cards.map((c) => (c.id === cardId ? { ...c, ...changes } : c)));
+  };
 
   return (
-    <div className="space-y-1">
-      {status === "draft" && (
-        <p className="text-xs text-muted-foreground pb-2">
-          Waiting for the facilitator to start the writing phase.
-        </p>
-      )}
-      {categories.map((category) => {
-        const categoryCards = cards.filter(
-          (c) => c.category_id === category.id
-        );
-        const myCards = categoryCards.filter(
-          (c) => c.author_id === currentUserId
-        );
-        const othersCardCount = categoryCards.length - myCards.length;
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <span>{t("yourCards", { count: myCardCount })}</span>
+          {othersCount > 0 && (
+            <span>{t("othersCards", { count: othersCount })}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <AiGroupButton retroId={retro.id} cards={cards} onCardsChange={onCardsChange} />
+          <AiReadButton retroId={retro.id} cardCount={cards.length} />
+        </div>
+      </div>
 
-        return (
-          <div key={category.id} className="space-y-2 py-3 border-b border-border last:border-0">
-            <div className="flex items-center justify-between">
-              <h3
-                className="text-sm font-semibold flex items-center gap-1.5"
-                style={{ color: category.color ?? undefined }}
-              >
-                {category.icon && <span className="text-base leading-none">{category.icon}</span>}
-                {category.name}
-              </h3>
-              {(myCards.length > 0 || othersCardCount > 0) && (
-                <span className="text-xs text-muted-foreground">
-                  {myCards.length} yours
-                  {othersCardCount > 0 && ` · ${othersCardCount} others`}
-                </span>
-              )}
-            </div>
+      {/* Desktop: 3-column layout */}
+      <div className="hidden md:grid md:grid-cols-3 md:gap-6">
+        {categories.map((cat) => (
+          <CategoryColumn
+            key={cat.id}
+            category={cat}
+            cards={cardsByCategory(cat.id)}
+            retroId={retro.id}
+            currentUserId={currentUserId}
+            currentUser={currentUser}
+            onCardAdded={handleCardAdded}
+            onCardDeleted={handleCardDeleted}
+            onCardUpdated={handleCardUpdated}
+          />
+        ))}
+      </div>
 
-            <div className="space-y-2">
-              {myCards.map((card) => (
-                <div key={card.id} className="animate-in fade-in-0 slide-in-from-top-1 duration-200">
+      {/* Mobile: tabs with swipe */}
+      <div className="md:hidden" style={{ touchAction: "manipulation" }}>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as string)} {...swipeHandlers}>
+          <TabsList className="w-full">
+            {categories.map((cat) => (
+              <TabsTrigger key={cat.id} value={cat.id} className="flex-1">
+                {cat.name} (<span className="tabular-nums">{cardsByCategory(cat.id).length}</span>)
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {categories.map((cat) => (
+            <TabsContent key={cat.id} value={cat.id} className="space-y-3 mt-4">
+              <CardInput
+                retroId={retro.id}
+                categoryId={cat.id}
+                currentUser={currentUser}
+                onCardAdded={handleCardAdded}
+              />
+
+              <div className="space-y-2">
+                {cardsByCategory(cat.id).map((card) => (
                   <CardItem
+                    key={card.id}
                     card={card}
-                    isOwn
-                    showContent
-                    onDelete={() => onDeleteCard(card.id)}
-                    onEdit={(text) => onEditCard(card.id, text)}
-                    categoryColor={category.color ?? undefined}
+                    isOwn={card.authorId === currentUserId}
+                    showContent={card.authorId === currentUserId}
+                    editable={card.authorId === currentUserId}
+                    onDelete={handleCardDeleted}
+                    onUpdate={handleCardUpdated}
                   />
-                </div>
-              ))}
-            </div>
-
-            {status === "writing" && (
-              activeCategory === category.id ? (
-                <CardInput
-                  placeholder={`Add a ${category.name.toLowerCase()} card…`}
-                  onSubmit={(text) => onAddCard(category.id, text)}
-                  onCancel={() => setActiveCategory(null)}
-                />
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full border-dashed"
-                  onClick={() => setActiveCategory(category.id)}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Add card
-                </Button>
-              )
-            )}
-          </div>
-        );
-      })}
+                ))}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
     </div>
   );
 }

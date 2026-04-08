@@ -1,62 +1,40 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useRealtimePresence } from "@/hooks/use-realtime-presence";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-interface ParticipantBarProps {
-  retroId: string;
-  currentUserId: string;
-  currentUserName?: string;
+interface Participant {
+  id: string;
+  name: string;
+  color: string;
+  image: string | null;
+  online?: boolean;
 }
 
-export function ParticipantBar({
-  retroId,
-  currentUserId,
-  currentUserName = "You",
-}: ParticipantBarProps) {
-  const onlineUsers = useRealtimePresence(retroId, {
-    id: currentUserId,
-    name: currentUserName,
-  });
+interface ParticipantBarProps {
+  participants: Participant[];
+}
+
+export function ParticipantBar({ participants }: ParticipantBarProps) {
+  if (participants.length === 0) return null;
 
   return (
-    <TooltipProvider>
-      <div className="flex items-center gap-1 overflow-x-auto py-1">
-        {onlineUsers.map((user) => {
-          const isMe = user.userId === currentUserId;
-          return (
-            <Tooltip key={user.userId}>
-              <TooltipTrigger>
-                <div className="relative">
-                  <Avatar className="h-7 w-7">
-                    <AvatarFallback className="text-[10px]">
-                      {user.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="absolute -bottom-0.5 -right-0.5 bg-green-500 rounded-full h-2 w-2 border border-background" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">
-                  {user.name}
-                  {isMe ? " (you)" : ""}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
-        {onlineUsers.length > 0 && (
-          <span className="text-xs text-muted-foreground ml-1">
-            {onlineUsers.length} online
-          </span>
-        )}
-      </div>
-    </TooltipProvider>
+    <div className="flex items-center gap-1">
+      {participants.map((p) => (
+        <div key={p.id} className="relative" title={`${p.name}${p.online ? " (online)" : ""}`}>
+          <Avatar className="h-7 w-7 border-2" style={{ borderColor: p.color }}>
+            {p.image && <AvatarImage src={p.image} alt={p.name} />}
+            <AvatarFallback
+              className="text-[10px] text-white"
+              style={{ backgroundColor: p.color }}
+            >
+              {p.name?.charAt(0)?.toUpperCase() ?? "?"}
+            </AvatarFallback>
+          </Avatar>
+          {p.online && (
+            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-background" />
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

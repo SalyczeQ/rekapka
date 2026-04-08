@@ -1,11 +1,35 @@
 interface ExportCard {
-  category: string;
   text: string;
-  author: string;
-  votes: number;
-  tags: string;
-  discussed: boolean;
-  group_label: string;
+  categoryName: string;
+  authorName: string;
+  groupLabel: string | null;
+  isDiscussed: boolean;
+  discussionDurationSec: number | null;
+  tags: string[];
+}
+
+export function exportCardsToCsv(cards: ExportCard[]): string {
+  const headers = [
+    "Category",
+    "Text",
+    "Author",
+    "Group",
+    "Discussed",
+    "Discussion Time (sec)",
+    "Tags",
+  ];
+
+  const rows = cards.map((card) => [
+    escapeCsv(card.categoryName),
+    escapeCsv(card.text),
+    escapeCsv(card.authorName),
+    escapeCsv(card.groupLabel ?? ""),
+    card.isDiscussed ? "Yes" : "No",
+    card.discussionDurationSec?.toString() ?? "",
+    escapeCsv(card.tags.join(", ")),
+  ]);
+
+  return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
 }
 
 function escapeCsv(value: string): string {
@@ -13,29 +37,4 @@ function escapeCsv(value: string): string {
     return `"${value.replace(/"/g, '""')}"`;
   }
   return value;
-}
-
-export function generateCsv(cards: ExportCard[]): string {
-  const headers = [
-    "Category",
-    "Text",
-    "Author",
-    "Votes",
-    "Tags",
-    "Discussed",
-    "Group",
-  ];
-  const rows = cards.map((card) =>
-    [
-      escapeCsv(card.category),
-      escapeCsv(card.text),
-      escapeCsv(card.author),
-      String(card.votes),
-      escapeCsv(card.tags),
-      card.discussed ? "Yes" : "No",
-      escapeCsv(card.group_label),
-    ].join(",")
-  );
-
-  return [headers.join(","), ...rows].join("\n");
 }

@@ -1,36 +1,25 @@
-const CACHE_NAME = "rekapka-v1";
-const STATIC_ASSETS = ["/", "/app", "/manifest.json"];
+const CACHE_NAME = 'rekapka-v1';
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
+self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
-  );
-  self.clients.claim();
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
 });
 
-self.addEventListener("fetch", (event) => {
-  // Network-first strategy for API calls
-  if (event.request.url.includes("/api/")) {
+self.addEventListener('fetch', (event) => {
+  // Don't intercept navigation requests — breaks Next.js streaming/Suspense
+  if (event.request.mode === 'navigate') {
     return;
   }
 
-  // Cache-first for static assets
+  // Don't intercept API calls
+  if (event.request.url.includes('/api/')) {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request);
-    })
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });

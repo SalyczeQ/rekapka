@@ -1,59 +1,56 @@
-/**
- * Auto-group cards by theme using OpenAI API.
- * Falls back gracefully if API is unavailable.
- */
+import OpenAI from "openai";
+
+function getOpenAI() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
+
+interface CardForGrouping {
+  id: string;
+  text: string;
+}
+
+interface GroupResult {
+  cardId: string;
+  groupLabel: string;
+}
+
 export async function groupCardsByTheme(
-  cardTexts: string[]
-): Promise<string[]> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey || cardTexts.length === 0) {
-    return cardTexts.map(() => "");
-  }
+  cards: CardForGrouping[]
+): Promise<GroupResult[]> {
+  if (cards.length === 0) return [];
 
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a retrospective facilitator. Group the following cards by theme. Return a JSON array of theme labels, one per card (same order as input). Use short labels (1-3 words). Cards with similar topics should share the same label. If a card doesn't fit any group, use an empty string.",
-          },
-          {
-            role: "user",
-            content: JSON.stringify(cardTexts),
-          },
-        ],
-        temperature: 0.3,
-        max_tokens: 1000,
-      }),
+    const cardList = cards
+      .map((c, i) => `${i + 1}. [${c.id}] ${c.text}`)
+      .join("\n");
+
+    const response = await getOpenAI().chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.3,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a retrospective facilitator. Group these cards by similar themes. Return a JSON array of objects with cardId and groupLabel fields. Keep group labels short (2-4 words). If a card is unique, give it a descriptive label. Respond ONLY with valid JSON.",
+        },
+        {
+          role: "user",
+          content: `Group these retrospective cards by theme:\n\n${cardList}`,
+        },
+      ],
     });
 
-    if (!response.ok) {
-      console.error("OpenAI API error:", response.status);
-      return cardTexts.map(() => "");
-    }
+    const content = response.choices[0]?.message?.content?.trim();
+    if (!content) return cards.map((c) => ({ cardId: c.id, groupLabel: "" }));
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content ?? "[]";
+    // Parse JSON from response (handle markdown code blocks)
+    const jsonStr = content.replace(/```json?\s*/g, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(jsonStr) as GroupResult[];
 
-    // Extract JSON array from response (handle markdown code blocks)
-    const jsonMatch = content.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return cardTexts.map(() => "");
-
-    const labels: string[] = JSON.parse(jsonMatch[0]);
-
-    // Ensure same length as input
-    while (labels.length < cardTexts.length) labels.push("");
-    return labels.slice(0, cardTexts.length);
+    return parsed;
   } catch (error) {
-    console.error("Failed to group cards:", error);
-    return cardTexts.map(() => "");
+    console.error("AI grouping failed:", error);
+    // Fallback: no grouping
+    return cards.map((c) => ({ cardId: c.id, groupLabel: "" }));
   }
 }

@@ -1,100 +1,100 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
+import { createCard } from "@/lib/actions/retro-session";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Send } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { EmojiPicker } from "./emoji-picker";
-import { replaceEmojiShortcodes } from "@/lib/emoji";
-import { Send, Loader2 } from "lucide-react";
+
+import type { SerializedCard } from "@/types/serialized";
 
 interface CardInputProps {
-  placeholder?: string;
-  onSubmit: (text: string) => Promise<void>;
-  onCancel: () => void;
+  retroId: string;
+  categoryId: string;
+  currentUser: { id: string; name: string; color: string; image: string | null };
+  onCardAdded?: (card: SerializedCard) => void;
 }
 
-export function CardInput({ placeholder, onSubmit, onCancel }: CardInputProps) {
+export function CardInput({ retroId, categoryId, currentUser, onCardAdded }: CardInputProps) {
+  const t = useTranslations("card");
+  const tErr = useTranslations("error");
   const [text, setText] = useState("");
-  const [cursorPos, setCursorPos] = useState(0);
-  const [submitting, setSubmitting] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit() {
-    const processed = replaceEmojiShortcodes(text.trim());
-    if (!processed) return;
-    setSubmitting(true);
-    await onSubmit(processed);
-    setText("");
-    setSubmitting(false);
-    textareaRef.current?.focus();
-  }
+    if (!text.trim() || isSubmitting) return;
 
-  function handleEmojiSelect(emoji: string, start: number, end: number) {
-    const before = text.slice(0, start);
-    const after = text.slice(end);
-    const newText = before + emoji + after;
-    setText(newText);
-    const newPos = start + emoji.length;
-    setCursorPos(newPos);
-    setTimeout(() => {
-      textareaRef.current?.setSelectionRange(newPos, newPos);
-      textareaRef.current?.focus();
-    }, 0);
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.set("retroId", retroId);
+      formData.set("categoryId", categoryId);
+      formData.set("text", text);
+
+      const card = await createCard(formData);
+      if (card) {
+        setText("");
+        onCardAdded?.({
+          id: card.id,
+          retroId: card.retroId,
+          categoryId: card.categoryId,
+          authorId: card.authorId,
+          text: card.text,
+          sortOrder: card.sortOrder,
+          groupLabel: card.groupLabel,
+          isDiscussed: card.isDiscussed,
+          isSkipped: card.isSkipped,
+          discussionNotes: card.discussionNotes,
+          discussionStartedAt: card.discussionStartedAt ? String(card.discussionStartedAt) : null,
+          discussionEndedAt: card.discussionEndedAt ? String(card.discussionEndedAt) : null,
+          discussionDurationSec: card.discussionDurationSec,
+          carriedFromRetroId: card.carriedFromRetroId,
+          createdAt: String(card.createdAt),
+          updatedAt: String(card.updatedAt),
+          authorName: currentUser.name,
+          authorColor: currentUser.color,
+          authorImage: currentUser.image,
+        });
+      }
+    } catch {
+      toast.error(tErr("failedAddCard"));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
-    <div className="relative">
-      <EmojiPicker
-        text={text}
-        cursorPosition={cursorPos}
-        onSelect={handleEmojiSelect}
-      />
-      <div className="flex gap-2">
+    <div className="flex gap-2">
+      <div className="flex-1 relative">
         <Textarea
-          ref={textareaRef}
+          placeholder={t("addCard")}
+          aria-label={t("addCard")}
           value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            setCursorPos(e.target.selectionStart ?? 0);
-          }}
-          onSelect={(e) =>
-            setCursorPos((e.target as HTMLTextAreaElement).selectionStart ?? 0)
-          }
-          placeholder={placeholder}
-          className="min-h-[60px] text-sm"
+          onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               handleSubmit();
             }
           }}
-          autoFocus
+          className="min-h-[60px] resize-none pr-10"
         />
-        <div className="flex flex-col gap-1">
-          <Button
-            size="icon"
-            onClick={handleSubmit}
-            disabled={!text.trim() || submitting}
-            className="h-8 w-8"
-          >
-            {submitting
-              ? <Loader2 className="h-3 w-3 animate-spin" />
-              : <Send className="h-3 w-3" />
-            }
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={onCancel}
-            className="h-8 w-8 text-xs"
-          >
-            ✕
-          </Button>
+        <div className="absolute right-1 bottom-1">
+          <EmojiPicker onSelect={(emoji) => setText((t) => t + emoji)} />
         </div>
       </div>
-      <p className="text-[10px] text-muted-foreground mt-0.5">
-        Type :emoji: for shortcodes. Shift+Enter for new line.
-      </p>
+      <Button
+        size="icon"
+        onClick={handleSubmit}
+        disabled={!text.trim() || isSubmitting}
+        className="self-end"
+        aria-label="Send card"
+      >
+        <Send className="h-4 w-4" aria-hidden="true" />
+      </Button>
     </div>
   );
 }

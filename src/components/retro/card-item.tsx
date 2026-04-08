@@ -1,71 +1,51 @@
 "use client";
 
-import { useState, useRef, useEffect, useTransition } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Trash2, Check, ArrowRight, Pencil, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { colorFromUserId } from "@/lib/colors";
+import { deleteCard, updateCard } from "@/lib/actions/retro-session";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Trash2, Eye, EyeOff, Pencil, Check, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { ReadAloudButton } from "./read-aloud-button";
 
 interface CardItemProps {
   card: {
     id: string;
     text: string;
-    author_id: string;
-    group_label: string | null;
-    is_discussed: boolean;
-    discussion_notes?: string | null;
-    carried_from_retro_id?: string | null;
+    authorId: string;
+    authorName: string;
+    authorColor: string;
+    groupLabel: string | null;
+    isDiscussed: boolean;
+    isSkipped?: boolean;
   };
-  isOwn?: boolean;
-  showContent?: boolean;
-  categoryColor?: string;
-  voteCount?: number;
-  hasVoted?: boolean;
-  showVoting?: boolean;
-  showDiscussed?: boolean;
-  showNotes?: boolean;
-  isGroupingPhase?: boolean;
-  tags?: string[];
-  onDelete?: () => void;
-  onEdit?: (text: string) => Promise<void>;
-  onVote?: () => void;
-  onToggleDiscussed?: () => void;
-  onEditNotes?: (notes: string) => Promise<void>;
-  onEditGroupLabel?: (label: string) => Promise<void>;
+  isOwn: boolean;
+  showContent: boolean;
+  blurred?: boolean;
+  editable?: boolean;
+  onDelete?: (cardId: string) => void;
+  onUpdate?: (cardId: string, changes: { text: string }) => void;
+  onReveal?: () => void;
 }
 
 export function CardItem({
   card,
   isOwn,
-  showContent = true,
-  categoryColor,
-  voteCount = 0,
-  hasVoted,
-  showVoting,
-  showDiscussed,
-  showNotes,
-  isGroupingPhase,
-  tags,
+  showContent,
+  blurred = false,
+  editable = false,
   onDelete,
-  onEdit,
-  onVote,
-  onToggleDiscussed,
-  onEditNotes,
-  onEditGroupLabel,
+  onUpdate,
+  onReveal,
 }: CardItemProps) {
-  const authorColor = colorFromUserId(card.author_id);
+  const t = useTranslations();
+  const [revealed, setRevealed] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(card.text);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [votePending, startVoteTransition] = useTransition();
-  const [discussedPending, startDiscussedTransition] = useTransition();
-  const [notesExpanded, setNotesExpanded] = useState(false);
-  const [notesText, setNotesText] = useState(card.discussion_notes ?? "");
-  const [editingGroupLabel, setEditingGroupLabel] = useState(false);
-  const [groupLabelText, setGroupLabelText] = useState(card.group_label ?? "");
-  const notesTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const isBlurred = blurred && !revealed;
 
   useEffect(() => {
     if (editing && textareaRef.current) {
@@ -74,200 +54,183 @@ export function CardItem({
     }
   }, [editing]);
 
-  const handleEditSave = async () => {
+  const [deleting, setDeleting] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      await deleteCard(card.id);
+      onDelete?.(card.id);
+    } catch {
+      toast.error(t("error.failedDeleteCard"));
+      setDeleting(false);
+    }
+  }
+
+  async function handleSaveEdit() {
     const trimmed = editText.trim();
     if (!trimmed || trimmed === card.text) {
-      setEditText(card.text);
       setEditing(false);
+      setEditText(card.text);
       return;
     }
-    await onEdit?.(trimmed);
-    setEditing(false);
-  };
+    setSaving(true);
+    try {
+      const formData = new FormData();
+      formData.set("text", trimmed);
+      await updateCard(card.id, formData);
+      onUpdate?.(card.id, { text: trimmed });
+      setEditing(false);
+    } catch {
+      toast.error(t("error.failedSaveCard"));
+    } finally {
+      setSaving(false);
+    }
+  }
 
-  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  function handleCancelEdit() {
+    setEditing(false);
+    setEditText(card.text);
+  }
+
+  function handleEditKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleEditSave();
-    } else if (e.key === "Escape") {
-      setEditText(card.text);
-      setEditing(false);
+      handleSaveEdit();
     }
-  };
-
-  const handleNotesChange = (value: string) => {
-    setNotesText(value);
-    if (notesTimeoutRef.current) clearTimeout(notesTimeoutRef.current);
-    notesTimeoutRef.current = setTimeout(() => {
-      onEditNotes?.(value);
-    }, 800);
-  };
-
-  const handleGroupLabelSave = () => {
-    setEditingGroupLabel(false);
-    onEditGroupLabel?.(groupLabelText.trim());
-  };
+    if (e.key === "Escape") {
+      handleCancelEdit();
+    }
+  }
 
   return (
     <Card
       className={cn(
-        "relative overflow-hidden transition-all duration-150 hover:shadow-md",
-        card.is_discussed && "opacity-60",
-        card.carried_from_retro_id && "ring-1 ring-amber-400/40"
+        "relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200",
+        card.isDiscussed && "opacity-60",
+        card.isSkipped && "opacity-50 border-dashed"
       )}
     >
-      {/* Author color left border */}
       <div
         className="absolute left-0 top-0 bottom-0 w-1"
-        style={{ backgroundColor: showContent ? authorColor : categoryColor }}
+        style={{ backgroundColor: card.authorColor }}
       />
-      <CardContent className="py-2 px-3 pl-4">
+      <CardContent className="pl-4 py-3">
         <div className="flex items-start justify-between gap-2">
-          <div
-            className={cn("flex-1 min-w-0", showNotes && onEditNotes && "cursor-pointer")}
-            onClick={() => {
-              if (showNotes && onEditNotes && !editing) {
-                setNotesExpanded((prev) => !prev);
-              }
-            }}
-          >
-            {showContent && editing ? (
-              <textarea
-                ref={textareaRef}
-                className="w-full text-sm bg-transparent resize-none outline-none border-b border-primary"
-                value={editText}
-                rows={2}
-                onChange={(e) => setEditText(e.target.value)}
-                onKeyDown={handleEditKeyDown}
-                onBlur={handleEditSave}
-              />
-            ) : showContent ? (
-              <p
-                className={cn("text-sm whitespace-pre-wrap break-words", onEdit && "cursor-text")}
-                onClick={(e) => {
-                  if (onEdit) {
-                    e.stopPropagation();
-                    setEditing(true);
-                  }
-                }}
-              >
-                {card.text}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">
-                Hidden card
-              </p>
+          <div className="flex-1 min-w-0">
+            {card.groupLabel && (
+              <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded mb-1 inline-block">
+                {card.groupLabel}
+              </span>
+            )}
+            {card.isSkipped && (
+              <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded mb-1 inline-block ml-1">
+                {t("card.skipped")}
+              </span>
             )}
 
-            <div className="flex flex-wrap items-center gap-1 mt-1">
-              {card.group_label && !editingGroupLabel && (
-                <Badge
-                  variant="secondary"
+            {editing ? (
+              <div className="space-y-2">
+                <textarea
+                  ref={textareaRef}
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  onKeyDown={handleEditKeyDown}
+                  className="w-full text-sm bg-transparent border border-input rounded-md px-2 py-1.5 resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                  rows={3}
+                />
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={handleSaveEdit}
+                    aria-label="Save edit"
+                  >
+                    <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={handleCancelEdit}
+                    aria-label="Cancel edit"
+                  >
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p
                   className={cn(
-                    "text-[10px] h-4 px-1",
-                    isGroupingPhase && onEditGroupLabel && "cursor-pointer hover:bg-secondary/80"
+                    "text-sm whitespace-pre-wrap leading-relaxed transition-[filter] duration-300",
+                    isBlurred && "blur-md select-none cursor-pointer"
                   )}
-                  onClick={(e) => {
-                    if (isGroupingPhase && onEditGroupLabel) {
-                      e.stopPropagation();
-                      setEditingGroupLabel(true);
+                  onClick={() => {
+                    if (isBlurred) {
+                      setRevealed(true);
+                      onReveal?.();
                     }
                   }}
                 >
-                  {card.group_label}
-                </Badge>
-              )}
-              {editingGroupLabel && (
-                <input
-                  className="text-[10px] h-4 px-1 bg-secondary rounded border border-input outline-none w-24"
-                  value={groupLabelText}
-                  onChange={(e) => setGroupLabelText(e.target.value)}
-                  onBlur={handleGroupLabelSave}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleGroupLabelSave();
-                    if (e.key === "Escape") setEditingGroupLabel(false);
-                  }}
-                  autoFocus
-                  onClick={(e) => e.stopPropagation()}
-                />
-              )}
-              {tags &&
-                tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="outline"
-                    className="text-[10px] h-4 px-1"
-                  >
-                    {tag}
-                  </Badge>
-                ))}
-              {card.carried_from_retro_id && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-600">
-                  <ArrowRight className="h-2.5 w-2.5" />
-                  carried over
+                  {showContent || revealed ? card.text : t("card.hiddenCard")}
+                </p>
+                <span className="text-xs text-muted-foreground mt-1 block">
+                  {card.authorName}
                 </span>
-              )}
-            </div>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            {showVoting && (
-              <Button
-                variant={hasVoted ? "default" : "outline"}
-                size="sm"
-                className="h-9 min-w-[48px] text-sm"
-                disabled={votePending}
-                onClick={() => startVoteTransition(() => { onVote?.() })}
-              >
-                {votePending ? <Loader2 className="h-4 w-4 animate-spin" /> : voteCount}
-              </Button>
+            {(showContent || revealed) && !editing && (
+              <ReadAloudButton text={card.text} className="h-7 w-7" />
             )}
-            {showDiscussed && onToggleDiscussed && (
-              <Button
-                variant={card.is_discussed ? "default" : "outline"}
-                size="icon"
-                className="h-9 w-9"
-                disabled={discussedPending}
-                onClick={() => startDiscussedTransition(() => { onToggleDiscussed?.() })}
-              >
-                {discussedPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-              </Button>
-            )}
-            {isOwn && onEdit && !editing && (
+            {blurred && (
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                onClick={() => setEditing(true)}
+                onClick={() => setRevealed(!revealed)}
+                aria-label={revealed ? "Hide card text" : "Reveal card text"}
               >
-                <Pencil className="h-3 w-3" />
+                {revealed ? (
+                  <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : (
+                  <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
               </Button>
             )}
-            {isOwn && onDelete && (
+            {isOwn && editable && !editing && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-destructive hover:text-destructive"
-                onClick={onDelete}
+                className="h-7 w-7"
+                onClick={() => {
+                  setEditText(card.text);
+                  setEditing(true);
+                }}
+                aria-label="Edit card"
               >
-                <Trash2 className="h-3 w-3" />
+                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+              </Button>
+            )}
+            {isOwn && onDelete && !editing && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-destructive"
+                onClick={handleDelete}
+                disabled={deleting}
+                aria-label="Delete card"
+              >
+                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               </Button>
             )}
           </div>
         </div>
-
-        {/* Discussion notes expandable area */}
-        {showNotes && onEditNotes && notesExpanded && (
-          <div className="mt-2 pt-2 border-t border-border/50" onClick={(e) => e.stopPropagation()}>
-            <textarea
-              className="w-full text-xs bg-muted/50 rounded p-2 resize-none outline-none placeholder:text-muted-foreground/60"
-              placeholder="Add discussion notes..."
-              rows={2}
-              value={notesText}
-              onChange={(e) => handleNotesChange(e.target.value)}
-            />
-          </div>
-        )}
       </CardContent>
     </Card>
   );

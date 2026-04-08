@@ -1,1 +1,0 @@
-ALTER TABLE "retros" ADD COLUMN "stats_cache" text;

@@ -105,3 +105,13 @@
 .dark[data-ui-theme="msdos"] [role="button"]:hover {
   background: oklch(0.3 0.08 260) !important;
 }
+
+/* Uppercase headers */
+[data-ui-theme="msdos"] h1,
+[data-ui-theme="msdos"] h2,
+[data-ui-theme="msdos"] h3,
+[data-ui-theme="msdos"] h4,
+[data-ui-theme="msdos"] [data-slot="card-title"] {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

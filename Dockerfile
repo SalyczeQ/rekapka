@@ -18,7 +18,6 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# NEXT_PUBLIC_ vars must be present at build time
 ARG NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 
@@ -37,17 +36,17 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
-
-RUN mkdir -p /app/public/uploads/retros && chown -R nextjs:nodejs /app/public/uploads
+COPY --from=builder /app/server ./server
 
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/ws ./node_modules/ws
 
 USER nextjs
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["node", "server/index.ts"]
