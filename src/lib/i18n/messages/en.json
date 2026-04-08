@@ -59,6 +59,14 @@
     "completed": "Done",
     "next": "Next: {phase}"
   },
+  "cards": {
+    "backToRetro": "Back to retro",
+    "subtitle": "{count} cards in this retro",
+    "discussed": "Discussed",
+    "skipped": "Skipped",
+    "all": "All",
+    "noCards": "No cards match this filter."
+  },
   "card": {
     "addCard": "Add a card… (use :emoji: for emoji)",
     "yourCards": "Your cards: {count}",

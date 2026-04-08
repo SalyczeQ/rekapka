@@ -59,6 +59,14 @@
     "completed": "Hotovo",
     "next": "Další: {phase}"
   },
+  "cards": {
+    "backToRetro": "Zpět na retro",
+    "subtitle": "{count} karet v tomto retru",
+    "discussed": "Prodiskutováno",
+    "skipped": "Přeskočeno",
+    "all": "Vše",
+    "noCards": "Žádné karty neodpovídají filtru."
+  },
   "card": {
     "addCard": "Přidat kartu… (použijte :emoji: pro emoji)",
     "yourCards": "Vaše karty: {count}",

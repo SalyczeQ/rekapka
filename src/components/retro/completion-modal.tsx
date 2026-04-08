@@ -318,15 +318,17 @@ export function CompletionModal({
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="py-3 text-center">
-            <p className="text-2xl font-bold tabular-nums">{stats.total}</p>
-            <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-              <MessageSquare className="h-3 w-3" aria-hidden="true" />
-              {t("totalCards")}
-            </p>
-          </CardContent>
-        </Card>
+        <Link href={`/retros/${retro.id}/cards`}>
+          <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+            <CardContent className="py-3 text-center">
+              <p className="text-2xl font-bold tabular-nums">{stats.total}</p>
+              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                <MessageSquare className="h-3 w-3" aria-hidden="true" />
+                {t("totalCards")}
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
         <Card>
           <CardContent className="py-3 text-center">
             <p className="text-2xl font-bold tabular-nums">{stats.discussed}</p>
