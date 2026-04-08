@@ -73,7 +73,7 @@ export default async function CardsPage({ params }: CardsPageProps) {
     .where(ne(users.email, "anonymous@rekapka.local"));
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6 select-none">
       <div className="flex items-center gap-3">
         <Link
           href={`/retros/${id}`}
