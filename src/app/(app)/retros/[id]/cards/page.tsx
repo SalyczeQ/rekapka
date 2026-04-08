@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { retros, cards, categories, users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, ne } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth/session";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -41,6 +41,7 @@ export default async function CardsPage({ params }: CardsPageProps) {
       discussionDurationSec: cards.discussionDurationSec,
       discussionNotes: cards.discussionNotes,
       groupLabel: cards.groupLabel,
+      guessedAuthor: cards.guessedAuthor,
       createdAt: cards.createdAt,
       authorName: users.name,
       authorColor: users.color,
@@ -65,6 +66,12 @@ export default async function CardsPage({ params }: CardsPageProps) {
   }
   const authors = Array.from(authorMap.values());
 
+  // Fetch all real users (non-anonymous) for author reassignment
+  const allUsers = await db
+    .select({ id: users.id, name: users.name, color: users.color, image: users.image })
+    .from(users)
+    .where(ne(users.email, "anonymous@rekapka.local"));
+
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
@@ -87,6 +94,7 @@ export default async function CardsPage({ params }: CardsPageProps) {
         cards={serialize(retroCards)}
         categories={serialize(retroCategories)}
         authors={serialize(authors)}
+        allUsers={serialize(allUsers)}
       />
     </div>
   );

@@ -65,7 +65,13 @@
     "discussed": "Prodiskutováno",
     "skipped": "Přeskočeno",
     "all": "Vše",
-    "noCards": "Žádné karty neodpovídají filtru."
+    "noCards": "Žádné karty neodpovídají filtru.",
+    "confirm": "Potvrdit",
+    "change": "Změnit",
+    "assign": "Přiřadit",
+    "assigned": "Autor přiřazen",
+    "assignFailed": "Nepodařilo se přiřadit autora",
+    "undo": "Zpět"
   },
   "card": {
     "addCard": "Přidat kartu… (použijte :emoji: pro emoji)",
@@ -216,7 +222,15 @@
     "inviteDesc": "Sdílejte tyto odkazy s členy týmu.",
     "reusable": "Opakovaně použitelný",
     "noInvites": "Žádné pozvánkové odkazy. Vytvořte jeden pro pozvání členů týmu.",
-    "createInvite": "Vytvořit pozvánku"
+    "createInvite": "Vytvořit pozvánku",
+    "aiGuessing": "AI odhad autorů",
+    "aiGuessingDesc": "Přeanalyzovat anonymní karty na základě potvrzených přiřazení autorů",
+    "recalculate": "Přepočítat AI odhady",
+    "recalculating": "Analyzuji…",
+    "recalculateSuccess": "Aktualizováno {count} odhadů",
+    "recalculateFailed": "Nepodařilo se přepočítat",
+    "anonymousCards": "{count} anonymních karet",
+    "withGuesses": "{count} s AI odhadem"
   },
   "theme": {
     "toggle": "Přepnout téma",

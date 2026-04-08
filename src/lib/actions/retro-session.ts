@@ -276,3 +276,14 @@ export async function removeTagFromCard(cardId: string, tagId: string) {
     });
   }
 }
+
+export async function assignCardAuthor(cardId: string, userId: string) {
+  await requireAuth();
+
+  await db
+    .update(cards)
+    .set({ authorId: userId, updatedAt: new Date() })
+    .where(eq(cards.id, cardId));
+
+  revalidatePath("/retros");
+}

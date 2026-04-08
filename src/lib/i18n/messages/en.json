@@ -65,7 +65,13 @@
     "discussed": "Discussed",
     "skipped": "Skipped",
     "all": "All",
-    "noCards": "No cards match this filter."
+    "noCards": "No cards match this filter.",
+    "confirm": "Confirm",
+    "change": "Change",
+    "assign": "Assign",
+    "assigned": "Author assigned",
+    "assignFailed": "Failed to assign author",
+    "undo": "Undo"
   },
   "card": {
     "addCard": "Add a card… (use :emoji: for emoji)",
@@ -200,7 +206,15 @@
     "inviteDesc": "Share these links with team members to let them join.",
     "reusable": "Reusable",
     "noInvites": "No invite links yet. Create one to invite team members.",
-    "createInvite": "Create Invite Link"
+    "createInvite": "Create Invite Link",
+    "aiGuessing": "AI Author Guessing",
+    "aiGuessingDesc": "Re-analyze anonymous cards using confirmed author assignments as training data",
+    "recalculate": "Recalculate AI Guesses",
+    "recalculating": "Analyzing…",
+    "recalculateSuccess": "Updated {count} guesses",
+    "recalculateFailed": "Failed to recalculate",
+    "anonymousCards": "{count} anonymous cards",
+    "withGuesses": "{count} with AI guesses"
   },
   "theme": {
     "toggle": "Toggle theme",
