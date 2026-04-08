@@ -19,7 +19,7 @@ const THEMES = [
 ];
 
 const LOCALES = [
-  { value: "cs", label: "Cestina" },
+  { value: "cs", label: "Čeština" },
   { value: "en", label: "English" },
 ];
 

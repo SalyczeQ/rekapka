@@ -122,7 +122,7 @@ export function PhaseWriting({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span>{t("yourCards", { count: myCardCount })}</span>
           {othersCount > 0 && (

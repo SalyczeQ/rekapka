@@ -12,7 +12,7 @@ import {
 
 const locales = [
   { code: "en", label: "English" },
-  { code: "cs", label: "Cestina" },
+  { code: "cs", label: "Čeština" },
 ] as const;
 
 export function LocaleToggle() {
