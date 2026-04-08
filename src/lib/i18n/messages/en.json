@@ -49,7 +49,9 @@
     "completedDesc": "All cards have been discussed. Check the stats page for a summary.",
     "allDiscussed": "All cards discussed!",
     "cardsDiscussed": "{count} cards discussed. Ready to complete the retro.",
-    "retros": "Retros"
+    "retros": "Retros",
+    "active": "Active",
+    "statusCompleted": "Completed"
   },
   "phase": {
     "writing": "Writing",
@@ -161,7 +163,10 @@
     "mostPopular": "Most popular",
     "avgCardLength": "Avg {words} words per card",
     "actionItemsCreated": "Action Items Created",
-    "discussionDistribution": "Discussion Time Distribution"
+    "discussionDistribution": "Discussion Time Distribution",
+    "deleteRetro": "Delete Retro",
+    "confirmDelete": "Are you sure? This cannot be undone.",
+    "cancel": "Cancel"
   },
   "settings": {
     "profile": "Profile",

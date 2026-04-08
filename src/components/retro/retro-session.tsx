@@ -20,6 +20,7 @@ interface RetroSessionProps {
   initialCards: SerializedCard[];
   initialActionItems: SerializedActionItem[];
   currentUserId: string;
+  currentUserEmail?: string;
   allUsers: { id: string; name: string; color: string; image: string | null }[];
   photoUrl?: string | null;
 }
@@ -30,6 +31,7 @@ export function RetroSession({
   initialCards,
   initialActionItems,
   currentUserId,
+  currentUserEmail,
   allUsers,
   photoUrl,
 }: RetroSessionProps) {
@@ -173,6 +175,7 @@ export function RetroSession({
             actionItems={actionItems}
             allUsers={allUsers}
             initialPhotoUrl={photoUrl}
+            currentUserEmail={currentUserEmail}
           />
         )}
       </div>

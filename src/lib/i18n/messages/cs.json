@@ -49,7 +49,9 @@
     "completedDesc": "Všechny karty byly prodiskutovány. Podívejte se na statistiky.",
     "allDiscussed": "Všechny karty prodiskutovány!",
     "cardsDiscussed": "{count} karet prodiskutováno. Připraveno k dokončení.",
-    "retros": "Retra"
+    "retros": "Retra",
+    "active": "Aktivní",
+    "statusCompleted": "Dokončeno"
   },
   "phase": {
     "writing": "Psaní",
@@ -161,7 +163,10 @@
     "mostPopular": "Nejpopulárnější",
     "avgCardLength": "Průměrně {words} slov na kartu",
     "actionItemsCreated": "Vytvořené akční body",
-    "discussionDistribution": "Rozložení doby diskuse"
+    "discussionDistribution": "Rozložení doby diskuse",
+    "deleteRetro": "Smazat retro",
+    "confirmDelete": "Opravdu? Toto nelze vrátit zpět.",
+    "cancel": "Zrušit"
   },
   "stats": {
     "title": "Statistiky",

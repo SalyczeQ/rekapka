@@ -87,6 +87,7 @@ export default async function RetroPage({ params }: RetroPageProps) {
       initialCards={serialize<SerializedCard[]>(retroCards)}
       initialActionItems={serialize<SerializedActionItem[]>(retroActionItems)}
       currentUserId={currentUser.id!}
+      currentUserEmail={currentUser.email ?? ""}
       allUsers={serialize<{ id: string; name: string; color: string; image: string | null }[]>(allUsers)}
       photoUrl={photoSignedUrl}
     />

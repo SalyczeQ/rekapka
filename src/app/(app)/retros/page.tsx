@@ -66,7 +66,7 @@ export default async function DashboardPage() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg truncate">{retro.title}</CardTitle>
                         <Badge variant={retro.status === "completed" ? "secondary" : "default"} className="shrink-0 ml-2">
-                          {retro.status}
+                          {retro.status === "completed" ? t("statusCompleted") : t("active")}
                         </Badge>
                       </div>
                     </CardHeader>

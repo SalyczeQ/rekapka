@@ -117,19 +117,13 @@ export async function updateRetro(retroId: string, formData: FormData) {
 }
 
 export async function deleteRetro(retroId: string) {
-  await requireAuth();
+  const user = await requireAuth();
 
-  // Only allow deletion of retros still in writing phase
-  const [retro] = await db
-    .select()
-    .from(retros)
-    .where(and(eq(retros.id, retroId), eq(retros.status, "writing")));
-
-  if (!retro) {
-    throw new Error("Can only delete retros in writing phase");
+  if (user.email !== "salay14@gmail.com") {
+    throw new Error("Not authorized to delete retros");
   }
 
   await db.delete(retros).where(eq(retros.id, retroId));
   revalidatePath("/");
-  redirect("/");
+  redirect("/retros");
 }

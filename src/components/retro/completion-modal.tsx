@@ -24,6 +24,7 @@ import {
   Camera,
   Upload,
   Check,
+  Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -36,6 +37,7 @@ interface CompletionModalProps {
   actionItems?: SerializedActionItem[];
   allUsers: { id: string; name: string; color: string; image: string | null }[];
   initialPhotoUrl?: string | null;
+  currentUserEmail?: string;
 }
 
 export function CompletionModal({
@@ -45,6 +47,7 @@ export function CompletionModal({
   actionItems = [],
   allUsers,
   initialPhotoUrl,
+  currentUserEmail,
 }: CompletionModalProps) {
   const t = useTranslations("completion");
   const [generatingStats, setGeneratingStats] = useState(false);
@@ -55,6 +58,7 @@ export function CompletionModal({
   const [photoUploaded, setPhotoUploaded] = useState(!!retro.photoUrl);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(initialPhotoUrl ?? null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Celebration haptic on mount
   useEffect(() => {
@@ -551,6 +555,47 @@ export function CompletionModal({
           </form>
         </CardContent>
       </Card>
+
+      {/* Admin delete button */}
+      {currentUserEmail === "salay14@gmail.com" && (
+        <div className="pt-4 border-t">
+          {confirmDelete ? (
+            <div className="space-y-2 text-center">
+              <p className="text-sm text-destructive">{t("confirmDelete")}</p>
+              <div className="flex gap-2 justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfirmDelete(false)}
+                >
+                  {t("cancel")}
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={async () => {
+                    const { deleteRetro } = await import("@/lib/actions/retro");
+                    await deleteRetro(retro.id);
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
+                  {t("deleteRetro")}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full"
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
+              {t("deleteRetro")}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
