@@ -173,6 +173,7 @@ export const cards = pgTable(
     carriedFromRetroId: uuid("carried_from_retro_id").references(() => retros.id, {
       onDelete: "set null",
     }),
+    guessedAuthor: text("guessed_author"),
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   },
