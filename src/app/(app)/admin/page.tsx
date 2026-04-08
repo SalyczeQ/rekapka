@@ -1,7 +1,7 @@
 import { requireAuth } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { appSettings, inviteTokens, users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { appSettings, inviteTokens, users, cards } from "@/lib/db/schema";
+import { eq, count, sql } from "drizzle-orm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { ActionForm } from "@/components/shared/action-form";
 import { updateAppSettings } from "@/lib/actions/settings";
 import { createInviteToken, deleteInviteToken } from "@/lib/actions/invite";
-import { Link2, Trash2, Plus, Calendar } from "lucide-react";
+import { Link2, Trash2, Plus, Calendar, Bot } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
+import { RecalculateGuessesButton } from "@/components/admin/recalculate-guesses-button";
+
+const ANONYMOUS_ID = "00000000-0000-4000-8000-000000000000";
 
 export default async function AdminPage() {
   await requireAuth();
@@ -36,6 +39,15 @@ export default async function AdminPage() {
     .orderBy(inviteTokens.createdAt);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+  // AI guessing stats
+  const [anonStats] = await db
+    .select({
+      total: count(),
+      withGuesses: sql<number>`count(*) filter (where ${cards.guessedAuthor} is not null)`,
+    })
+    .from(cards)
+    .where(eq(cards.authorId, ANONYMOUS_ID));
 
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
@@ -160,6 +172,28 @@ export default async function AdminPage() {
               {t("createInvite")}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* AI Author Guessing */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-4 w-4" aria-hidden="true" />
+            {t("aiGuessing")}
+          </CardTitle>
+          <CardDescription>{t("aiGuessingDesc")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4 text-sm">
+            <span className="text-muted-foreground">
+              {t("anonymousCards", { count: anonStats?.total ?? 0 })}
+            </span>
+            <span className="text-muted-foreground">
+              {t("withGuesses", { count: anonStats?.withGuesses ?? 0 })}
+            </span>
+          </div>
+          <RecalculateGuessesButton />
         </CardContent>
       </Card>
     </div>
