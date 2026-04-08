@@ -20,10 +20,10 @@ ON CONFLICT (email) DO NOTHING;
 INSERT INTO retros (id, title, status, date, location, created_by, started_at, completed_at, total_duration_sec)
 VALUES (
   'a0000003-0000-4000-8000-000000000003',
-  'Retro #3',
+  'Retro #3 - Konečně taky trocha práce. A ještě ke všemu rukama.',
   'completed',
   '2023-09-24',
-  'Konečně taky trocha práce. A ještě ke všemu rukama.',
+  NULL,
   (SELECT id FROM users WHERE email = 'salay14@gmail.com'),
   '2023-09-24 17:00:00+00',
   '2023-09-24 21:30:00+00',
