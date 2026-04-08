@@ -206,6 +206,7 @@
     "emailHint": "E-mail je spravován přes Google OAuth.",
     "appearance": "Vzhled",
     "theme": "Téma",
+    "cardColor": "Barva karty",
     "language": "Jazyk",
     "dictation": "Povolit hlasové diktování",
     "dictationHint": "Zobrazit tlačítko mikrofonu na vstupech karet pro převod řeči na text",

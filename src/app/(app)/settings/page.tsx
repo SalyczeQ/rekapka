@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ActionForm } from "@/components/shared/action-form";
 import { updateUserSettings } from "@/lib/actions/settings";
 import { getTranslations } from "next-intl/server";
+import { ColorPicker } from "@/components/shared/color-picker";
 
 const THEMES = [
   { value: "default", label: "Default" },
@@ -99,6 +100,11 @@ export default async function SettingsPage() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("cardColor")}</Label>
+              <ColorPicker name="color" defaultValue={user.color} />
             </div>
 
             <div className="space-y-2">

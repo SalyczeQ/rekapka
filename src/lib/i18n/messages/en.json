@@ -190,6 +190,7 @@
     "emailHint": "Email is managed by Google OAuth.",
     "appearance": "Appearance",
     "theme": "Theme",
+    "cardColor": "Card Color",
     "language": "Language",
     "dictation": "Enable voice dictation",
     "dictationHint": "Show microphone button on card inputs for speech-to-text",
