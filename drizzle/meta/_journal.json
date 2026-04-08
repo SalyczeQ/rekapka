@@ -36,6 +36,181 @@
       "when": 1775680000000,
       "tag": "0004_import_retro_28",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1775680179273,
+      "tag": "0005_puzzling_talisman",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1775680290401,
+      "tag": "0006_import_retro_2",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1775680298327,
+      "tag": "0007_import_retro_4",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1775680303718,
+      "tag": "0008_import_retro_5",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1775680308108,
+      "tag": "0009_import_retro_6",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1775680311581,
+      "tag": "0010_import_retro_7",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1775680317536,
+      "tag": "0011_import_retro_8",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1775680324799,
+      "tag": "0012_import_retro_13",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1775680327212,
+      "tag": "0013_import_retro_15",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1775680331122,
+      "tag": "0014_import_retro_16",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1775680337126,
+      "tag": "0015_import_retro_17",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1775680340217,
+      "tag": "0016_import_retro_18",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1775680348831,
+      "tag": "0017_import_retro_19",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1775680358067,
+      "tag": "0018_import_retro_20",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1775680361708,
+      "tag": "0019_import_retro_21",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1775680367038,
+      "tag": "0020_import_retro_22",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1775680372941,
+      "tag": "0021_import_retro_23",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1775680376808,
+      "tag": "0022_import_retro_24",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1775680379736,
+      "tag": "0023_import_retro_25",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1775690000000,
+      "tag": "0024_import_retro_3",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1775700000000,
+      "tag": "0025_import_retro_9",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1775710000000,
+      "tag": "0026_import_retro_10",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1775720000000,
+      "tag": "0027_import_retro_11",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1775730000000,
+      "tag": "0028_import_retro_12",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1775740000000,
+      "tag": "0029_import_retro_14",
+      "breakpoints": true
     }
   ]
 }
