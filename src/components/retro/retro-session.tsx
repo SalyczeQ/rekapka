@@ -197,6 +197,7 @@ export function RetroSession({
         )}
 
         {(currentPhase === "writing" || currentPhase === "discussing") && (
+          <div className="max-w-2xl mx-auto">
           <PredictionSection
             retroId={retro.id}
             predictions={predictions}
@@ -206,6 +207,7 @@ export function RetroSession({
             onPredictionsChange={setPredictions}
             onUnresolvedChange={setUnresolvedPredictions}
           />
+          </div>
         )}
 
         {currentPhase === "completed" && (

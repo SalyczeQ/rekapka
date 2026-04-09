@@ -215,7 +215,8 @@ export function PhaseDiscussing({
   const cardActions = currentCard ? actionItems.filter((a) => a.cardId === currentCard.id) : [];
 
   return (
-    <div className="max-w-2xl mx-auto space-y-3">
+    <div className="max-w-2xl mx-auto">
+      <div className="space-y-3">
       {/* 1. Card counter + timer */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
@@ -286,8 +287,9 @@ export function PhaseDiscussing({
           {t("card.skippedCards", { count: skippedCards.length })}
         </p>
       )}
+      </div>
 
-      {/* 4. Collapsible: Notes & Actions */}
+      {/* Collapsible sections — outside space-y-3 for consistent border spacing */}
       <div className="border-t pt-2">
         <Button
           variant="ghost"
@@ -369,7 +371,7 @@ export function PhaseDiscussing({
 
 
       {/* Add new card during discussion */}
-      <div className="pt-2 border-t">
+      <div className="border-t pt-2">
         <Button
           variant="ghost"
           size="sm"

@@ -34,15 +34,15 @@ export function PredictionSection({
   const openCount = unresolvedFromPast.filter((p) => p.status === "open").length;
 
   return (
-    <div className="border-t pt-3">
+    <div className="border-t pt-2">
       <Button
         variant="ghost"
         size="sm"
-        className="w-full justify-between text-xs text-muted-foreground"
+        className="w-full text-xs text-muted-foreground justify-between"
         onClick={() => setExpanded(!expanded)}
       >
         <span className="flex items-center gap-1.5">
-          <Lightbulb className="h-3.5 w-3.5" aria-hidden="true" />
+          <Lightbulb className="h-3 w-3" aria-hidden="true" />
           {t("title")}
           {openCount > 0 && (
             <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
@@ -51,7 +51,7 @@ export function PredictionSection({
           )}
         </span>
         <ChevronDown
-          className={`h-3.5 w-3.5 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+          className={`h-3 w-3 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
           aria-hidden="true"
         />
       </Button>
