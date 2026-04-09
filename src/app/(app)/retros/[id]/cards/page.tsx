@@ -18,7 +18,7 @@ function serialize<T>(obj: unknown): T {
 
 export default async function CardsPage({ params }: CardsPageProps) {
   const { id } = await params;
-  await requireAuth();
+  const currentUser = await requireAuth();
   const t = await getTranslations("cards");
 
   const [retro] = await db.select().from(retros).where(eq(retros.id, id));
@@ -42,6 +42,7 @@ export default async function CardsPage({ params }: CardsPageProps) {
       discussionNotes: cards.discussionNotes,
       groupLabel: cards.groupLabel,
       guessedAuthor: cards.guessedAuthor,
+      sortOrder: cards.sortOrder,
       createdAt: cards.createdAt,
       authorName: users.name,
       authorColor: users.color,
@@ -95,6 +96,7 @@ export default async function CardsPage({ params }: CardsPageProps) {
         categories={serialize(retroCategories)}
         authors={serialize(authors)}
         allUsers={serialize(allUsers)}
+        currentUserEmail={currentUser.email ?? ""}
       />
     </div>
   );

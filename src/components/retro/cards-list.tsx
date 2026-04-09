@@ -5,8 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
-import { assignCardAuthor } from "@/lib/actions/retro-session";
-import { Check, Pencil, Bot, Undo2 } from "lucide-react";
+import { assignCardAuthor, deleteCard } from "@/lib/actions/retro-session";
+import { Check, Pencil, Bot, Undo2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const ANONYMOUS_ID = "00000000-0000-4000-8000-000000000000";
@@ -22,6 +22,7 @@ interface CardData {
   discussionNotes: string | null;
   groupLabel: string | null;
   guessedAuthor: string | null;
+  sortOrder: number;
   authorName: string;
   authorColor: string;
   authorImage: string | null;
@@ -45,9 +46,10 @@ interface CardsListProps {
   categories: CategoryData[];
   authors: UserData[];
   allUsers?: UserData[];
+  currentUserEmail?: string;
 }
 
-export function CardsList({ cards: initialCards, categories, authors, allUsers = [] }: CardsListProps) {
+export function CardsList({ cards: initialCards, categories, authors, allUsers = [], currentUserEmail }: CardsListProps) {
   const t = useTranslations("cards");
   const [cards, setCards] = useState(initialCards);
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
@@ -140,6 +142,36 @@ export function CardsList({ cards: initialCards, categories, authors, allUsers =
   function handleAssign(cardId: string, userId: string) {
     assignWithUndo(cardId, userId);
   }
+
+  const isAdmin = currentUserEmail === "salay14@gmail.com";
+
+  const deleteWithUndo = useCallback((card: CardData) => {
+    // Optimistic remove
+    setCards((prev) => prev.filter((c) => c.id !== card.id));
+
+    const timer = setTimeout(async () => {
+      pendingTimers.current.delete(`del-${card.id}`);
+      try {
+        await deleteCard(card.id);
+      } catch {
+        setCards((prev) => [...prev, card]);
+        toast.error(t("deleteFailed"));
+      }
+    }, 5000);
+    pendingTimers.current.set(`del-${card.id}`, timer);
+
+    toast(t("cardDeleted"), {
+      duration: 5000,
+      action: {
+        label: t("undo"),
+        onClick: () => {
+          clearTimeout(timer);
+          pendingTimers.current.delete(`del-${card.id}`);
+          setCards((prev) => [...prev, card].sort((a, b) => a.sortOrder - b.sortOrder));
+        },
+      },
+    });
+  }, [t]);
 
   const isAnonymous = (card: CardData) => card.authorId === ANONYMOUS_ID;
 
@@ -285,6 +317,15 @@ export function CardsList({ cards: initialCards, categories, authors, allUsers =
                                     {hasGuess ? t("change") : t("assign")}
                                   </button>
                                 )}
+                                {isAdmin && (
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteWithUndo(card)}
+                                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                                  >
+                                    <Trash2 className="h-2.5 w-2.5" aria-hidden="true" />
+                                  </button>
+                                )}
                               </>
                             ) : (
                               <>
@@ -300,6 +341,32 @@ export function CardsList({ cards: initialCards, categories, authors, allUsers =
                                   </span>
                                 )}
                                 <span>{card.authorName}</span>
+                                {isAdmin && (
+                                  changingCard === card.id ? (
+                                    <select
+                                      autoFocus
+                                      className="text-[10px] bg-transparent border border-input rounded px-1 py-0.5"
+                                      defaultValue=""
+                                      onChange={(e) => {
+                                        if (e.target.value) handleAssign(card.id, e.target.value);
+                                      }}
+                                      onBlur={() => setChangingCard(null)}
+                                    >
+                                      <option value="" disabled>{t("change")}…</option>
+                                      {allUsers.map((u) => (
+                                        <option key={u.id} value={u.id}>{u.name}</option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => setChangingCard(card.id)}
+                                      className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted hover:bg-accent transition-colors"
+                                    >
+                                      <Pencil className="h-2.5 w-2.5" aria-hidden="true" />
+                                    </button>
+                                  )
+                                )}
                               </>
                             )}
 
