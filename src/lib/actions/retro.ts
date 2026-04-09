@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { retros, categories, cards } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth/session";
 import { createRetroSchema, updateRetroSchema } from "@/lib/validators";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { CATEGORY_NAMES } from "@/types";
@@ -19,6 +19,17 @@ const CATEGORY_DEFAULTS = [
 export async function createRetro(formData: FormData) {
   const user = await requireAuth();
   const fromRetroId = formData.get("fromRetroId") as string | null;
+
+  // Prevent creating a new retro if one is already active
+  const [active] = await db
+    .select({ id: retros.id })
+    .from(retros)
+    .where(inArray(retros.status, ["writing", "discussing"]))
+    .limit(1);
+
+  if (active) {
+    redirect(`/retros/${active.id}`);
+  }
 
   const input = createRetroSchema.parse({
     title: formData.get("title"),

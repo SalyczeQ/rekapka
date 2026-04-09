@@ -1,4 +1,8 @@
 import { createRetro } from "@/lib/actions/retro";
+import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
+import { retros } from "@/lib/db/schema";
+import { inArray } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,6 +11,17 @@ import { getTranslations } from "next-intl/server";
 
 export default async function NewRetroPage() {
   const t = await getTranslations("retro");
+
+  // Redirect to active retro if one exists
+  const [active] = await db
+    .select({ id: retros.id })
+    .from(retros)
+    .where(inArray(retros.status, ["writing", "discussing"]))
+    .limit(1);
+
+  if (active) {
+    redirect(`/retros/${active.id}`);
+  }
 
   return (
     <div className="p-4 md:p-6 max-w-lg mx-auto">
