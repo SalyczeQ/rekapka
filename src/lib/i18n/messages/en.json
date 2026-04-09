@@ -32,7 +32,8 @@
     "admin": "Admin",
     "stats": "Stats",
     "settings": "Settings",
-    "activeRetro": "Retro"
+    "activeRetro": "Retro",
+    "predictions": "Predictions"
   },
   "retro": {
     "title": "Title",
@@ -126,6 +127,33 @@
     "cards": "cards",
     "noCards": "No cards to group yet. Add some cards first.",
     "optional": "Grouping is optional. It helps organize similar cards before discussion."
+  },
+  "predictions": {
+    "title": "Predictions & Bets",
+    "addPrediction": "Add Prediction",
+    "predictionPlaceholder": "I bet that…",
+    "stake": "Stake",
+    "stakePlaceholder": "beer, 100 CZK…",
+    "challenge": "Challenge",
+    "unresolved": "Unresolved from past retros",
+    "thisRetro": "Made this retro",
+    "correct": "Correct",
+    "wrong": "Wrong",
+    "cancelled": "Cancelled",
+    "open": "Open",
+    "noPredictions": "No predictions yet",
+    "failed": "Failed to add prediction",
+    "deadline": "Deadline",
+    "overdue": "Overdue",
+    "dueSoon": "Due soon",
+    "allPredictions": "All Predictions",
+    "openCount": "{count} open",
+    "resolvedCount": "{count} resolved",
+    "tabOpen": "Open",
+    "tabResolved": "Resolved",
+    "tabCancelled": "Cancelled",
+    "createdIn": "Created in",
+    "resolvedIn": "Resolved in"
   },
   "completion": {
     "retroComplete": "Retro Complete!",

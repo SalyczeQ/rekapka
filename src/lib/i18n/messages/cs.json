@@ -32,7 +32,8 @@
     "admin": "Správa",
     "stats": "Statistiky",
     "settings": "Nastavení",
-    "activeRetro": "Retro"
+    "activeRetro": "Retro",
+    "predictions": "Předpovědi"
   },
   "retro": {
     "title": "Název",
@@ -126,6 +127,33 @@
     "cards": "karet",
     "noCards": "Žádné karty k seskupení. Vraťte se do fáze psaní.",
     "optional": "Seskupování je volitelné. Použijte fázový panel výše pro přechod k diskusi."
+  },
+  "predictions": {
+    "title": "Předpovědi a sázky",
+    "addPrediction": "Přidat předpověď",
+    "predictionPlaceholder": "Vsadím se, že…",
+    "stake": "V sázce",
+    "stakePlaceholder": "pivo, 100 Kč…",
+    "challenge": "Vyzvat",
+    "unresolved": "Nevyřešené z minulých retr",
+    "thisRetro": "Z tohoto retra",
+    "correct": "Správně",
+    "wrong": "Špatně",
+    "cancelled": "Zrušeno",
+    "open": "Otevřená",
+    "noPredictions": "Zatím žádné předpovědi",
+    "failed": "Nepodařilo se přidat předpověď",
+    "deadline": "Termín",
+    "overdue": "Po termínu",
+    "dueSoon": "Brzy",
+    "allPredictions": "Všechny předpovědi",
+    "openCount": "{count} otevřených",
+    "resolvedCount": "{count} vyřešených",
+    "tabOpen": "Otevřené",
+    "tabResolved": "Vyřešené",
+    "tabCancelled": "Zrušené",
+    "createdIn": "Vytvořeno v",
+    "resolvedIn": "Vyřešeno v"
   },
   "completion": {
     "retroComplete": "Retro dokončeno!",

@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Plus, Settings, BarChart3, Shield, Menu, Play } from "lucide-react";
+import { Home, Plus, Settings, BarChart3, Shield, Menu, Play, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { ThemeToggle } from "./theme-toggle";
@@ -32,6 +32,7 @@ function SidebarContent({ activeRetro }: { activeRetro?: ActiveRetro | null }) {
     { href: "/retros", icon: Home, label: t("dashboard") },
     retroItem,
     { href: "/stats", icon: BarChart3, label: t("stats") },
+    { href: "/predictions", icon: Lightbulb, label: t("predictions") },
     { href: "/admin", icon: Shield, label: t("admin") },
     { href: "/settings", icon: Settings, label: t("settings") },
   ];
