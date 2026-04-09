@@ -14,7 +14,6 @@ import { createActionItem } from "@/lib/actions/action-items";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { vibrate } from "@/lib/haptics";
-import { AiGroupButton } from "./ai-group-button";
 import { ReadAloudButton } from "./read-aloud-button";
 import { DictationButton } from "./dictation-button";
 import { CardItem } from "./card-item";
@@ -401,12 +400,6 @@ export function PhaseDiscussing({
         </p>
       )}
 
-      {/* AI tools */}
-      <div className="pt-2 border-t flex items-center gap-2 flex-wrap">
-        {!cards.some((c) => c.groupLabel) && cards.length > 3 && (
-          <AiGroupButton retroId={retro.id} cards={cards} onCardsChange={onCardsChange} />
-        )}
-      </div>
 
       {/* Add new card during discussion */}
       <div className="pt-2 border-t">
