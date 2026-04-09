@@ -2,17 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Plus, Settings } from "lucide-react";
+import { Home, Plus, Settings, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
-export function BottomNav() {
+interface ActiveRetro {
+  id: string;
+  title: string;
+  status: string;
+}
+
+export function BottomNav({ activeRetro }: { activeRetro?: ActiveRetro | null }) {
   const pathname = usePathname();
   const t = useTranslations("nav");
 
+  const middleItem = activeRetro
+    ? { href: `/retros/${activeRetro.id}`, icon: Play, label: t("activeRetro") }
+    : { href: "/retros/new", icon: Plus, label: t("newRetro") };
+
   const navItems = [
     { href: "/retros", icon: Home, label: t("dashboard") },
-    { href: "/retros/new", icon: Plus, label: t("newRetro") },
+    middleItem,
     { href: "/settings", icon: Settings, label: t("settings") },
   ];
 
@@ -24,7 +34,9 @@ export function BottomNav() {
     >
       <div className="flex items-center justify-around h-14">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = item.href.startsWith("/retros/") && item.href !== "/retros/new"
+            ? pathname.startsWith(item.href)
+            : pathname === item.href;
           return (
             <Link
               key={item.href}

@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Plus, Settings, BarChart3, Shield, Menu } from "lucide-react";
+import { Home, Plus, Settings, BarChart3, Shield, Menu, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { ThemeToggle } from "./theme-toggle";
@@ -14,13 +14,23 @@ import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-function SidebarContent() {
+interface ActiveRetro {
+  id: string;
+  title: string;
+  status: string;
+}
+
+function SidebarContent({ activeRetro }: { activeRetro?: ActiveRetro | null }) {
   const pathname = usePathname();
   const t = useTranslations("nav");
 
+  const retroItem = activeRetro
+    ? { href: `/retros/${activeRetro.id}`, icon: Play, label: t("activeRetro") }
+    : { href: "/retros/new", icon: Plus, label: t("newRetro") };
+
   const sidebarItems = [
     { href: "/retros", icon: Home, label: t("dashboard") },
-    { href: "/retros/new", icon: Plus, label: t("newRetro") },
+    retroItem,
     { href: "/stats", icon: BarChart3, label: t("stats") },
     { href: "/admin", icon: Shield, label: t("admin") },
     { href: "/settings", icon: Settings, label: t("settings") },
@@ -36,7 +46,9 @@ function SidebarContent() {
       </div>
       <nav className="flex-1 p-2 space-y-1">
         {sidebarItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = item.href.startsWith("/retros/") && item.href !== "/retros/new"
+            ? pathname.startsWith(item.href)
+            : pathname === item.href;
           return (
             <Link
               key={item.href}
@@ -65,13 +77,18 @@ function SidebarContent() {
   );
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+interface AppShellProps {
+  children: React.ReactNode;
+  activeRetro?: ActiveRetro | null;
+}
+
+export function AppShell({ children, activeRetro }: AppShellProps) {
   return (
     <div className="flex min-h-screen w-full overflow-x-hidden">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:w-60 md:flex-col md:border-r md:bg-sidebar">
         <Suspense>
-          <SidebarContent />
+          <SidebarContent activeRetro={activeRetro} />
         </Suspense>
       </aside>
 
@@ -87,7 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </SheetTrigger>
             <SheetContent side="left" className="w-60 p-0" style={{ overscrollBehavior: "contain" }}>
               <Suspense>
-                <SidebarContent />
+                <SidebarContent activeRetro={activeRetro} />
               </Suspense>
             </SheetContent>
           </Sheet>
@@ -105,7 +122,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Mobile bottom nav */}
-      <BottomNav />
+      <BottomNav activeRetro={activeRetro} />
     </div>
   );
 }

@@ -31,7 +31,8 @@
     "newRetro": "Nové retro",
     "admin": "Správa",
     "stats": "Statistiky",
-    "settings": "Nastavení"
+    "settings": "Nastavení",
+    "activeRetro": "Retro"
   },
   "retro": {
     "title": "Název",

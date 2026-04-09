@@ -31,7 +31,8 @@
     "newRetro": "New Retro",
     "admin": "Admin",
     "stats": "Stats",
-    "settings": "Settings"
+    "settings": "Settings",
+    "activeRetro": "Retro"
   },
   "retro": {
     "title": "Title",
