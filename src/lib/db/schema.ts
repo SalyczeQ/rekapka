@@ -237,3 +237,37 @@ export const actionItems = pgTable(
     index("action_items_status_idx").on(table.status),
   ]
 );
+
+// ─── Predictions & Bets ──────────────────────────────────────────────────────
+
+export const predictions = pgTable(
+  "predictions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    retroId: uuid("retro_id")
+      .notNull()
+      .references(() => retros.id, { onDelete: "cascade" }),
+    resolvedInRetroId: uuid("resolved_in_retro_id").references(() => retros.id, {
+      onDelete: "set null",
+    }),
+    authorId: uuid("author_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    text: text("text").notNull(),
+    stake: text("stake"),
+    challengedUserId: uuid("challenged_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    deadline: date("deadline", { mode: "date" }),
+    status: text("status").notNull().default("open"),
+    resolvedAt: timestamp("resolved_at", { mode: "date", withTimezone: true }),
+    resolvedBy: uuid("resolved_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("predictions_retro_id_idx").on(table.retroId),
+    index("predictions_author_id_idx").on(table.authorId),
+    index("predictions_status_idx").on(table.status),
+  ]
+);

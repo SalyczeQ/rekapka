@@ -13,6 +13,8 @@ export type SSEEvent =
   | { type: "action_item_updated"; itemId: string; changes: Partial<SSEActionItemData> }
   | { type: "action_item_deleted"; itemId: string }
   | { type: "retro_updated"; changes: Record<string, unknown> }
+  | { type: "prediction_added"; prediction: SSEPredictionData }
+  | { type: "prediction_resolved"; predictionId: string; status: string }
   | { type: "presence"; users: SSEPresenceUser[] }
   | { type: "heartbeat" };
 
@@ -23,6 +25,20 @@ export interface SSEActionItemData {
   text: string;
   assigneeId: string | null;
   status: string;
+}
+
+export interface SSEPredictionData {
+  id: string;
+  retroId: string;
+  authorId: string;
+  authorName: string;
+  text: string;
+  stake: string | null;
+  challengedUserId: string | null;
+  challengedUserName: string | null;
+  status: string;
+  deadline: string | null;
+  createdAt: string;
 }
 
 export interface SSEPresenceUser {

@@ -39,6 +39,24 @@ export interface SerializedActionItem {
   createdAt: string;
 }
 
+export interface SerializedPrediction {
+  id: string;
+  retroId: string;
+  authorId: string;
+  authorName: string;
+  authorColor: string;
+  text: string;
+  stake: string | null;
+  challengedUserId: string | null;
+  challengedUserName: string | null;
+  status: string;
+  deadline: string | null;
+  resolvedInRetroId: string | null;
+  retroTitle?: string;
+  resolvedInRetroTitle?: string;
+  createdAt: string;
+}
+
 export interface SerializedCard {
   id: string;
   retroId: string;
