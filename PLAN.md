@@ -17,6 +17,7 @@ Detailed plans are split into focused files in the `plan/` folder:
 | [07-web-interface-guidelines.md](plan/07-web-interface-guidelines.md) | Accessibility, forms, focus states, touch, dark mode, i18n, anti-patterns |
 | [08-haptics-dictation-docker.md](plan/08-haptics-dictation-docker.md) | Haptic feedback patterns, voice dictation, Docker Compose services |
 | [09-decisions-and-checklist.md](plan/09-decisions-and-checklist.md) | Key technical decisions, verification checklist |
+| [10-predictions-bets.md](plan/10-predictions-bets.md) | Predictions & Bets feature — track bets between retros, resolve next time |
 
 ## Recent Additions (not yet in plan files)
 
