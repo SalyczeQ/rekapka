@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import type { SerializedRetro, SerializedCategory, SerializedCard, SerializedActionItem } from "@/types/serialized";
+import type { SerializedRetro, SerializedCategory, SerializedCard, SerializedActionItem, SerializedPrediction } from "@/types/serialized";
 import type { SSEEvent } from "@/types/realtime";
 import { vibrate } from "@/lib/haptics";
 import { useRetroStream } from "@/hooks/use-retro-stream";
@@ -11,14 +11,17 @@ import { PhaseWriting } from "./phase-writing";
 import { PhaseDiscussing } from "./phase-discussing";
 import { ParticipantBar } from "./participant-bar";
 import { CompletionModal } from "./completion-modal";
+import { PredictionSection } from "./prediction-section";
 
-export type { SerializedRetro, SerializedCategory, SerializedCard, SerializedActionItem };
+export type { SerializedRetro, SerializedCategory, SerializedCard, SerializedActionItem, SerializedPrediction };
 
 interface RetroSessionProps {
   retro: SerializedRetro;
   categories: SerializedCategory[];
   initialCards: SerializedCard[];
   initialActionItems: SerializedActionItem[];
+  initialPredictions: SerializedPrediction[];
+  unresolvedPredictions: SerializedPrediction[];
   currentUserId: string;
   currentUserEmail?: string;
   allUsers: { id: string; name: string; color: string; image: string | null }[];
@@ -31,6 +34,8 @@ export function RetroSession({
   categories,
   initialCards,
   initialActionItems,
+  initialPredictions,
+  unresolvedPredictions: initialUnresolved,
   currentUserId,
   currentUserEmail,
   allUsers,
@@ -42,6 +47,8 @@ export function RetroSession({
   const [currentPhase, setCurrentPhase] = useState(retro.status);
   const [currentRetro, setCurrentRetro] = useState(retro);
   const [actionItems, setActionItems] = useState(initialActionItems);
+  const [predictions, setPredictions] = useState(initialPredictions);
+  const [unresolvedPredictions, setUnresolvedPredictions] = useState(initialUnresolved);
 
   const handleSSEEvent = useCallback((event: SSEEvent) => {
     switch (event.type) {
@@ -120,6 +127,24 @@ export function RetroSession({
       case "retro_updated":
         setCurrentRetro((prev) => ({ ...prev, ...event.changes }));
         break;
+      case "prediction_added":
+        setPredictions((prev) => {
+          if (prev.some((p) => p.id === event.prediction.id)) return prev;
+          return [...prev, {
+            ...event.prediction,
+            authorColor: allUsers.find((u) => u.id === event.prediction.authorId)?.color ?? "#888",
+            resolvedInRetroId: null,
+          }];
+        });
+        break;
+      case "prediction_resolved":
+        setPredictions((prev) =>
+          prev.map((p) => p.id === event.predictionId ? { ...p, status: event.status } : p)
+        );
+        setUnresolvedPredictions((prev) =>
+          prev.map((p) => p.id === event.predictionId ? { ...p, status: event.status } : p)
+        );
+        break;
     }
   }, [allUsers]);
 
@@ -168,6 +193,18 @@ export function RetroSession({
             onCardsChange={setCards}
             onActionItemsChange={setActionItems}
             dictationEnabled={dictationEnabled}
+          />
+        )}
+
+        {(currentPhase === "writing" || currentPhase === "discussing") && (
+          <PredictionSection
+            retroId={retro.id}
+            predictions={predictions}
+            unresolvedFromPast={unresolvedPredictions}
+            currentUserId={currentUserId}
+            allUsers={allUsers}
+            onPredictionsChange={setPredictions}
+            onUnresolvedChange={setUnresolvedPredictions}
           />
         )}
 
