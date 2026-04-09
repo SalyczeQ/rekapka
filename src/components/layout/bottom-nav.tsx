@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Plus, Settings, Play } from "lucide-react";
+import { Home, Plus, BarChart3, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
@@ -23,7 +23,7 @@ export function BottomNav({ activeRetro }: { activeRetro?: ActiveRetro | null })
   const navItems = [
     { href: "/retros", icon: Home, label: t("dashboard") },
     middleItem,
-    { href: "/settings", icon: Settings, label: t("settings") },
+    { href: "/stats", icon: BarChart3, label: t("stats") },
   ];
 
   return (
