@@ -17,3 +17,13 @@ Detailed plans are split into focused files in the `plan/` folder:
 | [07-web-interface-guidelines.md](plan/07-web-interface-guidelines.md) | Accessibility, forms, focus states, touch, dark mode, i18n, anti-patterns |
 | [08-haptics-dictation-docker.md](plan/08-haptics-dictation-docker.md) | Haptic feedback patterns, voice dictation, Docker Compose services |
 | [09-decisions-and-checklist.md](plan/09-decisions-and-checklist.md) | Key technical decisions, verification checklist |
+
+## Recent Additions (not yet in plan files)
+
+- **Card color picker** in user settings — 10 predefined colors from `CARD_COLORS` palette
+- **Cards list page** (`/retros/[id]/cards`) — all cards grouped by category with author filter pills, profile pics, confirm/change/delete for anonymous cards with 5s undo
+- **Admin card management** — delete anonymous cards, change author on any card (salay14@gmail.com only)
+- **Show All Cards** button on completion page (Cards by Author section)
+- **Mobile-first audit** — Pixel 9, iPhone 17 Pro/Pro Max viewport testing, overflow fixes, touch-action, tap-highlight, overscroll-behavior, icon-only buttons on mobile
+- **AI Guess Authors** — admin recalculate button on /admin, uses confirmed assignments as training data
+- **Legacy imports** — 25 retros (#2-#30) via SQL migrations with AI-guessed anonymous authors

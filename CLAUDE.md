@@ -65,8 +65,10 @@ Schema defined in `src/lib/db/schema.ts`
 - **Haptic feedback**: `src/lib/haptics.ts` — `vibrate()` wrapper for mobile (Android only, no-op on iOS)
 - **Translations**: Add keys to both `src/lib/i18n/messages/en.json` and `cs.json`. Restart dev server after changes (Turbopack caches translations). Use actual characters, NOT `\u` escapes in JSX strings.
 - **Docker migrations**: `docker-entrypoint.sh` runs `migrate.mjs` (drizzle-orm migrator) at startup. Add `---> statement-breakpoint` between SQL statements in migration files.
-- **Admin features**: Some features gated to `salay14@gmail.com` (delete retro, revert phase)
+- **Admin features**: Some features gated to `salay14@gmail.com` (delete retro, revert phase, delete anonymous cards, change author on any card)
 - **Brand color**: `#1A6B5A` teal — used in logo, favicon, default theme primary
+- **Mobile-first**: `overflow-x: hidden` on body + AppShell root, `touch-action: manipulation` on all interactive elements, `-webkit-tap-highlight-color: transparent`, `overscroll-behavior: contain` on Sheet, icon-only buttons on mobile (`md:` shows text), `env(safe-area-inset-*)` on bottom nav
+- **Undo pattern**: Author assignment and card deletion use 5-second optimistic update with toast undo button — server action fires only after timeout
 
 ## AI Features
 
@@ -96,4 +98,8 @@ scripts/              — Migration generator script
 
 ## Legacy Retro Imports
 
-22 retros (#2-#30) imported from a previous system via SQL migrations. Anonymous cards use system user `00000000-0000-4000-8000-000000000000` with AI-guessed authors in `guessed_author` column. Users can confirm/change guesses on the `/retros/[id]/cards` page. Admin can recalculate guesses from `/admin`.
+22 retros (#2-#30) imported from a previous system via SQL migrations. Anonymous cards use system user `00000000-0000-4000-8000-000000000000` with AI-guessed authors in `guessed_author` column. Users can confirm/change guesses on the `/retros/[id]/cards` page. Admin can recalculate guesses from `/admin`. Admin can also delete anonymous cards and reassign authors on any card.
+
+## Mobile Testing
+
+Tested viewports: Pixel 9 (412x915), iPhone 17 Pro (402x874), iPhone 17 Pro Max (440x956). All pages verified for no horizontal overflow, proper badge/button sizing, and bottom nav spacing.
