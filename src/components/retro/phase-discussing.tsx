@@ -384,13 +384,14 @@ export function PhaseDiscussing({
           </Button>
         ) : (
           <Button variant="outline" className="flex-1" onClick={handleSkip} disabled={busy}>
-            <SkipForward className="h-4 w-4 mr-2" aria-hidden="true" />
-            {t("card.skip")}
+            <SkipForward className="h-4 w-4 md:mr-2" aria-hidden="true" />
+            <span className="hidden md:inline">{t("card.skip")}</span>
           </Button>
         )}
         <Button className="flex-1" onClick={handleMarkDiscussed} disabled={busy}>
-          <Check className="h-4 w-4 mr-2" aria-hidden="true" />
-          {t("card.markDiscussed")}
+          <Check className="h-4 w-4 md:mr-2" aria-hidden="true" />
+          <span className="hidden md:inline">{t("card.markDiscussed")}</span>
+          <span className="md:hidden">{t("card.done")}</span>
         </Button>
       </div>
 

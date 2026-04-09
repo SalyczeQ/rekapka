@@ -85,6 +85,7 @@
     "skip": "Skip",
     "unskip": "Unskip",
     "markDiscussed": "Mark Discussed",
+    "done": "Done",
     "cardOf": "Card {current} of {total} remaining ({discussed} discussed)",
     "skipped": "Skipped",
     "skippedCards": "{count} skipped cards at end of queue",

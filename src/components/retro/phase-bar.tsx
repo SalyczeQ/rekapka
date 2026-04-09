@@ -55,9 +55,9 @@ export function PhaseBar({ currentPhase, retroId, onPhaseChange, currentUserEmai
                 onPhaseChange("writing");
               }}
             >
-              <Button type="submit" size="sm" variant="outline">
-                <Undo2 className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
-                {phaseLabel("writing")}
+              <Button type="submit" size="sm" variant="outline" aria-label={phaseLabel("writing")}>
+                <Undo2 className="h-3.5 w-3.5 md:mr-1.5" aria-hidden="true" />
+                <span className="hidden md:inline">{phaseLabel("writing")}</span>
               </Button>
             </form>
           )}

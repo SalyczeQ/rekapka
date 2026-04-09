@@ -18,10 +18,10 @@ export function ParticipantBar({ participants }: ParticipantBarProps) {
   if (participants.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5 md:gap-1">
       {participants.map((p) => (
         <div key={p.id} className="relative" title={`${p.name}${p.online ? " (online)" : ""}`}>
-          <Avatar className="h-7 w-7 border-2" style={{ borderColor: p.color }}>
+          <Avatar className="h-6 w-6 md:h-7 md:w-7 border-2" style={{ borderColor: p.color }}>
             {p.image && <AvatarImage src={p.image} alt={p.name} />}
             <AvatarFallback
               className="text-[10px] text-white"
