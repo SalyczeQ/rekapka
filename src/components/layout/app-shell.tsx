@@ -67,7 +67,7 @@ function SidebarContent() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen w-full overflow-x-hidden">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:w-60 md:flex-col md:border-r md:bg-sidebar">
         <Suspense>
@@ -76,7 +76,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
         {/* Mobile header */}
         <header className="flex items-center justify-between px-4 h-14 border-b md:hidden">
           <Sheet>

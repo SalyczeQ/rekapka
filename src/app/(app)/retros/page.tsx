@@ -82,40 +82,38 @@ export default async function DashboardPage() {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <h3 className="font-semibold truncate">{retro.title}</h3>
-                  <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap tabular-nums">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" aria-hidden="true" />
-                      {formatDate(retro.date)}
-                    </span>
-                    {retro.location && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" aria-hidden="true" />
-                        {retro.location}
-                      </span>
-                    )}
-                    {retro.cardCount.total > 0 && (
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="h-3 w-3" aria-hidden="true" />
-                        {retro.cardCount.discussed}/{retro.cardCount.total}
-                      </span>
-                    )}
-                    {duration && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" aria-hidden="true" />
-                        {duration}
-                      </span>
-                    )}
-                  </div>
-                </div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold truncate flex-1 min-w-0">{retro.title}</h3>
                 <Badge
                   variant={isActive ? "default" : "secondary"}
-                  className={`shrink-0 ${isActive ? "bg-primary text-primary-foreground" : ""}`}
+                  className={`shrink-0 text-[10px] ${isActive ? "bg-primary text-primary-foreground" : ""}`}
                 >
                   {isActive ? t("active") : t("statusCompleted")}
                 </Badge>
+              </div>
+              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground flex-wrap tabular-nums">
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" aria-hidden="true" />
+                  {formatDate(retro.date)}
+                </span>
+                {retro.location && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" aria-hidden="true" />
+                    {retro.location}
+                  </span>
+                )}
+                {retro.cardCount.total > 0 && (
+                  <span className="flex items-center gap-1">
+                    <MessageSquare className="h-3 w-3" aria-hidden="true" />
+                    {retro.cardCount.discussed}/{retro.cardCount.total}
+                  </span>
+                )}
+                {duration && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" aria-hidden="true" />
+                    {duration}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -125,13 +123,13 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-8">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-8 overflow-x-hidden">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-balance">{t("retros")}</h1>
         <Link href="/retros/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
-            {tNav("newRetro")}
+          <Button size="sm">
+            <Plus className="h-4 w-4 md:mr-2" aria-hidden="true" />
+            <span className="hidden md:inline">{tNav("newRetro")}</span>
           </Button>
         </Link>
       </div>
