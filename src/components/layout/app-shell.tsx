@@ -85,7 +85,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <Menu className="h-5 w-5" aria-hidden="true" />
             </SheetTrigger>
-            <SheetContent side="left" className="w-60 p-0">
+            <SheetContent side="left" className="w-60 p-0" style={{ overscrollBehavior: "contain" }}>
               <Suspense>
                 <SidebarContent />
               </Suspense>

@@ -59,6 +59,16 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Mobile: remove tap highlight, fast taps on interactive elements */
+  button,
+  a,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
 }
 
 /* Respect reduced motion preference globally */

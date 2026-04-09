@@ -15,10 +15,17 @@ export function useSwipe({ onSwipeLeft, onSwipeRight, threshold = 50 }: SwipeOpt
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX;
     startY.current = e.touches[0].clientY;
+    // Disable text selection during swipe
+    (e.currentTarget as HTMLElement).style.userSelect = "none";
+    (e.currentTarget as HTMLElement).style.webkitUserSelect = "none";
   }, []);
 
   const onTouchEnd = useCallback(
     (e: React.TouchEvent) => {
+      // Re-enable text selection
+      (e.currentTarget as HTMLElement).style.userSelect = "";
+      (e.currentTarget as HTMLElement).style.webkitUserSelect = "";
+
       const endX = e.changedTouches[0].clientX;
       const endY = e.changedTouches[0].clientY;
       const diffX = endX - startX.current;

@@ -294,7 +294,6 @@ export function CardsList({ cards: initialCards, categories, authors, allUsers =
                                 )}
                                 {changingCard === card.id ? (
                                   <select
-                                    autoFocus
                                     className="text-[10px] bg-transparent border border-input rounded px-1 py-0.5"
                                     defaultValue=""
                                     onChange={(e) => {
