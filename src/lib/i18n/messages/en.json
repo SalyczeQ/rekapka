@@ -71,7 +71,9 @@
     "assign": "Assign",
     "assigned": "Author assigned",
     "assignFailed": "Failed to assign author",
-    "undo": "Undo"
+    "undo": "Undo",
+    "cardDeleted": "Card deleted",
+    "deleteFailed": "Failed to delete card"
   },
   "card": {
     "addCard": "Add a card… (use :emoji: for emoji)",
@@ -176,6 +178,7 @@
     "avgPerCard": "Avg per card",
     "mostPopular": "Most popular",
     "avgCardLength": "Avg {words} words per card",
+    "showAllCards": "Show All Cards",
     "actionItemsCreated": "Action Items Created",
     "discussionDistribution": "Discussion Time Distribution",
     "deleteRetro": "Delete Retro",

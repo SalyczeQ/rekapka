@@ -71,7 +71,9 @@
     "assign": "Přiřadit",
     "assigned": "Autor přiřazen",
     "assignFailed": "Nepodařilo se přiřadit autora",
-    "undo": "Zpět"
+    "undo": "Zpět",
+    "cardDeleted": "Karta smazána",
+    "deleteFailed": "Nepodařilo se smazat kartu"
   },
   "card": {
     "addCard": "Přidat kartu… (použijte :emoji: pro emoji)",
@@ -176,6 +178,7 @@
     "avgPerCard": "Průměr na kartu",
     "mostPopular": "Nejpopulárnější",
     "avgCardLength": "Průměrně {words} slov na kartu",
+    "showAllCards": "Zobrazit všechny karty",
     "actionItemsCreated": "Vytvořené akční body",
     "discussionDistribution": "Rozložení doby diskuse",
     "deleteRetro": "Smazat retro",

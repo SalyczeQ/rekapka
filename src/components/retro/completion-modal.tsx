@@ -467,6 +467,11 @@ export function CompletionModal({
               {t("avgCardLength", { words: stats.avgCardWords })}
             </p>
           )}
+          <Link href={`/retros/${retro.id}/cards`} className="block mt-3">
+            <Button variant="outline" size="sm" className="w-full">
+              {t("showAllCards")}
+            </Button>
+          </Link>
         </CardContent>
       </Card>
 
