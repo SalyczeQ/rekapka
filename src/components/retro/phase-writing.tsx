@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CardInput } from "./card-input";
 import { CardItem } from "./card-item";
 import { AiGroupButton } from "./ai-group-button";
-import { AiReadButton } from "./ai-read-button";
 import { useSwipe } from "@/hooks/use-swipe";
 
 interface PhaseWritingProps {
@@ -129,10 +128,7 @@ export function PhaseWriting({
             <span>{t("othersCards", { count: othersCount })}</span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <AiGroupButton retroId={retro.id} cards={cards} onCardsChange={onCardsChange} />
-          <AiReadButton retroId={retro.id} cardCount={cards.length} />
-        </div>
+        <AiGroupButton retroId={retro.id} cards={cards} onCardsChange={onCardsChange} />
       </div>
 
       {/* Desktop: 3-column layout */}

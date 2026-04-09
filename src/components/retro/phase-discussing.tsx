@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { vibrate } from "@/lib/haptics";
 import { AiGroupButton } from "./ai-group-button";
-import { AiReadButton } from "./ai-read-button";
 import { ReadAloudButton } from "./read-aloud-button";
 import { DictationButton } from "./dictation-button";
 import { CardItem } from "./card-item";
@@ -407,7 +406,6 @@ export function PhaseDiscussing({
         {!cards.some((c) => c.groupLabel) && cards.length > 3 && (
           <AiGroupButton retroId={retro.id} cards={cards} onCardsChange={onCardsChange} />
         )}
-        <AiReadButton retroId={retro.id} cardCount={cards.length} />
       </div>
 
       {/* Add new card during discussion */}

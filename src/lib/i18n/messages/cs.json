@@ -127,19 +127,6 @@
     "noCards": "Žádné karty k seskupení. Vraťte se do fáze psaní.",
     "optional": "Seskupování je volitelné. Použijte fázový panel výše pro přechod k diskusi."
   },
-  "aiRead": {
-    "readCards": "AI čtení karet",
-    "reading": "Čtu…",
-    "reread": "Přečíst znovu",
-    "dismiss": "Zavřít",
-    "failed": "Nepodařilo se analyzovat karty",
-    "focusPoints": "Doporučené body k diskusi",
-    "mood": {
-      "positive": "Pozitivní",
-      "mixed": "Smíšené",
-      "concerned": "Znepokojivé"
-    }
-  },
   "completion": {
     "retroComplete": "Retro dokončeno!",
     "carryOver": "{count} neprodiskutovaných karet bude přeneseno do dalšího retra.",

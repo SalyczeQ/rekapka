@@ -127,19 +127,6 @@
     "noCards": "No cards to group yet. Add some cards first.",
     "optional": "Grouping is optional. It helps organize similar cards before discussion."
   },
-  "aiRead": {
-    "readCards": "AI Read Cards",
-    "reading": "Reading…",
-    "reread": "Re-read Cards",
-    "dismiss": "Dismiss",
-    "failed": "Failed to analyze cards",
-    "focusPoints": "Suggested discussion focus",
-    "mood": {
-      "positive": "Positive",
-      "mixed": "Mixed",
-      "concerned": "Concerned"
-    }
-  },
   "completion": {
     "retroComplete": "Retro Complete!",
     "carryOver": "{count} undiscussed cards will be carried over to the next retro.",
