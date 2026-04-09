@@ -14,7 +14,6 @@ import { createActionItem } from "@/lib/actions/action-items";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { vibrate } from "@/lib/haptics";
-import { ReadAloudButton } from "./read-aloud-button";
 import { DictationButton } from "./dictation-button";
 import { CardItem } from "./card-item";
 import { deleteActionItem } from "@/lib/actions/action-items";
@@ -54,9 +53,9 @@ export function PhaseDiscussing({
   const [cardTimer, setCardTimer] = useState(0);
   const [actionText, setActionText] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
-  const [showNotes, setShowNotes] = useState(false);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showNotesActions, setShowNotesActions] = useState(false);
   const [showAddCard, setShowAddCard] = useState(false);
   const [addCardCategoryId, setAddCardCategoryId] = useState(categories[0]?.id ?? "");
 
@@ -72,7 +71,7 @@ export function PhaseDiscussing({
       startCardDiscussion(currentCard.id);
     }
     // Reset UI state for new card
-    setShowNotes(false);
+    setShowNotesActions(false);
     setNotes(currentCard?.discussionNotes ?? "");
     setActionText("");
     setAssigneeId("");
@@ -213,8 +212,11 @@ export function PhaseDiscussing({
     );
   }
 
+  const cardActions = currentCard ? actionItems.filter((a) => a.cardId === currentCard.id) : [];
+
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-2xl mx-auto space-y-3">
+      {/* 1. Card counter + timer */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
           {t("card.cardOf", { current: currentIndex + 1, total: sortedCards.length, discussed: discussedCount })}
@@ -230,21 +232,19 @@ export function PhaseDiscussing({
         </span>
       </div>
 
+      {/* 2. Card */}
       <Card className="border-2">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm text-muted-foreground">
               {getCategoryName(currentCard.categoryId)}
             </CardTitle>
-            <div className="flex items-center gap-1.5">
-              <ReadAloudButton text={currentCard.text} />
-              <span
-                className="text-xs px-2 py-0.5 rounded-full text-white"
-                style={{ backgroundColor: currentCard.authorColor }}
-              >
-                {currentCard.authorName}
-              </span>
-            </div>
+            <span
+              className="text-xs px-2 py-0.5 rounded-full text-white"
+              style={{ backgroundColor: currentCard.authorColor }}
+            >
+              {currentCard.authorName}
+            </span>
           </div>
         </CardHeader>
         <CardContent>
@@ -257,121 +257,7 @@ export function PhaseDiscussing({
         </CardContent>
       </Card>
 
-      {/* Discussion notes */}
-      {showNotes ? (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label htmlFor="discussion-notes" className="text-xs text-muted-foreground flex items-center gap-1">
-              <StickyNote className="h-3 w-3" aria-hidden="true" />
-              {t("discussion.notes")}
-            </label>
-            <DictationButton enabled={dictationEnabled} onTranscript={(text) => setNotes((prev) => prev + (prev ? " " : "") + text)} className="h-6 w-6" />
-          </div>
-          <textarea
-            id="discussion-notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="w-full text-sm bg-transparent border border-input rounded-md px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-            rows={3}
-            placeholder={t("discussion.notesPlaceholder")}
-          />
-        </div>
-      ) : (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs text-muted-foreground"
-          onClick={() => setShowNotes(true)}
-        >
-          <StickyNote className="h-3 w-3 mr-1" aria-hidden="true" />
-          {t("discussion.addNotes")}
-        </Button>
-      )}
-
-      {/* Inline action item creation */}
-      <div className="flex gap-2">
-        <DictationButton enabled={dictationEnabled} onTranscript={(text) => setActionText((prev) => prev + (prev ? " " : "") + text)} className="h-8 w-8 shrink-0" />
-        <input
-          type="text"
-          value={actionText}
-          onChange={(e) => setActionText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleAddActionItem();
-            }
-          }}
-          placeholder={t("discussion.actionItemPlaceholder")}
-          aria-label="Action item text"
-          autoComplete="off"
-          className="flex-1 min-w-0 text-sm bg-transparent border border-input rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
-        />
-        <select
-          value={assigneeId}
-          onChange={(e) => setAssigneeId(e.target.value)}
-          className="text-sm bg-transparent border border-input rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
-          aria-label="Assign action item to"
-        >
-          <option value="">{t("discussion.unassigned")}</option>
-          {allUsers.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.name}
-            </option>
-          ))}
-        </select>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8 shrink-0"
-          onClick={handleAddActionItem}
-          disabled={!actionText.trim()}
-          aria-label="Add action item"
-        >
-          <Plus className="h-4 w-4" aria-hidden="true" />
-        </Button>
-      </div>
-
-      {/* Action items for current card */}
-      {currentCard && (() => {
-        const cardActions = actionItems.filter((a) => a.cardId === currentCard.id);
-        if (cardActions.length === 0) return null;
-        return (
-          <div className="space-y-1">
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
-              {t("discussion.actionItems", { count: cardActions.length })}
-            </span>
-            <ul className="space-y-1">
-              {cardActions.map((item) => (
-                <li
-                  key={item.id}
-                  className="flex items-center gap-2 text-sm bg-muted/50 rounded-md px-3 py-1.5"
-                >
-                  <span className="flex-1 min-w-0 truncate">{item.text}</span>
-                  {item.assigneeName && (
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      → {item.assigneeName}
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    className="text-muted-foreground hover:text-destructive shrink-0"
-                    aria-label={`Delete action item: ${item.text}`}
-                    onClick={async () => {
-                      await deleteActionItem(item.id);
-                      onActionItemsChange(actionItems.filter((a) => a.id !== item.id));
-                    }}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      })()}
-
-      {/* Skip / Discuss buttons */}
+      {/* 3. Primary actions — Skip / Done */}
       <div className="flex gap-2">
         {currentCard.isSkipped ? (
           <Button
@@ -400,6 +286,86 @@ export function PhaseDiscussing({
           {t("card.skippedCards", { count: skippedCards.length })}
         </p>
       )}
+
+      {/* 4. Collapsible: Notes & Actions */}
+      <div className="border-t pt-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full text-xs text-muted-foreground justify-between"
+          onClick={() => setShowNotesActions(!showNotesActions)}
+        >
+          <span className="flex items-center gap-1">
+            <StickyNote className="h-3 w-3" aria-hidden="true" />
+            {t("discussion.notesAndActions")}
+            {cardActions.length > 0 && (
+              <span className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0 rounded-full">
+                {cardActions.length}
+              </span>
+            )}
+          </span>
+          <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", showNotesActions && "rotate-180")} aria-hidden="true" />
+        </Button>
+        {showNotesActions && (
+          <div className="mt-2 space-y-3">
+            {/* Notes */}
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full text-sm bg-transparent border border-input rounded-md px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+              rows={2}
+              placeholder={t("discussion.notesPlaceholder")}
+            />
+
+            {/* Action item input */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={actionText}
+                onChange={(e) => setActionText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); handleAddActionItem(); }
+                }}
+                placeholder={t("discussion.actionItemPlaceholder")}
+                autoComplete="off"
+                className="flex-1 min-w-0 text-sm bg-transparent border border-input rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <select
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
+                className="hidden md:block text-sm bg-transparent border border-input rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
+                aria-label="Assign action item to"
+              >
+                <option value="">{t("discussion.unassigned")}</option>
+                {allUsers.map((u) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+              <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handleAddActionItem} disabled={!actionText.trim()} aria-label="Add action item">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </div>
+
+            {/* Action items list */}
+            {cardActions.length > 0 && (
+              <ul className="space-y-1">
+                {cardActions.map((item) => (
+                  <li key={item.id} className="flex items-center gap-2 text-sm bg-muted/50 rounded-md px-3 py-1.5">
+                    <span className="flex-1 min-w-0 truncate">{item.text}</span>
+                    {item.assigneeName && (
+                      <span className="text-xs text-muted-foreground shrink-0">→ {item.assigneeName}</span>
+                    )}
+                    <button type="button" className="text-muted-foreground hover:text-destructive shrink-0" aria-label={`Delete: ${item.text}`}
+                      onClick={async () => { await deleteActionItem(item.id); onActionItemsChange(actionItems.filter((a) => a.id !== item.id)); }}>
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
 
 
       {/* Add new card during discussion */}
