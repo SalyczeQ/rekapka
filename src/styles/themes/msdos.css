@@ -58,7 +58,7 @@
 .dark[data-ui-theme="msdos"] ::-webkit-scrollbar-thumb { background: oklch(0.95 0.05 90); }
 .dark[data-ui-theme="msdos"] ::-webkit-scrollbar-thumb:hover { background: oklch(1 0.08 90); }
 
-[data-ui-theme="msdos"] * {
+[data-ui-theme="msdos"] *:not([data-color-swatch]) {
   font-family: "Courier New", Courier, monospace !important;
   border-radius: 0 !important;
   text-shadow: none !important;
@@ -71,7 +71,7 @@
 }
 
 /* Blocky button style — light */
-[data-ui-theme="msdos"] button,
+[data-ui-theme="msdos"] button:not([data-color-swatch]),
 [data-ui-theme="msdos"] [role="button"] {
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -88,7 +88,7 @@
 }
 
 /* Blocky button style — dark */
-.dark[data-ui-theme="msdos"] button,
+.dark[data-ui-theme="msdos"] button:not([data-color-swatch]),
 .dark[data-ui-theme="msdos"] [role="button"] {
   background: oklch(0.25 0.08 260) !important;
   color: oklch(0.95 0 0) !important;

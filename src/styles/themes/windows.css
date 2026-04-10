@@ -55,13 +55,13 @@
 .dark[data-ui-theme="windows"] ::-webkit-scrollbar-track { background: oklch(0.22 0.01 220); }
 .dark[data-ui-theme="windows"] ::-webkit-scrollbar-thumb { background: oklch(0.32 0.01 220); border-color: oklch(0.5 0 0) oklch(0.15 0 0) oklch(0.15 0 0) oklch(0.5 0 0); }
 
-[data-ui-theme="windows"] * {
+[data-ui-theme="windows"] *:not([data-color-swatch]) {
   font-family: "Tahoma", "MS Sans Serif", Arial, sans-serif !important;
   border-radius: 0 !important;
 }
 
 /* 3D beveled buttons — light */
-[data-ui-theme="windows"] button,
+[data-ui-theme="windows"] button:not([data-color-swatch]),
 [data-ui-theme="windows"] [role="button"] {
   border-style: outset !important;
   border-width: 2px !important;
@@ -79,7 +79,7 @@
 }
 
 /* 3D beveled buttons — dark */
-.dark[data-ui-theme="windows"] button,
+.dark[data-ui-theme="windows"] button:not([data-color-swatch]),
 .dark[data-ui-theme="windows"] [role="button"] {
   border-color: oklch(0.5 0 0) oklch(0.15 0 0) oklch(0.15 0 0) oklch(0.5 0 0) !important;
   background: oklch(0.27 0.01 220) !important;

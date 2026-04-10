@@ -56,7 +56,7 @@
 .dark[data-ui-theme="cli"] ::-webkit-scrollbar-thumb { background: oklch(0.7 0.2 145); }
 .dark[data-ui-theme="cli"] ::-webkit-scrollbar-thumb:hover { background: oklch(0.8 0.2 145); }
 
-[data-ui-theme="cli"] * {
+[data-ui-theme="cli"] *:not([data-color-swatch]) {
   font-family: "JetBrains Mono", ui-monospace, monospace !important;
   border-radius: 0 !important;
 }
@@ -109,7 +109,7 @@
 }
 
 /* Buttons — light */
-[data-ui-theme="cli"] button,
+[data-ui-theme="cli"] button:not([data-color-swatch]),
 [data-ui-theme="cli"] [role="button"] {
   background: oklch(0.88 0.02 145) !important;
   color: oklch(0.15 0.12 145) !important;
@@ -123,7 +123,7 @@
 }
 
 /* Buttons — dark */
-.dark[data-ui-theme="cli"] button,
+.dark[data-ui-theme="cli"] button:not([data-color-swatch]),
 .dark[data-ui-theme="cli"] [role="button"] {
   background: oklch(0.15 0.02 145) !important;
   color: oklch(0.8 0.15 145) !important;
