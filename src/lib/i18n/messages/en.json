@@ -108,7 +108,8 @@
     "failedAddAction": "Failed to add action item",
     "actionItems": "Action items ({count})",
     "addCard": "Add a new card",
-    "selectCategory": "Select category"
+    "selectCategory": "Select category",
+    "reactionFailed": "Failed to react"
   },
   "grouping": {
     "title": "Group Cards",
@@ -199,6 +200,10 @@
     "showAllCards": "Show All Cards",
     "actionItemsCreated": "Action Items Created",
     "discussionDistribution": "Discussion Time Distribution",
+    "reactionLeaderboard": "Reaction Awards",
+    "mostReactedCard": "Most reacted card",
+    "reactionsCount": "reactions",
+    "totalReactions": "total reactions",
     "deleteRetro": "Delete Retro",
     "confirmDelete": "Are you sure? This cannot be undone.",
     "cancel": "Cancel"
@@ -215,6 +220,8 @@
     "language": "Language",
     "dictation": "Enable voice dictation",
     "dictationHint": "Show microphone button on card inputs for speech-to-text",
+    "reactionSounds": "Reaction sound effects",
+    "reactionSoundsHint": "Play a subtle sound when emoji reactions are added",
     "saveSettings": "Save Settings",
     "saved": "Settings saved",
     "groupSettings": "Group Settings",

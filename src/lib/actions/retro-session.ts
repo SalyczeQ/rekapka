@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { cards, categories, retros, tags, cardTags, users } from "@/lib/db/schema";
+import { cards, categories, retros, tags, cardTags, users, cardReactions } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth/session";
 import { createCardSchema, updateCardSchema } from "@/lib/validators";
 import { eq, and, sql } from "drizzle-orm";
@@ -114,6 +114,11 @@ export async function advancePhase(retroId: string, newPhase: string) {
       discussionEndedAt: null,
       discussionDurationSec: null,
     }).where(eq(cards.retroId, retroId));
+
+    // Clear all reactions for this retro's cards
+    await db.delete(cardReactions).where(
+      sql`${cardReactions.cardId} IN (SELECT id FROM cards WHERE retro_id = ${retroId})`
+    );
   }
 
   if (newPhase === "completed") {

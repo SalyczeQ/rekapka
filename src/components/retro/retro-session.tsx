@@ -22,11 +22,14 @@ interface RetroSessionProps {
   initialActionItems: SerializedActionItem[];
   initialPredictions: SerializedPrediction[];
   unresolvedPredictions: SerializedPrediction[];
+  initialReactions: Record<string, Record<string, number>>;
+  initialUserReactions: Record<string, string[]>;
   currentUserId: string;
   currentUserEmail?: string;
   allUsers: { id: string; name: string; color: string; image: string | null }[];
   photoUrl?: string | null;
   dictationEnabled?: boolean;
+  reactionSoundsEnabled?: boolean;
 }
 
 export function RetroSession({
@@ -36,11 +39,14 @@ export function RetroSession({
   initialActionItems,
   initialPredictions,
   unresolvedPredictions: initialUnresolved,
+  initialReactions,
+  initialUserReactions,
   currentUserId,
   currentUserEmail,
   allUsers,
   photoUrl,
   dictationEnabled = true,
+  reactionSoundsEnabled = false,
 }: RetroSessionProps) {
   const t = useTranslations();
   const [currentCards, setCards] = useState(initialCards);
@@ -49,6 +55,8 @@ export function RetroSession({
   const [actionItems, setActionItems] = useState(initialActionItems);
   const [predictions, setPredictions] = useState(initialPredictions);
   const [unresolvedPredictions, setUnresolvedPredictions] = useState(initialUnresolved);
+  const [reactions, setReactions] = useState(initialReactions);
+  const [userReactions] = useState(initialUserReactions);
 
   const handleSSEEvent = useCallback((event: SSEEvent) => {
     switch (event.type) {
@@ -124,6 +132,12 @@ export function RetroSession({
       case "action_item_deleted":
         setActionItems((prev) => prev.filter((a) => a.id !== event.itemId));
         break;
+      case "reactions_updated":
+        setReactions((prev) => ({
+          ...prev,
+          [event.cardId]: event.reactions,
+        }));
+        break;
       case "retro_updated":
         setCurrentRetro((prev) => ({ ...prev, ...event.changes }));
         break;
@@ -193,6 +207,9 @@ export function RetroSession({
             onCardsChange={setCards}
             onActionItemsChange={setActionItems}
             dictationEnabled={dictationEnabled}
+            reactions={reactions}
+            userReactions={userReactions}
+            reactionSoundsEnabled={reactionSoundsEnabled}
           />
         )}
 
@@ -219,6 +236,7 @@ export function RetroSession({
             allUsers={allUsers}
             initialPhotoUrl={photoUrl}
             currentUserEmail={currentUserEmail}
+            reactions={reactions}
           />
         )}
       </div>

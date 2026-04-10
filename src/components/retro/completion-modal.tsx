@@ -29,6 +29,7 @@ import {
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { vibrate } from "@/lib/haptics";
+import { REACTION_EMOJIS } from "@/lib/reactions";
 
 interface CompletionModalProps {
   retro: SerializedRetro;
@@ -38,6 +39,7 @@ interface CompletionModalProps {
   allUsers: { id: string; name: string; color: string; image: string | null }[];
   initialPhotoUrl?: string | null;
   currentUserEmail?: string;
+  reactions?: Record<string, Record<string, number>>;
 }
 
 export function CompletionModal({
@@ -48,6 +50,7 @@ export function CompletionModal({
   allUsers,
   initialPhotoUrl,
   currentUserEmail,
+  reactions = {},
 }: CompletionModalProps) {
   const t = useTranslations("completion");
   const [generatingStats, setGeneratingStats] = useState(false);
@@ -157,6 +160,62 @@ export function CompletionModal({
       actionItemCount: actionItems.length,
     };
   }, [cards, categories, allUsers, retro, actionItems]);
+
+  // Reaction stats: most reacted card per emoji + overall leaderboard
+  const reactionStats = useMemo(() => {
+    const cardEntries = Object.entries(reactions);
+    if (cardEntries.length === 0) return null;
+
+    // Total reactions per card
+    const cardTotals: { cardId: string; total: number }[] = cardEntries.map(([cardId, emojis]) => ({
+      cardId,
+      total: Object.values(emojis).reduce((a, b) => a + b, 0),
+    }));
+
+    // Most reacted card overall
+    const sortedByTotal = [...cardTotals].sort((a, b) => b.total - a.total);
+    const mostReactedCardId = sortedByTotal[0]?.total > 0 ? sortedByTotal[0].cardId : null;
+    const mostReactedCard = mostReactedCardId ? cards.find((c) => c.id === mostReactedCardId) : null;
+    const mostReactedTotal = sortedByTotal[0]?.total ?? 0;
+
+    // Per-emoji winners: which card got the most of each emoji
+    const emojiWinners: { emoji: string; display: string; cardId: string; count: number; cardText: string; authorName: string; authorColor: string }[] = [];
+    for (const { key, display } of REACTION_EMOJIS) {
+      let bestCardId = "";
+      let bestCount = 0;
+      for (const [cardId, emojis] of cardEntries) {
+        const count = emojis[key] ?? 0;
+        if (count > bestCount) {
+          bestCount = count;
+          bestCardId = cardId;
+        }
+      }
+      if (bestCount > 0) {
+        const card = cards.find((c) => c.id === bestCardId);
+        if (card) {
+          emojiWinners.push({
+            emoji: key,
+            display,
+            cardId: bestCardId,
+            count: bestCount,
+            cardText: card.text,
+            authorName: card.authorName,
+            authorColor: card.authorColor,
+          });
+        }
+      }
+    }
+
+    // Total reactions count
+    const totalReactions = cardTotals.reduce((sum, c) => sum + c.total, 0);
+
+    return {
+      mostReactedCard,
+      mostReactedTotal,
+      emojiWinners,
+      totalReactions,
+    };
+  }, [reactions, cards]);
 
   const handleSaveLocation = async () => {
     if (!location.trim() || savingLocation) return;
@@ -483,6 +542,56 @@ export function CompletionModal({
             <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
               <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
               {t("actionItemsCreated")}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Reaction leaderboard */}
+      {reactionStats && reactionStats.totalReactions > 0 && (
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm">{t("reactionLeaderboard")}</CardTitle>
+          </CardHeader>
+          <CardContent className="pb-3 space-y-3">
+            {/* Most reacted card */}
+            {reactionStats.mostReactedCard && (
+              <div className="bg-muted/50 rounded-md px-3 py-2">
+                <p className="text-xs text-muted-foreground mb-1">{t("mostReactedCard")}</p>
+                <div className="flex items-start gap-2">
+                  <div
+                    className="w-1 self-stretch rounded-full shrink-0"
+                    style={{ backgroundColor: reactionStats.mostReactedCard.authorColor }}
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm line-clamp-2">{reactionStats.mostReactedCard.text}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {reactionStats.mostReactedCard.authorName} — {reactionStats.mostReactedTotal} {t("reactionsCount")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Per-emoji winners */}
+            <div className="space-y-1.5">
+              {reactionStats.emojiWinners.map((winner) => (
+                <div key={winner.emoji} className="flex items-center gap-2 text-sm">
+                  <span className="text-base w-6 text-center shrink-0">{winner.display}</span>
+                  <span className="tabular-nums font-medium shrink-0 w-6 text-center">{winner.count}</span>
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <div
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ backgroundColor: winner.authorColor }}
+                    />
+                    <span className="truncate text-muted-foreground">{winner.cardText}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-xs text-muted-foreground text-center tabular-nums">
+              {reactionStats.totalReactions} {t("totalReactions")}
             </p>
           </CardContent>
         </Card>

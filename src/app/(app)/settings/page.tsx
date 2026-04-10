@@ -142,6 +142,25 @@ export default async function SettingsPage() {
                 {t("dictationHint")}
               </p>
             </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <input
+                  key={String(user.reactionSoundsEnabled)}
+                  type="checkbox"
+                  id="settings-reaction-sounds"
+                  name="reactionSoundsEnabled"
+                  defaultChecked={user.reactionSoundsEnabled}
+                  className="h-4 w-4 shrink-0 rounded border-input accent-primary"
+                />
+                <Label htmlFor="settings-reaction-sounds" className="leading-none">
+                  {t("reactionSounds")}
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground pl-7">
+                {t("reactionSoundsHint")}
+              </p>
+            </div>
           </CardContent>
         </Card>
 

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { retros, categories, cards, users, actionItems, predictions } from "@/lib/db/schema";
 import { eq, ne, and, sql, or, lte, isNull } from "drizzle-orm";
+import { getCardReactions, getUserReactions } from "@/lib/actions/reactions";
 import { requireAuth } from "@/lib/auth/session";
 import { RetroSession } from "@/components/retro/retro-session";
 import { getPhotoUrl } from "@/lib/s3/upload";
@@ -27,7 +28,7 @@ export default async function RetroPage({ params }: RetroPageProps) {
 
   // Fetch current user's dictation preference
   const [currentUserRecord] = await db
-    .select({ dictationEnabled: users.dictationEnabled })
+    .select({ dictationEnabled: users.dictationEnabled, reactionSoundsEnabled: users.reactionSoundsEnabled })
     .from(users)
     .where(eq(users.id, currentUser.id!))
     .limit(1);
@@ -149,6 +150,13 @@ export default async function RetroPage({ params }: RetroPageProps) {
     })
   );
 
+  // Fetch reactions for all cards
+  const cardIds = retroCards.map((c) => c.id);
+  const [cardReactionsMap, userReactionsMap] = await Promise.all([
+    getCardReactions(cardIds),
+    getUserReactions(cardIds, currentUser.id!),
+  ]);
+
   // Resolve signed photo URL if photo exists
   const photoSignedUrl = retro.photoUrl
     ? await getPhotoUrl(retro.photoUrl).catch(() => null)
@@ -162,11 +170,14 @@ export default async function RetroPage({ params }: RetroPageProps) {
       initialActionItems={serialize<SerializedActionItem[]>(retroActionItems)}
       initialPredictions={serialize<SerializedPrediction[]>(predictionsWithNames)}
       unresolvedPredictions={serialize<SerializedPrediction[]>(unresolvedWithNames)}
+      initialReactions={cardReactionsMap}
+      initialUserReactions={userReactionsMap}
       currentUserId={currentUser.id!}
       currentUserEmail={currentUser.email ?? ""}
       allUsers={serialize<{ id: string; name: string; color: string; image: string | null }[]>(allUsers)}
       photoUrl={photoSignedUrl}
       dictationEnabled={currentUserRecord?.dictationEnabled ?? true}
+      reactionSoundsEnabled={currentUserRecord?.reactionSoundsEnabled ?? false}
     />
   );
 }

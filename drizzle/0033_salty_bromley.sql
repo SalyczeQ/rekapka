@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "reaction_sounds_enabled" boolean DEFAULT false NOT NULL;

@@ -225,6 +225,20 @@
       "when": 1775776992803,
       "tag": "0031_shocking_ken_ellis",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1775804324613,
+      "tag": "0032_big_the_renegades",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1775807173025,
+      "tag": "0033_salty_bromley",
+      "breakpoints": true
     }
   ]
 }

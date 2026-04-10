@@ -108,7 +108,8 @@
     "failedAddAction": "Nepodařilo se přidat akční bod",
     "actionItems": "Akční body ({count})",
     "addCard": "Přidat novou kartu",
-    "selectCategory": "Vybrat kategorii"
+    "selectCategory": "Vybrat kategorii",
+    "reactionFailed": "Nepodařilo se reagovat"
   },
   "grouping": {
     "title": "Seskupit karty",
@@ -199,6 +200,10 @@
     "showAllCards": "Zobrazit všechny karty",
     "actionItemsCreated": "Vytvořené akční body",
     "discussionDistribution": "Rozložení doby diskuse",
+    "reactionLeaderboard": "Ceny za reakce",
+    "mostReactedCard": "Karta s nejvíce reakcemi",
+    "reactionsCount": "reakcí",
+    "totalReactions": "reakcí celkem",
     "deleteRetro": "Smazat retro",
     "confirmDelete": "Opravdu? Toto nelze vrátit zpět.",
     "cancel": "Zrušit"
@@ -231,6 +236,8 @@
     "language": "Jazyk",
     "dictation": "Povolit hlasové diktování",
     "dictationHint": "Zobrazit tlačítko mikrofonu na vstupech karet pro převod řeči na text",
+    "reactionSounds": "Zvukové efekty reakcí",
+    "reactionSoundsHint": "Přehrát jemný zvuk při přidání emoji reakce",
     "saveSettings": "Uložit nastavení",
     "saved": "Nastavení uloženo",
     "groupSettings": "Nastavení skupiny",

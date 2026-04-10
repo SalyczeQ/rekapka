@@ -16,6 +16,7 @@ import { useTranslations } from "next-intl";
 import { vibrate } from "@/lib/haptics";
 import { DictationButton } from "./dictation-button";
 import { CardItem } from "./card-item";
+import { ReactionBar } from "./reaction-bar";
 import { deleteActionItem } from "@/lib/actions/action-items";
 import { CardInput } from "./card-input";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,9 @@ interface PhaseDiscussingProps {
   onCardsChange: (cards: SerializedCard[]) => void;
   onActionItemsChange: (items: SerializedActionItem[]) => void;
   dictationEnabled?: boolean;
+  reactions: Record<string, Record<string, number>>;
+  userReactions: Record<string, string[]>;
+  reactionSoundsEnabled?: boolean;
 }
 
 export function PhaseDiscussing({
@@ -44,6 +48,9 @@ export function PhaseDiscussing({
   onCardsChange,
   onActionItemsChange,
   dictationEnabled = true,
+  reactions,
+  userReactions,
+  reactionSoundsEnabled = false,
 }: PhaseDiscussingProps) {
   const t = useTranslations();
   const activeCards = cards.filter((c) => !c.isDiscussed && !c.isSkipped);
@@ -254,6 +261,12 @@ export function PhaseDiscussing({
             isOwn={currentCard.authorId === currentUserId}
             showContent={true}
             blurred={true}
+          />
+          <ReactionBar
+            cardId={currentCard.id}
+            reactions={reactions[currentCard.id] ?? {}}
+            userReactions={userReactions[currentCard.id] ?? []}
+            soundEnabled={reactionSoundsEnabled}
           />
         </CardContent>
       </Card>

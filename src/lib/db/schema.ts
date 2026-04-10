@@ -24,6 +24,7 @@ export const users = pgTable(
     locale: text("locale").notNull().default("cs"),
     uiTheme: text("ui_theme").notNull().default("default"),
     dictationEnabled: boolean("dictation_enabled").notNull().default(true),
+    reactionSoundsEnabled: boolean("reaction_sounds_enabled").notNull().default(false),
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   },
@@ -181,6 +182,27 @@ export const cards = pgTable(
     index("cards_retro_id_idx").on(table.retroId),
     index("cards_category_id_idx").on(table.categoryId),
     index("cards_author_id_idx").on(table.authorId),
+  ]
+);
+
+// ─── Card Reactions ──────────────────────────────────────────────────────────
+
+export const cardReactions = pgTable(
+  "card_reactions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    cardId: uuid("card_id")
+      .notNull()
+      .references(() => cards.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    emoji: text("emoji").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("card_reactions_card_user_emoji_idx").on(table.cardId, table.userId, table.emoji),
+    index("card_reactions_card_id_idx").on(table.cardId),
   ]
 );
 

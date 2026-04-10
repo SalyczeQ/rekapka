@@ -16,6 +16,7 @@ export async function updateUserSettings(_prev: unknown, formData: FormData) {
     const uiTheme = formData.get("uiTheme") as string;
     const color = formData.get("color") as string;
     const dictationEnabled = formData.get("dictationEnabled");
+    const reactionSoundsEnabled = formData.get("reactionSoundsEnabled");
 
     const updates: Record<string, unknown> = { updatedAt: new Date() };
     if (name) updates.name = name;
@@ -24,6 +25,7 @@ export async function updateUserSettings(_prev: unknown, formData: FormData) {
     if (color) updates.color = color;
     // Checkbox: present in form = "on", absent = null
     updates.dictationEnabled = dictationEnabled === "on";
+    updates.reactionSoundsEnabled = reactionSoundsEnabled === "on";
 
     await db.update(users).set(updates).where(eq(users.id, user.id!));
 

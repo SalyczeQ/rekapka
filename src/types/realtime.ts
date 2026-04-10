@@ -12,6 +12,7 @@ export type SSEEvent =
   | { type: "action_item_added"; item: SSEActionItemData }
   | { type: "action_item_updated"; itemId: string; changes: Partial<SSEActionItemData> }
   | { type: "action_item_deleted"; itemId: string }
+  | { type: "reactions_updated"; cardId: string; reactions: Record<string, number> }
   | { type: "retro_updated"; changes: Record<string, unknown> }
   | { type: "prediction_added"; prediction: SSEPredictionData }
   | { type: "prediction_resolved"; predictionId: string; status: string }
