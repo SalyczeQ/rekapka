@@ -163,6 +163,7 @@ export const cards = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
     text: text("text").notNull(),
+    imageKey: text("image_key"),
     sortOrder: integer("sort_order").notNull().default(0),
     groupLabel: text("group_label"),
     isDiscussed: boolean("is_discussed").notNull().default(false),

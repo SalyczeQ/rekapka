@@ -1,0 +1,1 @@
+ALTER TABLE "cards" ADD COLUMN "image_key" text;

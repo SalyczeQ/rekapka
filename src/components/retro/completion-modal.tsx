@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Clock,
   MessageSquare,
@@ -238,8 +239,6 @@ export function CompletionModal({
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingPhoto(true);
-    // Show local preview immediately
-    setPhotoPreviewUrl(URL.createObjectURL(file));
     try {
       const fd = new FormData();
       fd.set("file", file);
@@ -248,6 +247,13 @@ export function CompletionModal({
         body: fd,
       });
       if (!res.ok) throw new Error();
+      const { key } = await res.json();
+      // Fetch presigned URL for the uploaded photo
+      const urlRes = await fetch(`/api/retros/${retro.id}/photo-url?key=${encodeURIComponent(key)}`);
+      if (urlRes.ok) {
+        const { url } = await urlRes.json();
+        setPhotoPreviewUrl(url);
+      }
       setPhotoUploaded(true);
       toast.success(t("photoSaved"));
     } catch {
@@ -333,11 +339,13 @@ export function CompletionModal({
             </Label>
             {photoPreviewUrl && (
               <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={photoPreviewUrl}
                   alt="Team photo"
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 672px"
+                  unoptimized={photoPreviewUrl.includes("localhost")}
                 />
               </div>
             )}

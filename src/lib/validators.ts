@@ -22,6 +22,7 @@ export const updateCardSchema = z.object({
   text: z.string().min(1).max(2000).optional(),
   categoryId: z.string().uuid().optional(),
   discussionNotes: z.string().max(5000).optional(),
+  imageKey: z.string().nullable().optional(),
 });
 
 export const createActionItemSchema = z.object({

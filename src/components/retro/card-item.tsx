@@ -5,6 +5,8 @@ import { deleteCard, updateCard } from "@/lib/actions/retro-session";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Trash2, Eye, EyeOff, Pencil, Check, X } from "lucide-react";
+import { LinkifiedText } from "@/components/shared/linkified-text";
+import { CardImage } from "./card-image";
 import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -26,6 +28,7 @@ interface CardItemProps {
   showContent: boolean;
   blurred?: boolean;
   editable?: boolean;
+  imageUrl?: string | null;
   onDelete?: (cardId: string) => void;
   onUpdate?: (cardId: string, changes: { text: string }) => void;
   onReveal?: () => void;
@@ -37,6 +40,7 @@ export function CardItem({
   showContent,
   blurred = false,
   editable = false,
+  imageUrl,
   onDelete,
   onUpdate,
   onReveal,
@@ -56,6 +60,7 @@ export function CardItem({
   }, [editing]);
 
   const [deleting, setDeleting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [saving, setSaving] = useState(false);
 
   async function handleDelete() {
@@ -67,6 +72,7 @@ export function CardItem({
     } catch {
       toast.error(t("error.failedDeleteCard"));
       setDeleting(false);
+      setConfirmingDelete(false);
     }
   }
 
@@ -177,8 +183,11 @@ export function CardItem({
                     }
                   }}
                 >
-                  {showContent || revealed ? card.text : t("card.hiddenCard")}
+                  {showContent || revealed ? <LinkifiedText text={card.text} /> : t("card.hiddenCard")}
                 </p>
+                {(showContent || revealed) && imageUrl && (
+                  <CardImage url={imageUrl} />
+                )}
                 <span className="text-xs text-muted-foreground mt-1 block">
                   {card.authorName}
                 </span>
@@ -219,17 +228,39 @@ export function CardItem({
                 <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
               </Button>
             )}
-            {isOwn && onDelete && !editing && (
+            {isOwn && onDelete && !editing && !confirmingDelete && (
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 text-destructive"
-                onClick={handleDelete}
-                disabled={deleting}
+                onClick={() => setConfirmingDelete(true)}
                 aria-label="Delete card"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               </Button>
+            )}
+            {confirmingDelete && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-destructive"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  aria-label="Confirm delete"
+                >
+                  <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setConfirmingDelete(false)}
+                  aria-label="Cancel delete"
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                </Button>
+              </>
             )}
           </div>
         </div>

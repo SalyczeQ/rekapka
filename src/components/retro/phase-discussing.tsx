@@ -32,6 +32,7 @@ interface PhaseDiscussingProps {
   onCardsChange: (cards: SerializedCard[]) => void;
   onActionItemsChange: (items: SerializedActionItem[]) => void;
   dictationEnabled?: boolean;
+  imageUrls?: Record<string, string>;
   reactions: Record<string, Record<string, number>>;
   userReactions: Record<string, string[]>;
   reactionSoundsEnabled?: boolean;
@@ -47,6 +48,7 @@ export function PhaseDiscussing({
   onCardsChange,
   onActionItemsChange,
   dictationEnabled = true,
+  imageUrls,
   reactions,
   userReactions,
   reactionSoundsEnabled = false,
@@ -312,6 +314,7 @@ export function PhaseDiscussing({
               isOwn={currentCard.authorId === currentUserId}
               showContent={true}
               blurred={true}
+              imageUrl={imageUrls?.[currentCard.id]}
             />
             <ReactionBar
               cardId={currentCard.id}
