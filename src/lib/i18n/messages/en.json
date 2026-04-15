@@ -33,7 +33,8 @@
     "stats": "Stats",
     "settings": "Settings",
     "activeRetro": "Retro",
-    "predictions": "Predictions"
+    "predictions": "Predictions",
+    "retros": "Back in Time"
   },
   "retro": {
     "title": "Title",
