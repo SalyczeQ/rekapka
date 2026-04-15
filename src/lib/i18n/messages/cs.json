@@ -78,7 +78,8 @@
     "deleteFailed": "Nepodařilo se smazat kartu"
   },
   "card": {
-    "addCard": "Přidat kartu… (použijte :emoji: pro emoji)",
+    "addCard": "Přidat kartu…",
+    "addCardFirst": "Buď první, kdo přidá kartu!",
     "sendCard": "Odeslat kartu",
     "myCards": "Moje karty ({count})",
     "othersWriting": "Také píší",

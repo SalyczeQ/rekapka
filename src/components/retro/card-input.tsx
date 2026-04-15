@@ -22,9 +22,10 @@ interface CardInputProps {
   onCardAdded?: (card: SerializedCard) => void;
   onImageUploaded?: (cardId: string, url: string) => void;
   dictationEnabled?: boolean;
+  isEmpty?: boolean;
 }
 
-export function CardInput({ retroId, categoryId, currentUser, onCardAdded, onImageUploaded, dictationEnabled = true }: CardInputProps) {
+export function CardInput({ retroId, categoryId, currentUser, onCardAdded, onImageUploaded, dictationEnabled = true, isEmpty = false }: CardInputProps) {
   const t = useTranslations("card");
   const tErr = useTranslations("error");
   const [text, setText] = useState("");
@@ -126,7 +127,7 @@ export function CardInput({ retroId, categoryId, currentUser, onCardAdded, onIma
     <div className="space-y-2">
       <div className="relative">
         <Textarea
-          placeholder={t("addCard")}
+          placeholder={isEmpty ? t("addCardFirst") : t("addCard")}
           aria-label={t("addCard")}
           value={text}
           onChange={(e) => setText(e.target.value)}

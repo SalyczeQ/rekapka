@@ -125,6 +125,7 @@ function CategoryColumn({
         retroId={retroId}
         categoryId={category.id}
         currentUser={currentUser}
+        isEmpty={cards.length === 0}
         onCardAdded={onCardAdded}
         onImageUploaded={onImageUploaded}
         dictationEnabled={dictationEnabled}
