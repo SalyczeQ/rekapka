@@ -3,12 +3,22 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/shared/logo";
+import { db } from "@/lib/db";
+import { retros } from "@/lib/db/schema";
+import { inArray, desc } from "drizzle-orm";
 
 export default async function Home() {
   const session = await auth();
 
   if (session?.user) {
-    redirect("/retros");
+    const [activeRetro] = await db
+      .select({ id: retros.id })
+      .from(retros)
+      .where(inArray(retros.status, ["writing", "discussing"]))
+      .orderBy(desc(retros.updatedAt))
+      .limit(1);
+
+    redirect(activeRetro ? `/retros/${activeRetro.id}` : "/retros");
   }
 
   return (
