@@ -24,6 +24,26 @@ export async function uploadPhoto(
   return key;
 }
 
+export async function uploadCardPhoto(
+  file: Buffer,
+  contentType: string,
+  retroId: string
+): Promise<string> {
+  const ext = contentType.split("/")[1] || "jpg";
+  const key = `cards/${retroId}/${uuidv4()}.${ext}`;
+
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: key,
+      Body: file,
+      ContentType: contentType,
+    })
+  );
+
+  return key;
+}
+
 export async function getPhotoUrl(key: string): Promise<string> {
   const command = new GetObjectCommand({
     Bucket: S3_BUCKET,

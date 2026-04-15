@@ -55,6 +55,7 @@ export default async function RetroPage({ params }: RetroPageProps) {
         discussionEndedAt: cards.discussionEndedAt,
         discussionDurationSec: cards.discussionDurationSec,
         carriedFromRetroId: cards.carriedFromRetroId,
+        imageKey: cards.imageKey,
         createdAt: cards.createdAt,
         updatedAt: cards.updatedAt,
         authorName: users.name,
@@ -162,6 +163,18 @@ export default async function RetroPage({ params }: RetroPageProps) {
     ? await getPhotoUrl(retro.photoUrl).catch(() => null)
     : null;
 
+  // Resolve signed URLs for card images
+  const cardImageUrls: Record<string, string> = {};
+  await Promise.all(
+    retroCards
+      .filter((c) => c.imageKey)
+      .map(async (c) => {
+        try {
+          cardImageUrls[c.id] = await getPhotoUrl(c.imageKey!);
+        } catch { /* ignore failed URL generation */ }
+      })
+  );
+
   return (
     <RetroSession
       retro={serialize<SerializedRetro>(retro)}
@@ -176,6 +189,7 @@ export default async function RetroPage({ params }: RetroPageProps) {
       currentUserEmail={currentUser.email ?? ""}
       allUsers={serialize<{ id: string; name: string; color: string; image: string | null }[]>(allUsers)}
       photoUrl={photoSignedUrl}
+      cardImageUrls={cardImageUrls}
       dictationEnabled={currentUserRecord?.dictationEnabled ?? true}
       reactionSoundsEnabled={currentUserRecord?.reactionSoundsEnabled ?? false}
     />

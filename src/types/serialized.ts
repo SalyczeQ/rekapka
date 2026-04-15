@@ -63,6 +63,7 @@ export interface SerializedCard {
   categoryId: string;
   authorId: string;
   text: string;
+  imageKey: string | null;
   sortOrder: number;
   groupLabel: string | null;
   isDiscussed: boolean;
