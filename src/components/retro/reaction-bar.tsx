@@ -21,13 +21,13 @@ export function ReactionBar({ cardId, reactions, userReactions, disabled, soundE
   const [animating, setAnimating] = useState<Record<string, boolean>>({});
   const prevReactionsRef = useRef(reactions);
 
-  // Sync from parent when SSE updates arrive
+  // Sync reaction COUNTS from parent (SSE updates from other users).
+  // Reference comparison works here — parent creates new objects on SSE events.
   if (reactions !== localReactions && !isPending) {
     setLocalReactions(reactions);
   }
-  if (userReactions !== localUserReactions && !isPending) {
-    setLocalUserReactions(userReactions);
-  }
+  // userReactions: NO sync — parent never updates this prop (useState with no setter).
+  // Local state is the source of truth, managed via optimistic updates + rollback.
 
   // Detect count increases from SSE (other users reacting) and trigger animation
   useEffect(() => {
@@ -66,7 +66,6 @@ export function ReactionBar({ cardId, reactions, userReactions, disabled, soundE
       vibrate(15);
 
       const isActive = localUserReactions.includes(emoji);
-      const currentCount = localReactions[emoji] ?? 0;
 
       // Trigger animation and sound only on add
       if (!isActive) {
@@ -77,10 +76,13 @@ export function ReactionBar({ cardId, reactions, userReactions, disabled, soundE
         }, 600);
       }
 
-      // Optimistic update
+      // Optimistic update — use functional updates reading from prev state
+      // to avoid stale closure values when SSE syncs trigger re-renders
       setLocalReactions((prev) => ({
         ...prev,
-        [emoji]: isActive ? Math.max(0, currentCount - 1) : currentCount + 1,
+        [emoji]: isActive
+          ? Math.max(0, (prev[emoji] ?? 0) - 1)
+          : (prev[emoji] ?? 0) + 1,
       }));
       setLocalUserReactions((prev) =>
         isActive ? prev.filter((e) => e !== emoji) : [...prev, emoji]
@@ -90,9 +92,12 @@ export function ReactionBar({ cardId, reactions, userReactions, disabled, soundE
         try {
           await toggleReaction(cardId, emoji);
         } catch {
+          // Rollback — reverse the optimistic change
           setLocalReactions((prev) => ({
             ...prev,
-            [emoji]: isActive ? currentCount : Math.max(0, currentCount - 1),
+            [emoji]: isActive
+              ? (prev[emoji] ?? 0) + 1
+              : Math.max(0, (prev[emoji] ?? 0) - 1),
           }));
           setLocalUserReactions((prev) =>
             isActive ? [...prev, emoji] : prev.filter((e) => e !== emoji)
@@ -100,7 +105,7 @@ export function ReactionBar({ cardId, reactions, userReactions, disabled, soundE
         }
       });
     },
-    [cardId, localReactions, localUserReactions, disabled]
+    [cardId, localUserReactions, disabled, soundEnabled]
   );
 
   return (
