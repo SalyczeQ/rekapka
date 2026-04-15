@@ -109,7 +109,9 @@
     "actionItems": "Action items ({count})",
     "addCard": "Add a new card",
     "selectCategory": "Select category",
-    "reactionFailed": "Failed to react"
+    "reactionFailed": "Failed to react",
+    "totalTime": "total",
+    "assignTo": "Assign to"
   },
   "grouping": {
     "title": "Group Cards",

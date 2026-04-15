@@ -109,7 +109,9 @@
     "actionItems": "Akční body ({count})",
     "addCard": "Přidat novou kartu",
     "selectCategory": "Vybrat kategorii",
-    "reactionFailed": "Nepodařilo se reagovat"
+    "reactionFailed": "Nepodařilo se reagovat",
+    "totalTime": "celkem",
+    "assignTo": "Přiřadit komu"
   },
   "grouping": {
     "title": "Seskupit karty",
