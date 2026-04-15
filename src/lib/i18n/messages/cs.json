@@ -33,7 +33,8 @@
     "stats": "Statistiky",
     "settings": "Nastavení",
     "activeRetro": "Retro",
-    "predictions": "Předpovědi"
+    "predictions": "Předpovědi",
+    "retros": "Zpět v čase"
   },
   "retro": {
     "title": "Název",
@@ -117,7 +118,9 @@
     "actionItems": "Akční body ({count})",
     "addCard": "Přidat novou kartu",
     "selectCategory": "Vybrat kategorii",
-    "reactionFailed": "Nepodařilo se reagovat"
+    "reactionFailed": "Nepodařilo se reagovat",
+    "totalTime": "celkem",
+    "assignTo": "Přiřadit komu"
   },
   "grouping": {
     "title": "Seskupit karty",

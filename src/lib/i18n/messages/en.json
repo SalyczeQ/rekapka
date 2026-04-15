@@ -33,7 +33,8 @@
     "stats": "Stats",
     "settings": "Settings",
     "activeRetro": "Retro",
-    "predictions": "Predictions"
+    "predictions": "Predictions",
+    "retros": "Back in Time"
   },
   "retro": {
     "title": "Title",
@@ -117,7 +118,9 @@
     "actionItems": "Action items ({count})",
     "addCard": "Add a new card",
     "selectCategory": "Select category",
-    "reactionFailed": "Failed to react"
+    "reactionFailed": "Failed to react",
+    "totalTime": "total",
+    "assignTo": "Assign to"
   },
   "grouping": {
     "title": "Group Cards",
