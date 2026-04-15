@@ -78,7 +78,7 @@ function CategoryColumn({
 
   return (
     <div
-      className="space-y-3 rounded-xl border p-4"
+      className="space-y-3 rounded-xl border p-3 md:p-4"
       style={{
         backgroundColor: bgColor,
         borderColor: borderColor,

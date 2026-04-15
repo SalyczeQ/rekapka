@@ -204,7 +204,7 @@ export function RetroSession({
         <ParticipantBar participants={participantList} />
       </div>
 
-      <div className="flex-1 overflow-auto p-4 md:p-6" key={currentPhase}>
+      <div className="flex-1 overflow-auto p-2 md:p-6" key={currentPhase}>
         {currentPhase === "writing" && (
           <PhaseWriting
             retro={currentRetro}
