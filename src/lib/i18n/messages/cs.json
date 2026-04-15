@@ -79,6 +79,13 @@
   },
   "card": {
     "addCard": "Přidat kartu… (použijte :emoji: pro emoji)",
+    "sendCard": "Odeslat kartu",
+    "myCards": "Moje karty ({count})",
+    "othersWriting": "Také píší",
+    "attachPhoto": "Připojit fotku",
+    "removePhoto": "Odstranit fotku",
+    "uploadingPhoto": "Nahrávání fotky…",
+    "photoTooLarge": "Fotka musí být obrázek do 20 MB",
     "yourCards": "Vaše karty: {count}",
     "othersCards": "Ostatní: {count}",
     "hiddenCard": "Skrytá karta",

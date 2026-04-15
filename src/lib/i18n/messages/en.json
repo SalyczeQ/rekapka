@@ -79,6 +79,13 @@
   },
   "card": {
     "addCard": "Add a card… (use :emoji: for emoji)",
+    "sendCard": "Send card",
+    "myCards": "My cards ({count})",
+    "othersWriting": "Also writing",
+    "attachPhoto": "Attach photo",
+    "removePhoto": "Remove photo",
+    "uploadingPhoto": "Uploading photo…",
+    "photoTooLarge": "Photo must be an image under 20 MB",
     "yourCards": "Your cards: {count}",
     "othersCards": "Others: {count}",
     "hiddenCard": "Hidden card",

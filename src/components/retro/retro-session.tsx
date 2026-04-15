@@ -12,6 +12,7 @@ import { PhaseDiscussing } from "./phase-discussing";
 import { ParticipantBar } from "./participant-bar";
 import { CompletionModal } from "./completion-modal";
 import { PredictionSection } from "./prediction-section";
+import { AiGroupButton } from "./ai-group-button";
 
 export type { SerializedRetro, SerializedCategory, SerializedCard, SerializedActionItem, SerializedPrediction };
 
@@ -28,6 +29,7 @@ interface RetroSessionProps {
   currentUserEmail?: string;
   allUsers: { id: string; name: string; color: string; image: string | null }[];
   photoUrl?: string | null;
+  cardImageUrls?: Record<string, string>;
   dictationEnabled?: boolean;
   reactionSoundsEnabled?: boolean;
 }
@@ -45,6 +47,7 @@ export function RetroSession({
   currentUserEmail,
   allUsers,
   photoUrl,
+  cardImageUrls: initialCardImageUrls = {},
   dictationEnabled = true,
   reactionSoundsEnabled = false,
 }: RetroSessionProps) {
@@ -57,6 +60,7 @@ export function RetroSession({
   const [unresolvedPredictions, setUnresolvedPredictions] = useState(initialUnresolved);
   const [reactions, setReactions] = useState(initialReactions);
   const [userReactions] = useState(initialUserReactions);
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>(initialCardImageUrls);
 
   const handleSSEEvent = useCallback((event: SSEEvent) => {
     switch (event.type) {
@@ -66,6 +70,12 @@ export function RetroSession({
           vibrate(30);
           return [...prev, event.card];
         });
+        if (event.card.imageKey) {
+          fetch(`/api/cards/${event.card.id}/photo-url`)
+            .then((r) => r.json())
+            .then(({ url }) => setImageUrls((prev) => ({ ...prev, [event.card.id]: url })))
+            .catch(() => {});
+        }
         break;
       case "card_updated":
         setCards((prev) =>
@@ -73,6 +83,12 @@ export function RetroSession({
             c.id === event.cardId ? { ...c, ...event.changes } : c
           )
         );
+        if (event.changes.imageKey) {
+          fetch(`/api/cards/${event.cardId}/photo-url`)
+            .then((r) => r.json())
+            .then(({ url }) => setImageUrls((prev) => ({ ...prev, [event.cardId]: url })))
+            .catch(() => {});
+        }
         break;
       case "card_deleted":
         setCards((prev) => prev.filter((c) => c.id !== event.cardId));
@@ -176,10 +192,15 @@ export function RetroSession({
   return (
     <div className="flex flex-col h-full">
       <PhaseBar currentPhase={currentPhase} retroId={retro.id} onPhaseChange={setCurrentPhase} currentUserEmail={currentUserEmail} />
-      <div className="px-4 py-1 flex items-center justify-end gap-2">
-        {!connected && (
-          <span className="text-xs text-muted-foreground">{t("common.reconnecting")}</span>
-        )}
+      <div className="px-4 py-1 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          {currentPhase === "writing" && (
+            <AiGroupButton retroId={retro.id} cards={currentCards} onCardsChange={setCards} />
+          )}
+          {!connected && (
+            <span className="text-xs text-muted-foreground">{t("common.reconnecting")}</span>
+          )}
+        </div>
         <ParticipantBar participants={participantList} />
       </div>
 
@@ -192,6 +213,8 @@ export function RetroSession({
             currentUserId={currentUserId}
             currentUser={allUsers.find((u) => u.id === currentUserId) ?? { id: currentUserId, name: t("common.you"), color: "#888", image: null }}
             onCardsChange={setCards}
+            imageUrls={imageUrls}
+            onImageUploaded={(cardId, url) => setImageUrls((prev) => ({ ...prev, [cardId]: url }))}
             dictationEnabled={dictationEnabled}
           />
         )}
@@ -206,6 +229,7 @@ export function RetroSession({
             allUsers={allUsers}
             onCardsChange={setCards}
             onActionItemsChange={setActionItems}
+            imageUrls={imageUrls}
             dictationEnabled={dictationEnabled}
             reactions={reactions}
             userReactions={userReactions}
