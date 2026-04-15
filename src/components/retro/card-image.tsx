@@ -35,7 +35,7 @@ export function CardImage({ url, alt = "Card photo" }: CardImageProps) {
           width={200}
           height={150}
           className="w-full h-auto max-h-[150px] object-cover"
-          unoptimized
+          unoptimized={url.includes("localhost")}
         />
       </button>
 
