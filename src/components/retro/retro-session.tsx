@@ -95,6 +95,13 @@ export function RetroSession({
         break;
       case "phase_changed":
         setCurrentPhase(event.phase);
+        if (event.phase === "completed") {
+          setCurrentRetro((prev) => ({
+            ...prev,
+            status: "completed",
+            completedAt: new Date().toISOString(),
+          }));
+        }
         break;
       case "group_updated":
         setCards((prev) => {
