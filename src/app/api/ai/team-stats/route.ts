@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { retros, cards, categories, users, appSettings } from "@/lib/db/schema";
 import { eq, sql, desc } from "drizzle-orm";
 import OpenAI from "openai";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 function getOpenAI() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -76,6 +77,11 @@ Respond in JSON: {"recurringThemes": [...], "sentimentTrend": "...", "unresolved
     if (content) {
       const jsonStr = content.replace(/```json?\s*/g, "").replace(/```/g, "").trim();
       const parsed = JSON.parse(jsonStr);
+      await logAudit({
+        actor: session.user,
+        action: AUDIT_ACTIONS.AI_TEAM_STATS,
+        metadata: { retroCount: retroIds.length },
+      });
       return NextResponse.json(parsed);
     }
 

@@ -1,15 +1,16 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { actionItems } from "@/lib/db/schema";
+import { actionItems, users, retros } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth/session";
 import { createActionItemSchema } from "@/lib/validators";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { emit } from "@/lib/realtime/event-bus";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 export async function createActionItem(formData: FormData) {
-  await requireAuth();
+  const user = await requireAuth();
 
   const input = createActionItemSchema.parse({
     retroId: formData.get("retroId"),
@@ -30,6 +31,36 @@ export async function createActionItem(formData: FormData) {
     })
     .returning();
 
+  let assigneeName: string | null = null;
+  if (item.assigneeId) {
+    const [assignee] = await db
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, item.assigneeId))
+      .limit(1);
+    assigneeName = assignee?.name ?? null;
+  }
+  const [retro] = await db
+    .select({ title: retros.title })
+    .from(retros)
+    .where(eq(retros.id, item.retroId))
+    .limit(1);
+
+  await logAudit({
+    actor: user,
+    action: AUDIT_ACTIONS.ACTION_ITEM_CREATE,
+    entityType: "action_item",
+    entityId: item.id,
+    retroId: item.retroId,
+    metadata: {
+      retroId: item.retroId,
+      retroTitle: retro?.title ?? null,
+      assigneeId: item.assigneeId,
+      assigneeName,
+      textLength: item.text.length,
+    },
+  });
+
   emit(input.retroId, {
     type: "action_item_added",
     item: {
@@ -46,7 +77,7 @@ export async function createActionItem(formData: FormData) {
 }
 
 export async function updateActionItemStatus(itemId: string, status: string) {
-  await requireAuth();
+  const user = await requireAuth();
 
   const [item] = await db
     .update(actionItems)
@@ -55,6 +86,19 @@ export async function updateActionItemStatus(itemId: string, status: string) {
     .returning();
 
   if (item) {
+    const [retro] = await db
+      .select({ title: retros.title })
+      .from(retros)
+      .where(eq(retros.id, item.retroId))
+      .limit(1);
+    await logAudit({
+      actor: user,
+      action: AUDIT_ACTIONS.ACTION_ITEM_UPDATE,
+      entityType: "action_item",
+      entityId: itemId,
+      retroId: item.retroId,
+      metadata: { retroId: item.retroId, retroTitle: retro?.title ?? null, status },
+    });
     emit(item.retroId, {
       type: "action_item_updated",
       itemId,
@@ -65,7 +109,7 @@ export async function updateActionItemStatus(itemId: string, status: string) {
 }
 
 export async function deleteActionItem(itemId: string) {
-  await requireAuth();
+  const user = await requireAuth();
 
   const [item] = await db
     .delete(actionItems)
@@ -73,6 +117,19 @@ export async function deleteActionItem(itemId: string) {
     .returning();
 
   if (item) {
+    const [retro] = await db
+      .select({ title: retros.title })
+      .from(retros)
+      .where(eq(retros.id, item.retroId))
+      .limit(1);
+    await logAudit({
+      actor: user,
+      action: AUDIT_ACTIONS.ACTION_ITEM_DELETE,
+      entityType: "action_item",
+      entityId: itemId,
+      retroId: item.retroId,
+      metadata: { retroId: item.retroId, retroTitle: retro?.title ?? null },
+    });
     emit(item.retroId, { type: "action_item_deleted", itemId });
     revalidatePath(`/retros/${item.retroId}`);
   }

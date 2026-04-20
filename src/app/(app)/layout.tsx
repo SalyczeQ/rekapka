@@ -38,10 +38,15 @@ export default async function AppLayout({
     .orderBy(desc(retros.updatedAt))
     .limit(1);
 
+  const isAdmin = session.user.email === "salay14@gmail.com";
+
   return (
     <>
       <UIThemeSetter theme={uiTheme} />
-      <AppShell activeRetro={activeRetro ? { id: activeRetro.id, title: activeRetro.title, status: activeRetro.status } : null}>
+      <AppShell
+        activeRetro={activeRetro ? { id: activeRetro.id, title: activeRetro.title, status: activeRetro.status } : null}
+        isAdmin={isAdmin}
+      >
         {children}
       </AppShell>
     </>

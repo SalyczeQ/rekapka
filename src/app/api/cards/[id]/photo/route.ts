@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { cards } from "@/lib/db/schema";
+import { cards, retros } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { uploadCardPhoto } from "@/lib/s3/upload";
 import { emit } from "@/lib/realtime/event-bus";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 
@@ -59,6 +60,27 @@ export async function POST(
     type: "card_updated",
     cardId,
     changes: { imageKey: key },
+  });
+
+  const [retro] = await db
+    .select({ title: retros.title })
+    .from(retros)
+    .where(eq(retros.id, card.retroId))
+    .limit(1);
+
+  await logAudit({
+    actor: session.user,
+    action: AUDIT_ACTIONS.CARD_PHOTO_UPLOAD,
+    entityType: "card",
+    entityId: cardId,
+    retroId: card.retroId,
+    metadata: {
+      retroId: card.retroId,
+      retroTitle: retro?.title ?? null,
+      mimeType: file.type,
+      sizeBytes: file.size,
+      imageKey: key,
+    },
   });
 
   return NextResponse.json({ key });

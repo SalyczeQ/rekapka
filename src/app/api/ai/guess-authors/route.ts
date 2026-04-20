@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { cards, users } from "@/lib/db/schema";
 import { eq, ne, sql } from "drizzle-orm";
 import OpenAI from "openai";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 const ANONYMOUS_ID = "00000000-0000-4000-8000-000000000000";
 
@@ -93,6 +94,12 @@ export async function POST() {
       console.error("Batch guess failed:", error);
     }
   }
+
+  await logAudit({
+    actor: session.user,
+    action: AUDIT_ACTIONS.AI_GUESS_AUTHORS,
+    metadata: { total: anonCards.length, guessed, unchanged },
+  });
 
   return NextResponse.json({
     total: anonCards.length,

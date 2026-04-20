@@ -6,6 +6,7 @@ import {
   integer,
   boolean,
   date,
+  jsonb,
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
@@ -258,6 +259,33 @@ export const actionItems = pgTable(
     index("action_items_retro_id_idx").on(table.retroId),
     index("action_items_assignee_id_idx").on(table.assigneeId),
     index("action_items_status_idx").on(table.status),
+  ]
+);
+
+// ─── Audit Logs ──────────────────────────────────────────────────────────────
+
+export const auditLogs = pgTable(
+  "audit_logs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    userEmail: text("user_email"),
+    userName: text("user_name"),
+    action: text("action").notNull(),
+    entityType: text("entity_type"),
+    entityId: text("entity_id"),
+    retroId: uuid("retro_id").references(() => retros.id, { onDelete: "set null" }),
+    metadata: jsonb("metadata"),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("audit_logs_user_id_idx").on(table.userId),
+    index("audit_logs_action_idx").on(table.action),
+    index("audit_logs_entity_type_idx").on(table.entityType),
+    index("audit_logs_retro_id_idx").on(table.retroId),
+    index("audit_logs_created_at_idx").on(table.createdAt),
   ]
 );
 

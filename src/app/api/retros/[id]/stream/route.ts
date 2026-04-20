@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { users, retros } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { createSSEStream } from "@/lib/realtime/stream";
 
@@ -17,23 +17,29 @@ export async function GET(
 
   const { id: retroId } = await params;
 
-  // Fetch user info for presence
-  const [user] = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      color: users.color,
-      image: users.image,
-    })
-    .from(users)
-    .where(eq(users.id, session.user.id))
-    .limit(1);
+  const [[user], [retro]] = await Promise.all([
+    db
+      .select({
+        id: users.id,
+        name: users.name,
+        color: users.color,
+        image: users.image,
+      })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1),
+    db
+      .select({ title: retros.title })
+      .from(retros)
+      .where(eq(retros.id, retroId))
+      .limit(1),
+  ]);
 
   if (!user) {
     return new Response("User not found", { status: 404 });
   }
 
-  const stream = createSSEStream(retroId, user);
+  const stream = createSSEStream(retroId, user, retro?.title ?? null);
 
   return new Response(stream, {
     headers: {

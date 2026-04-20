@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import OpenAI from "openai";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 function getOpenAI() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -27,6 +28,12 @@ export async function POST(request: NextRequest) {
     });
 
     const buffer = Buffer.from(await response.arrayBuffer());
+
+    await logAudit({
+      actor: session.user,
+      action: AUDIT_ACTIONS.AI_READ_ALOUD,
+      metadata: { voice: voice || "nova", textLength: text.length, bytes: buffer.length },
+    });
 
     return new NextResponse(buffer, {
       headers: {

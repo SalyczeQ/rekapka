@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { cards, categories, users, retros, actionItems } from "@/lib/db/schema";
 import { eq, count } from "drizzle-orm";
 import { generateRetroStats } from "@/lib/ai/generate-stats";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -24,6 +25,14 @@ export async function POST(request: NextRequest) {
 
   // Return cached stats if available
   if (retro.statsCache) {
+    await logAudit({
+      actor: session.user,
+      action: AUDIT_ACTIONS.AI_STATS,
+      entityType: "retro",
+      entityId: retroId,
+      retroId,
+      metadata: { retroId, retroTitle: retro.title, cached: true },
+    });
     return NextResponse.json(JSON.parse(retro.statsCache));
   }
 
@@ -59,6 +68,15 @@ export async function POST(request: NextRequest) {
     .update(retros)
     .set({ statsCache: JSON.stringify(stats) })
     .where(eq(retros.id, retroId));
+
+  await logAudit({
+    actor: session.user,
+    action: AUDIT_ACTIONS.AI_STATS,
+    entityType: "retro",
+    entityId: retroId,
+    retroId,
+    metadata: { retroId, retroTitle: retro.title, cached: false, cardCount: retroCards.length },
+  });
 
   return NextResponse.json(stats);
 }

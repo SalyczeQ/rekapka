@@ -34,7 +34,8 @@
     "settings": "Nastavení",
     "activeRetro": "Retro",
     "predictions": "Předpovědi",
-    "retros": "Zpět v čase"
+    "retros": "Zpět v čase",
+    "audit": "Audit"
   },
   "retro": {
     "title": "Název",
@@ -329,5 +330,30 @@
     "sentimentTrend": "Trend nálady",
     "unresolvedPatterns": "Nevyřešené vzorce",
     "recommendations": "Doporučení"
+  },
+  "audit": {
+    "title": "Audit",
+    "description": "Všechny akce uživatelů v aplikaci.",
+    "filters": "Filtry",
+    "user": "Uživatel",
+    "action": "Akce",
+    "entityType": "Entita",
+    "retro": "Retro",
+    "from": "Od",
+    "to": "Do",
+    "apply": "Použít",
+    "clear": "Vymazat",
+    "anyUser": "Kdokoliv",
+    "anyAction": "Jakákoliv akce",
+    "anyEntity": "Jakákoliv entita",
+    "anyRetro": "Jakékoliv retro",
+    "timestamp": "Čas",
+    "ip": "IP",
+    "details": "Detaily",
+    "noResults": "Žádné události neodpovídají filtrům.",
+    "unauthorized": "Přístup zamítnut.",
+    "total": "{count} událostí",
+    "prev": "Předchozí",
+    "next": "Další"
   }
 }

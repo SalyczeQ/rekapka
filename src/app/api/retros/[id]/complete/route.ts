@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { retros, cards, categories } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { emit } from "@/lib/realtime/event-bus";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 export async function POST(
   request: NextRequest,
@@ -92,6 +93,31 @@ export async function POST(
       }
     }
   }
+
+  let carriedToTitle: string | null = null;
+  if (nextRetroId) {
+    const [nextRetro] = await db
+      .select({ title: retros.title })
+      .from(retros)
+      .where(eq(retros.id, nextRetroId))
+      .limit(1);
+    carriedToTitle = nextRetro?.title ?? null;
+  }
+
+  await logAudit({
+    actor: session.user,
+    action: AUDIT_ACTIONS.RETRO_COMPLETE,
+    entityType: "retro",
+    entityId: id,
+    retroId: id,
+    metadata: {
+      retroId: id,
+      retroTitle: retro.title,
+      totalDurationSec,
+      carriedTo: nextRetroId ?? null,
+      carriedToTitle,
+    },
+  });
 
   emit(id, { type: "phase_changed", phase: "completed" });
 

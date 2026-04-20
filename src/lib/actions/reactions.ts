@@ -7,6 +7,7 @@ import { eq, and, sql, inArray } from "drizzle-orm";
 import { emit } from "@/lib/realtime/event-bus";
 import { REACTION_EMOJIS } from "@/lib/reactions";
 import type { ReactionKey } from "@/lib/reactions";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 const validKeys = new Set<string>(REACTION_EMOJIS.map((e) => e.key));
 
@@ -60,6 +61,14 @@ export async function toggleReaction(cardId: string, emoji: string) {
     .limit(1);
 
   if (card) {
+    await logAudit({
+      actor: user,
+      action: AUDIT_ACTIONS.REACTION_TOGGLE,
+      entityType: "card",
+      entityId: cardId,
+      retroId: card.retroId,
+      metadata: { emoji, added: !existing },
+    });
     emit(card.retroId, {
       type: "reactions_updated",
       cardId,
