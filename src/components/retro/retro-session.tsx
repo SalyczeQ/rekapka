@@ -198,7 +198,7 @@ export function RetroSession({
 
   return (
     <div className="flex flex-col h-full">
-      <PhaseBar currentPhase={currentPhase} retroId={retro.id} onPhaseChange={setCurrentPhase} currentUserEmail={currentUserEmail} />
+      <PhaseBar currentPhase={currentPhase} retroId={retro.id} retroTitle={currentRetro.title} onPhaseChange={setCurrentPhase} currentUserEmail={currentUserEmail} />
       <div className="px-4 py-1 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {currentPhase === "writing" && (
