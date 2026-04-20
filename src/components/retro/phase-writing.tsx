@@ -258,7 +258,7 @@ export function PhaseWriting({
   return (
     <div className="space-y-4">
       {/* Desktop: 3-column layout */}
-      <div className="hidden md:grid md:grid-cols-3 md:gap-6">
+      <div className="hidden lg:grid lg:grid-cols-3 lg:gap-6">
         {categories.map((cat) => (
           <CategoryColumn
             key={cat.id}
@@ -277,8 +277,8 @@ export function PhaseWriting({
         ))}
       </div>
 
-      {/* Mobile: tabs with swipe */}
-      <div className="md:hidden" style={{ touchAction: "manipulation" }}>
+      {/* Mobile + narrow desktop: tabs with swipe */}
+      <div className="lg:hidden" style={{ touchAction: "manipulation" }}>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as string)} {...swipeHandlers}>
           <TabsList className="w-full">
             {categories.map((cat) => (
