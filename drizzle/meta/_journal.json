@@ -246,6 +246,13 @@
       "when": 1776267464564,
       "tag": "0034_opposite_lizard",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1776673557329,
+      "tag": "0035_audit_logs",
+      "breakpoints": true
     }
   ]
 }
