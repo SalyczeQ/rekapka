@@ -34,7 +34,8 @@
     "settings": "Settings",
     "activeRetro": "Retro",
     "predictions": "Predictions",
-    "retros": "Back in Time"
+    "retros": "Back in Time",
+    "audit": "Audit Log"
   },
   "retro": {
     "title": "Title",
@@ -308,5 +309,29 @@
     "sentimentTrend": "Sentiment Trend",
     "unresolvedPatterns": "Unresolved Patterns",
     "recommendations": "Recommendations"
+  },
+  "audit": {
+    "title": "Audit Log",
+    "description": "All user actions across the app.",
+    "filters": "Filters",
+    "user": "User",
+    "action": "Action",
+    "entityType": "Entity",
+    "retro": "Retro",
+    "from": "From",
+    "to": "To",
+    "apply": "Apply",
+    "clear": "Clear",
+    "anyUser": "Any user",
+    "anyAction": "Any action",
+    "anyEntity": "Any entity",
+    "timestamp": "Time",
+    "ip": "IP",
+    "details": "Details",
+    "noResults": "No audit events match these filters.",
+    "unauthorized": "Not authorized.",
+    "total": "{count} events",
+    "prev": "Previous",
+    "next": "Next"
   }
 }
