@@ -16,6 +16,7 @@ export type SSEEvent =
   | { type: "retro_updated"; changes: Record<string, unknown> }
   | { type: "prediction_added"; prediction: SSEPredictionData }
   | { type: "prediction_resolved"; predictionId: string; status: string }
+  | { type: "prediction_deleted"; predictionId: string }
   | { type: "presence"; users: SSEPresenceUser[] }
   | { type: "heartbeat" };
 

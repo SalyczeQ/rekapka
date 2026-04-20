@@ -14,6 +14,7 @@ interface PredictionSectionProps {
   predictions: SerializedPrediction[];
   unresolvedFromPast: SerializedPrediction[];
   currentUserId: string;
+  currentUserEmail?: string;
   allUsers: { id: string; name: string }[];
   onPredictionsChange: (predictions: SerializedPrediction[]) => void;
   onUnresolvedChange: (predictions: SerializedPrediction[]) => void;
@@ -24,6 +25,7 @@ export function PredictionSection({
   predictions,
   unresolvedFromPast,
   currentUserId,
+  currentUserEmail,
   allUsers,
   onPredictionsChange,
   onUnresolvedChange,
@@ -66,12 +68,16 @@ export function PredictionSection({
                 predictions={unresolvedFromPast}
                 currentRetroId={retroId}
                 currentUserId={currentUserId}
+                currentUserEmail={currentUserEmail}
                 onUpdate={(id, status) => {
                   onUnresolvedChange(
                     unresolvedFromPast.map((p) =>
                       p.id === id ? { ...p, status } : p
                     )
                   );
+                }}
+                onDelete={(id) => {
+                  onUnresolvedChange(unresolvedFromPast.filter((p) => p.id !== id));
                 }}
               />
             </div>
@@ -85,12 +91,16 @@ export function PredictionSection({
                 predictions={predictions}
                 currentRetroId={retroId}
                 currentUserId={currentUserId}
+                currentUserEmail={currentUserEmail}
                 onUpdate={(id, status) => {
                   onPredictionsChange(
                     predictions.map((p) =>
                       p.id === id ? { ...p, status } : p
                     )
                   );
+                }}
+                onDelete={(id) => {
+                  onPredictionsChange(predictions.filter((p) => p.id !== id));
                 }}
               />
             </div>
