@@ -13,6 +13,7 @@ import { SignOutButton } from "@/components/shared/sign-out-button";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useRetroHeaderTitle } from "./retro-header-context";
 
 interface ActiveRetro {
   id: string;
@@ -86,6 +87,7 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, activeRetro, isAdmin }: AppShellProps) {
+  const retroHeaderTitle = useRetroHeaderTitle();
   return (
     <div className="flex min-h-screen w-full overflow-x-hidden">
       {/* Desktop sidebar */}
@@ -111,8 +113,8 @@ export function AppShell({ children, activeRetro, isAdmin }: AppShellProps) {
               </Suspense>
             </SheetContent>
           </Sheet>
-          <Link href="/retros" className="font-bold">
-            Rekapka
+          <Link href="/retros" className="font-bold truncate min-w-0 flex-1 text-center px-2">
+            {retroHeaderTitle ?? "Rekapka"}
           </Link>
           <div className="flex items-center gap-1">
             <LocaleToggle />

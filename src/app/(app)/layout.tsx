@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { users, retros } from "@/lib/db/schema";
 import { eq, inArray, desc } from "drizzle-orm";
 import { AppShell } from "@/components/layout/app-shell";
+import { RetroHeaderProvider } from "@/components/layout/retro-header-context";
 import { UIThemeSetter } from "@/components/shared/ui-theme-setter";
 
 export default async function AppLayout({
@@ -41,7 +42,7 @@ export default async function AppLayout({
   const isAdmin = session.user.email === "salay14@gmail.com";
 
   return (
-    <>
+    <RetroHeaderProvider>
       <UIThemeSetter theme={uiTheme} />
       <AppShell
         activeRetro={activeRetro ? { id: activeRetro.id, title: activeRetro.title, status: activeRetro.status } : null}
@@ -49,6 +50,6 @@ export default async function AppLayout({
       >
         {children}
       </AppShell>
-    </>
+    </RetroHeaderProvider>
   );
 }

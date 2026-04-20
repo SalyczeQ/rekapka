@@ -76,7 +76,7 @@ export function PhaseBar({ currentPhase, retroId, retroTitle, onPhaseChange, cur
         </nav>
 
         {retroTitle && (
-          <h1 className="flex-1 min-w-0 px-3 text-sm font-semibold truncate text-center">
+          <h1 className="hidden md:block flex-1 min-w-0 px-3 text-sm font-semibold truncate text-center">
             {retroTitle}
           </h1>
         )}
