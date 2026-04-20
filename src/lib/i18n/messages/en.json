@@ -95,7 +95,7 @@
     "unskip": "Unskip",
     "markDiscussed": "Mark Discussed",
     "done": "Done",
-    "cardOf": "Card {current} of {total} remaining ({discussed} discussed)",
+    "cardOf": "Card {current} of {total} ({discussed} discussed)",
     "skipped": "Skipped",
     "skippedCards": "{count} skipped cards at end of queue",
     "startDictation": "Start dictation",
@@ -120,7 +120,9 @@
     "selectCategory": "Select category",
     "reactionFailed": "Failed to react",
     "totalTime": "total",
-    "assignTo": "Assign to"
+    "assignTo": "Assign to",
+    "groupProgress": "Card {current} of {total} in this group",
+    "ungroupedCards": "Other cards"
   },
   "grouping": {
     "title": "Group Cards",

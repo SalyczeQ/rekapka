@@ -95,7 +95,7 @@
     "unskip": "Zrušit přeskočení",
     "markDiscussed": "Označit jako prodiskutované",
     "done": "Hotovo",
-    "cardOf": "Karta {current} z {total} zbývajících ({discussed} prodiskutovaných)",
+    "cardOf": "Karta {current} z {total} ({discussed} prodiskutovaných)",
     "skipped": "Přeskočeno",
     "skippedCards": "{count} přeskočených karet na konci fronty",
     "startDictation": "Začít diktování",
@@ -120,7 +120,9 @@
     "selectCategory": "Vybrat kategorii",
     "reactionFailed": "Nepodařilo se reagovat",
     "totalTime": "celkem",
-    "assignTo": "Přiřadit komu"
+    "assignTo": "Přiřadit komu",
+    "groupProgress": "Karta {current} z {total} v teto skupine",
+    "ungroupedCards": "Ostatni karty"
   },
   "grouping": {
     "title": "Seskupit karty",
