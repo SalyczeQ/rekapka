@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Plus, Settings, BarChart3, Shield, Menu, Play, Lightbulb, History } from "lucide-react";
+import { Home, Plus, Settings, BarChart3, Shield, Menu, Play, Lightbulb, History, ScrollText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { ThemeToggle } from "./theme-toggle";
@@ -20,7 +20,7 @@ interface ActiveRetro {
   status: string;
 }
 
-function SidebarContent({ activeRetro }: { activeRetro?: ActiveRetro | null }) {
+function SidebarContent({ activeRetro, isAdmin }: { activeRetro?: ActiveRetro | null; isAdmin?: boolean }) {
   const pathname = usePathname();
   const t = useTranslations("nav");
 
@@ -34,6 +34,7 @@ function SidebarContent({ activeRetro }: { activeRetro?: ActiveRetro | null }) {
     { href: "/stats", icon: BarChart3, label: t("stats") },
     { href: "/predictions", icon: Lightbulb, label: t("predictions") },
     { href: "/admin", icon: Shield, label: t("admin") },
+    ...(isAdmin ? [{ href: "/audit", icon: ScrollText, label: t("audit") }] : []),
     { href: "/settings", icon: Settings, label: t("settings") },
   ];
 
@@ -81,15 +82,16 @@ function SidebarContent({ activeRetro }: { activeRetro?: ActiveRetro | null }) {
 interface AppShellProps {
   children: React.ReactNode;
   activeRetro?: ActiveRetro | null;
+  isAdmin?: boolean;
 }
 
-export function AppShell({ children, activeRetro }: AppShellProps) {
+export function AppShell({ children, activeRetro, isAdmin }: AppShellProps) {
   return (
     <div className="flex min-h-screen w-full overflow-x-hidden">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:w-60 md:flex-col md:border-r md:bg-sidebar">
         <Suspense>
-          <SidebarContent activeRetro={activeRetro} />
+          <SidebarContent activeRetro={activeRetro} isAdmin={isAdmin} />
         </Suspense>
       </aside>
 
@@ -105,7 +107,7 @@ export function AppShell({ children, activeRetro }: AppShellProps) {
             </SheetTrigger>
             <SheetContent side="left" className="w-60 p-0" style={{ overscrollBehavior: "contain" }}>
               <Suspense>
-                <SidebarContent activeRetro={activeRetro} />
+                <SidebarContent activeRetro={activeRetro} isAdmin={isAdmin} />
               </Suspense>
             </SheetContent>
           </Sheet>
