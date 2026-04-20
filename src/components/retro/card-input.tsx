@@ -125,39 +125,41 @@ export function CardInput({ retroId, categoryId, currentUser, onCardAdded, onIma
 
   return (
     <div className="space-y-2">
-      <Textarea
-        placeholder={isEmpty ? t("addCardFirst") : t("addCard")}
-        aria-label={t("addCard")}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            handleSubmit();
-          }
-        }}
-        className="min-h-[60px] resize-none"
-      />
-      <div className="flex items-center gap-0.5">
-        <DictationButton enabled={dictationEnabled} onTranscript={(t) => setText((prev) => prev + (prev ? " " : "") + t)} />
-        <EmojiPicker onSelect={(emoji) => setText((t) => t + emoji)} />
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={() => fileInputRef.current?.click()}
-          aria-label={t("attachPhoto")}
-        >
-          <ImagePlus className="h-3.5 w-3.5" aria-hidden="true" />
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={handleFileSelect}
+      <div className="relative">
+        <Textarea
+          placeholder={isEmpty ? t("addCardFirst") : t("addCard")}
+          aria-label={t("addCard")}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit();
+            }
+          }}
+          className="min-h-[60px] resize-none pr-24"
         />
+        <div className="absolute right-1 bottom-1 flex items-center gap-0.5">
+          <DictationButton enabled={dictationEnabled} onTranscript={(t) => setText((prev) => prev + (prev ? " " : "") + t)} />
+          <EmojiPicker onSelect={(emoji) => setText((t) => t + emoji)} />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => fileInputRef.current?.click()}
+            aria-label={t("attachPhoto")}
+          >
+            <ImagePlus className="h-3.5 w-3.5" aria-hidden="true" />
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+        </div>
       </div>
 
       {stagedPreview && (
