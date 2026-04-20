@@ -175,7 +175,10 @@
     "tabResolved": "Vyřešené",
     "tabCancelled": "Zrušené",
     "createdIn": "Vytvořeno v",
-    "resolvedIn": "Vyřešeno v"
+    "resolvedIn": "Vyřešeno v",
+    "delete": "Smazat",
+    "cancel": "Zrušit",
+    "confirmDelete": "Smazat tuto předpověď?"
   },
   "completion": {
     "retroComplete": "Retro dokončeno!",

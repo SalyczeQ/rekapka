@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, X, Ban } from "lucide-react";
+import { Check, X, Ban, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { resolvePrediction } from "@/lib/actions/predictions";
+import { resolvePrediction, deletePrediction } from "@/lib/actions/predictions";
 import { vibrate } from "@/lib/haptics";
 import type { SerializedPrediction } from "@/types/serialized";
 
@@ -12,11 +13,15 @@ interface PredictionListProps {
   predictions: SerializedPrediction[];
   currentRetroId: string;
   currentUserId: string;
+  currentUserEmail?: string;
   onUpdate: (id: string, status: string) => void;
+  onDelete?: (id: string) => void;
 }
 
-export function PredictionList({ predictions, currentRetroId, currentUserId, onUpdate }: PredictionListProps) {
+export function PredictionList({ predictions, currentRetroId, currentUserId, currentUserEmail, onUpdate, onDelete }: PredictionListProps) {
   const t = useTranslations("predictions");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const isAdmin = currentUserEmail === "salay14@gmail.com";
 
   if (predictions.length === 0) {
     return <p className="text-xs text-muted-foreground text-center py-2">{t("noPredictions")}</p>;
@@ -26,6 +31,13 @@ export function PredictionList({ predictions, currentRetroId, currentUserId, onU
     vibrate(50);
     onUpdate(id, status);
     await resolvePrediction(id, status, currentRetroId);
+  }
+
+  async function handleDelete(id: string) {
+    vibrate(50);
+    setConfirmDeleteId(null);
+    onDelete?.(id);
+    await deletePrediction(id);
   }
 
   const statusBadge = (status: string) => {
@@ -108,6 +120,42 @@ export function PredictionList({ predictions, currentRetroId, currentUserId, onU
                   {t("cancelled")}
                 </Button>
               </div>
+            )}
+            {isAdmin && (
+              confirmDeleteId === p.id ? (
+                <div className="flex items-center justify-end gap-1 pt-1 border-t">
+                  <span className="text-[10px] text-destructive mr-1">{t("confirmDelete")}</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 text-[10px]"
+                    onClick={() => setConfirmDeleteId(null)}
+                  >
+                    {t("cancel")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="h-6 text-[10px]"
+                    onClick={() => handleDelete(p.id)}
+                  >
+                    <Trash2 className="h-3 w-3 mr-0.5" aria-hidden="true" />
+                    {t("delete")}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex justify-end pt-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 text-destructive"
+                    onClick={() => setConfirmDeleteId(p.id)}
+                    aria-label={t("delete")}
+                  >
+                    <Trash2 className="h-3 w-3" aria-hidden="true" />
+                  </Button>
+                </div>
+              )
             )}
           </div>
         );

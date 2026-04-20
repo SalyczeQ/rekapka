@@ -58,6 +58,7 @@ export default async function PredictionsRoute() {
       <PredictionsPage
         predictions={serialize<SerializedPrediction[]>(enriched)}
         currentUserId={currentUser.id!}
+        currentUserEmail={currentUser.email ?? undefined}
       />
     </div>
   );

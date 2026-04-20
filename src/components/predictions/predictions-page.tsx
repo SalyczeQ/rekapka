@@ -4,24 +4,27 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, X, Ban } from "lucide-react";
+import { Check, X, Ban, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { resolvePrediction } from "@/lib/actions/predictions";
+import { resolvePrediction, deletePrediction } from "@/lib/actions/predictions";
 import { vibrate } from "@/lib/haptics";
 import type { SerializedPrediction } from "@/types/serialized";
 
 interface PredictionsPageProps {
   predictions: SerializedPrediction[];
   currentUserId: string;
+  currentUserEmail?: string;
 }
 
 type Tab = "open" | "resolved" | "cancelled";
 
-export function PredictionsPage({ predictions: initial, currentUserId }: PredictionsPageProps) {
+export function PredictionsPage({ predictions: initial, currentUserId, currentUserEmail }: PredictionsPageProps) {
   const t = useTranslations("predictions");
   const [predictions, setPredictions] = useState(initial);
   const [tab, setTab] = useState<Tab>("open");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const isAdmin = currentUserEmail === "salay14@gmail.com";
 
   const open = predictions.filter((p) => p.status === "open");
   const resolved = predictions.filter((p) => p.status === "correct" || p.status === "wrong");
@@ -33,6 +36,13 @@ export function PredictionsPage({ predictions: initial, currentUserId }: Predict
     vibrate(50);
     setPredictions((prev) => prev.map((p) => p.id === id ? { ...p, status } : p));
     await resolvePrediction(id, status);
+  }
+
+  async function handleDelete(id: string) {
+    vibrate(50);
+    setConfirmDeleteId(null);
+    setPredictions((prev) => prev.filter((p) => p.id !== id));
+    await deletePrediction(id);
   }
 
   const deadlineBadge = (p: SerializedPrediction) => {
@@ -136,6 +146,41 @@ export function PredictionsPage({ predictions: initial, currentUserId }: Predict
                         <Ban className="h-3 w-3 mr-0.5" />{t("cancelled")}
                       </Button>
                     </div>
+                  )}
+                  {isAdmin && (
+                    confirmDeleteId === p.id ? (
+                      <div className="flex items-center justify-end gap-1 pt-1 border-t">
+                        <span className="text-[10px] text-destructive mr-1">{t("confirmDelete")}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 text-[10px]"
+                          onClick={() => setConfirmDeleteId(null)}
+                        >
+                          {t("cancel")}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="h-6 text-[10px]"
+                          onClick={() => handleDelete(p.id)}
+                        >
+                          <Trash2 className="h-3 w-3 mr-0.5" />{t("delete")}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex justify-end pt-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0 text-destructive"
+                          onClick={() => setConfirmDeleteId(p.id)}
+                          aria-label={t("delete")}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )
                   )}
                 </CardContent>
               </Card>

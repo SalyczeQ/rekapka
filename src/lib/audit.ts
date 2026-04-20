@@ -43,6 +43,7 @@ export const AUDIT_ACTIONS = {
   // Predictions
   PREDICTION_CREATE: "prediction.create",
   PREDICTION_RESOLVE: "prediction.resolve",
+  PREDICTION_DELETE: "prediction.delete",
 
   // Settings / Admin
   SETTINGS_UPDATE_USER: "settings.update_user",

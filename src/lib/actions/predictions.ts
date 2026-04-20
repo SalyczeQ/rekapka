@@ -148,3 +148,54 @@ export async function resolvePrediction(
     revalidatePath(`/retros/${prediction.retroId}`);
   }
 }
+
+export async function deletePrediction(predictionId: string) {
+  const user = await requireAuth();
+
+  if (user.email !== "salay14@gmail.com") {
+    throw new Error("Not authorized to delete predictions");
+  }
+
+  const [prediction] = await db
+    .select({
+      id: predictions.id,
+      retroId: predictions.retroId,
+      text: predictions.text,
+      authorId: predictions.authorId,
+    })
+    .from(predictions)
+    .where(eq(predictions.id, predictionId))
+    .limit(1);
+
+  if (!prediction) return;
+
+  await db.delete(predictions).where(eq(predictions.id, predictionId));
+
+  const [retro] = await db
+    .select({ title: retros.title })
+    .from(retros)
+    .where(eq(retros.id, prediction.retroId))
+    .limit(1);
+
+  await logAudit({
+    actor: user,
+    action: AUDIT_ACTIONS.PREDICTION_DELETE,
+    entityType: "prediction",
+    entityId: predictionId,
+    retroId: prediction.retroId,
+    metadata: {
+      retroId: prediction.retroId,
+      retroTitle: retro?.title ?? null,
+      authorId: prediction.authorId,
+      textLength: prediction.text.length,
+    },
+  });
+
+  emit(prediction.retroId, {
+    type: "prediction_deleted",
+    predictionId,
+  });
+
+  revalidatePath(`/retros/${prediction.retroId}`);
+  revalidatePath("/predictions");
+}

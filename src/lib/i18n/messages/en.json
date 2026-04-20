@@ -175,7 +175,10 @@
     "tabResolved": "Resolved",
     "tabCancelled": "Cancelled",
     "createdIn": "Created in",
-    "resolvedIn": "Resolved in"
+    "resolvedIn": "Resolved in",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "confirmDelete": "Delete this prediction?"
   },
   "completion": {
     "retroComplete": "Retro Complete!",

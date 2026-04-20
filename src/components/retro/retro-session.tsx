@@ -182,6 +182,10 @@ export function RetroSession({
           prev.map((p) => p.id === event.predictionId ? { ...p, status: event.status } : p)
         );
         break;
+      case "prediction_deleted":
+        setPredictions((prev) => prev.filter((p) => p.id !== event.predictionId));
+        setUnresolvedPredictions((prev) => prev.filter((p) => p.id !== event.predictionId));
+        break;
     }
   }, [allUsers]);
 
@@ -251,6 +255,7 @@ export function RetroSession({
             predictions={predictions}
             unresolvedFromPast={unresolvedPredictions}
             currentUserId={currentUserId}
+            currentUserEmail={currentUserEmail}
             allUsers={allUsers}
             onPredictionsChange={setPredictions}
             onUnresolvedChange={setUnresolvedPredictions}
