@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { retros, cards } from "@/lib/db/schema";
 import { desc, eq, count, sql } from "drizzle-orm";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -69,15 +70,13 @@ export default async function DashboardPage() {
         <Card className={`hover:bg-accent/50 transition-colors cursor-pointer ${isActive ? "border-primary/30 ring-1 ring-primary/10" : ""}`}>
           <div className="flex items-center gap-4 p-4">
             {retro.photoSignedUrl && (
-              <div className="w-20 h-20 md:w-32 md:h-24 shrink-0 rounded-xl overflow-hidden shadow-sm">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+              <div className="relative w-20 h-20 md:w-32 md:h-24 shrink-0 rounded-xl overflow-hidden shadow-sm">
+                <Image
                   src={retro.photoSignedUrl}
                   alt={`${retro.title} team photo`}
-                  width={128}
-                  height={96}
-                  loading="lazy"
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 768px) 80px, 128px"
+                  className="object-cover"
                 />
               </div>
             )}
