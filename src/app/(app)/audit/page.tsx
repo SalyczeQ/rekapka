@@ -1,14 +1,20 @@
 import Link from "next/link";
+import { forbidden } from "next/navigation";
 import { requireAuth } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { auditLogs, users, retros } from "@/lib/db/schema";
 import { and, desc, eq, gte, lte, sql, count } from "drizzle-orm";
-import { getTranslations, getFormatter } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { AUDIT_ACTIONS } from "@/lib/audit";
+
+export const metadata = {
+  title: "Audit Log | Rekapka",
+};
 
 const ADMIN_EMAIL = "salay14@gmail.com";
 const PAGE_SIZE = 50;
@@ -27,20 +33,9 @@ interface AuditPageProps {
 
 export default async function AuditPage({ searchParams }: AuditPageProps) {
   const user = await requireAuth();
-  const t = await getTranslations("audit");
-  const format = await getFormatter();
+  if (user.email !== ADMIN_EMAIL) forbidden();
 
-  if (user.email !== ADMIN_EMAIL) {
-    return (
-      <div className="p-4 md:p-6 max-w-2xl mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("unauthorized")}</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
+  const t = await getTranslations("audit");
 
   const sp = await searchParams;
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
@@ -166,13 +161,11 @@ export default async function AuditPage({ searchParams }: AuditPageProps) {
                 className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm"
               >
                 <option value="">{t("anyEntity")}</option>
-                {distinctEntityTypes.map((e) =>
-                  e.entityType ? (
-                    <option key={e.entityType} value={e.entityType}>
-                      {e.entityType}
-                    </option>
-                  ) : null,
-                )}
+                {distinctEntityTypes.map((e) => (
+                  <option key={e.entityType!} value={e.entityType!}>
+                    {e.entityType}
+                  </option>
+                ))}
               </select>
             </label>
             <label className="flex flex-col gap-1 text-xs">
@@ -182,7 +175,7 @@ export default async function AuditPage({ searchParams }: AuditPageProps) {
                 defaultValue={sp.retroId ?? ""}
                 className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm"
               >
-                <option value="">{t("anyEntity")}</option>
+                <option value="">{t("anyRetro")}</option>
                 {retroOptions.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.title}
@@ -241,7 +234,14 @@ export default async function AuditPage({ searchParams }: AuditPageProps) {
                 {rows.map((r) => (
                   <tr key={r.id} className="border-t align-top">
                     <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">
-                      {format.dateTime(r.createdAt, { dateStyle: "short", timeStyle: "medium" })}
+                      {r.createdAt.toLocaleString("cs-CZ", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                      })}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       {r.currentUserName ?? r.userName ?? r.userEmail ?? "—"}
