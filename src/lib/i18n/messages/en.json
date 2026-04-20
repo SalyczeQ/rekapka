@@ -60,7 +60,12 @@
     "writing": "Writing",
     "discussing": "Discussing",
     "completed": "Done",
-    "next": "Next: {phase}"
+    "next": "Next: {phase}",
+    "confirmTitle": "Move to {phase}?",
+    "confirmDiscussing": "Writing is over. Team members won't be expected to add new cards from the writing view.",
+    "confirmCompleted": "This marks the retro as done and generates final stats.",
+    "confirm": "Continue",
+    "cancel": "Cancel"
   },
   "cards": {
     "backToRetro": "Back to retro",

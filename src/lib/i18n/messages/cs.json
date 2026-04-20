@@ -60,7 +60,12 @@
     "writing": "Psaní",
     "discussing": "Diskuse",
     "completed": "Hotovo",
-    "next": "Další: {phase}"
+    "next": "Další: {phase}",
+    "confirmTitle": "Přejít na fázi {phase}?",
+    "confirmDiscussing": "Fáze psaní končí. Členové týmu už nebudou přidávat nové karty.",
+    "confirmCompleted": "Retro bude označeno jako dokončené a budou vygenerovány finální statistiky.",
+    "confirm": "Pokračovat",
+    "cancel": "Zrušit"
   },
   "cards": {
     "backToRetro": "Zpět na retro",
