@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { CATEGORY_NAMES } from "@/types";
 import { emit } from "@/lib/realtime/event-bus";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 const CATEGORY_DEFAULTS = [
   { name: "Mad", icon: "😡", color: "#EF4444", sortOrder: 0 },
@@ -102,12 +103,21 @@ export async function createRetro(formData: FormData) {
     }
   }
 
+  await logAudit({
+    actor: user,
+    action: AUDIT_ACTIONS.RETRO_CREATE,
+    entityType: "retro",
+    entityId: retro.id,
+    retroId: retro.id,
+    metadata: { title: input.title, carriedFromRetroId: fromRetroId ?? null },
+  });
+
   revalidatePath("/");
   redirect(`/retros/${retro.id}`);
 }
 
 export async function updateRetro(retroId: string, formData: FormData) {
-  await requireAuth();
+  const user = await requireAuth();
 
   const input = updateRetroSchema.parse({
     title: formData.get("title") || undefined,
@@ -123,6 +133,15 @@ export async function updateRetro(retroId: string, formData: FormData) {
     })
     .where(eq(retros.id, retroId));
 
+  await logAudit({
+    actor: user,
+    action: AUDIT_ACTIONS.RETRO_UPDATE,
+    entityType: "retro",
+    entityId: retroId,
+    retroId,
+    metadata: { changes: { ...input } },
+  });
+
   emit(retroId, { type: "retro_updated", changes: { ...input } });
   revalidatePath(`/retros/${retroId}`);
 }
@@ -135,6 +154,14 @@ export async function deleteRetro(retroId: string) {
   }
 
   await db.delete(retros).where(eq(retros.id, retroId));
+
+  await logAudit({
+    actor: user,
+    action: AUDIT_ACTIONS.RETRO_DELETE,
+    entityType: "retro",
+    entityId: retroId,
+  });
+
   revalidatePath("/");
   redirect("/retros");
 }

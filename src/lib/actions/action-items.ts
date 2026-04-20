@@ -7,9 +7,10 @@ import { createActionItemSchema } from "@/lib/validators";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { emit } from "@/lib/realtime/event-bus";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 export async function createActionItem(formData: FormData) {
-  await requireAuth();
+  const user = await requireAuth();
 
   const input = createActionItemSchema.parse({
     retroId: formData.get("retroId"),
@@ -30,6 +31,15 @@ export async function createActionItem(formData: FormData) {
     })
     .returning();
 
+  await logAudit({
+    actor: user,
+    action: AUDIT_ACTIONS.ACTION_ITEM_CREATE,
+    entityType: "action_item",
+    entityId: item.id,
+    retroId: item.retroId,
+    metadata: { assigneeId: item.assigneeId, textPreview: item.text.slice(0, 80) },
+  });
+
   emit(input.retroId, {
     type: "action_item_added",
     item: {
@@ -46,7 +56,7 @@ export async function createActionItem(formData: FormData) {
 }
 
 export async function updateActionItemStatus(itemId: string, status: string) {
-  await requireAuth();
+  const user = await requireAuth();
 
   const [item] = await db
     .update(actionItems)
@@ -55,6 +65,14 @@ export async function updateActionItemStatus(itemId: string, status: string) {
     .returning();
 
   if (item) {
+    await logAudit({
+      actor: user,
+      action: AUDIT_ACTIONS.ACTION_ITEM_UPDATE,
+      entityType: "action_item",
+      entityId: itemId,
+      retroId: item.retroId,
+      metadata: { status },
+    });
     emit(item.retroId, {
       type: "action_item_updated",
       itemId,
@@ -65,7 +83,7 @@ export async function updateActionItemStatus(itemId: string, status: string) {
 }
 
 export async function deleteActionItem(itemId: string) {
-  await requireAuth();
+  const user = await requireAuth();
 
   const [item] = await db
     .delete(actionItems)
@@ -73,6 +91,13 @@ export async function deleteActionItem(itemId: string) {
     .returning();
 
   if (item) {
+    await logAudit({
+      actor: user,
+      action: AUDIT_ACTIONS.ACTION_ITEM_DELETE,
+      entityType: "action_item",
+      entityId: itemId,
+      retroId: item.retroId,
+    });
     emit(item.retroId, { type: "action_item_deleted", itemId });
     revalidatePath(`/retros/${item.retroId}`);
   }

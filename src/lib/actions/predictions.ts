@@ -6,6 +6,7 @@ import { requireAuth } from "@/lib/auth/session";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { emit } from "@/lib/realtime/event-bus";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 export async function createPrediction(formData: FormData) {
   const user = await requireAuth();
@@ -48,6 +49,15 @@ export async function createPrediction(formData: FormData) {
     challengedUserName = challenged?.name ?? null;
   }
 
+  await logAudit({
+    actor: user,
+    action: AUDIT_ACTIONS.PREDICTION_CREATE,
+    entityType: "prediction",
+    entityId: prediction.id,
+    retroId,
+    metadata: { challengedUserId, stake, textPreview: text.slice(0, 80) },
+  });
+
   emit(retroId, {
     type: "prediction_added",
     prediction: {
@@ -89,6 +99,14 @@ export async function resolvePrediction(
     .returning();
 
   if (prediction) {
+    await logAudit({
+      actor: user,
+      action: AUDIT_ACTIONS.PREDICTION_RESOLVE,
+      entityType: "prediction",
+      entityId: predictionId,
+      retroId: prediction.retroId,
+      metadata: { status, resolvedInRetroId: currentRetroId ?? null },
+    });
     emit(prediction.retroId, {
       type: "prediction_resolved",
       predictionId,

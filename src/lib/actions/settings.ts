@@ -6,6 +6,7 @@ import { requireAuth } from "@/lib/auth/session";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 export async function updateUserSettings(_prev: unknown, formData: FormData) {
   try {
@@ -35,6 +36,14 @@ export async function updateUserSettings(_prev: unknown, formData: FormData) {
       cookieStore.set("locale", locale, { path: "/", maxAge: 60 * 60 * 24 * 365 });
     }
 
+    await logAudit({
+      actor: user,
+      action: AUDIT_ACTIONS.SETTINGS_UPDATE_USER,
+      entityType: "user",
+      entityId: user.id ?? null,
+      metadata: { changed: Object.keys(updates).filter((k) => k !== "updatedAt") },
+    });
+
     // Revalidate the app layout so UIThemeSetter picks up the new theme
     revalidatePath("/", "layout");
     return { success: true, message: "Settings saved" };
@@ -45,7 +54,7 @@ export async function updateUserSettings(_prev: unknown, formData: FormData) {
 
 export async function updateAppSettings(_prev: unknown, formData: FormData) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
 
     const groupName = formData.get("groupName") as string;
 
@@ -58,6 +67,13 @@ export async function updateAppSettings(_prev: unknown, formData: FormData) {
           .where(eq(appSettings.id, settings.id));
       }
     }
+
+    await logAudit({
+      actor: user,
+      action: AUDIT_ACTIONS.SETTINGS_UPDATE_APP,
+      entityType: "app_settings",
+      metadata: { groupName: groupName || null },
+    });
 
     revalidatePath("/admin");
     return { success: true, message: "Group name saved" };
