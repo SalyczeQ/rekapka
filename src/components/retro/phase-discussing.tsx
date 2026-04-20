@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { SerializedRetro, SerializedCategory, SerializedCard, SerializedActionItem } from "@/types/serialized";
-import { fairSort } from "@/lib/sorting";
+import { groupAwareSort, getGroupBoundaries } from "@/lib/sorting";
 import {
   markCardDiscussed,
   skipCard,
@@ -56,7 +56,10 @@ export function PhaseDiscussing({
   const t = useTranslations();
   const activeCards = cards.filter((c) => !c.isDiscussed && !c.isSkipped);
   const skippedCards = cards.filter((c) => !c.isDiscussed && c.isSkipped);
-  const sortedCards = [...fairSort(activeCards), ...skippedCards];
+  const sortedActiveCards = groupAwareSort(activeCards);
+  const sortedCards = [...sortedActiveCards, ...skippedCards];
+  const groupBoundaries = getGroupBoundaries(sortedActiveCards);
+  const hasGroups = groupBoundaries.length > 0 && groupBoundaries.some((g) => g.groupLabel !== null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cardTimer, setCardTimer] = useState(0);
   const [actionText, setActionText] = useState("");
@@ -71,7 +74,27 @@ export function PhaseDiscussing({
     id: currentUserId, name: "You", color: "#888", image: null,
   };
 
-  const currentCard = sortedCards[currentIndex];
+  // Clamp index when sortedCards shrinks (e.g. after unskip reorder)
+  useEffect(() => {
+    if (sortedCards.length > 0 && currentIndex >= sortedCards.length) {
+      setCurrentIndex(sortedCards.length - 1);
+    }
+  }, [sortedCards.length, currentIndex]);
+
+  const currentCard = sortedCards[Math.min(currentIndex, sortedCards.length - 1)];
+
+  const currentGroup = hasGroups
+    ? groupBoundaries.find((g) => currentIndex >= g.startIndex && currentIndex < g.endIndex)
+    : null;
+
+  // Count discussed cards in current group to show true progress (not position in shrinking array)
+  const groupTotalCards = currentGroup
+    ? cards.filter((c) => c.groupLabel === currentGroup.groupLabel).length
+    : null;
+  const groupDiscussedCards = currentGroup
+    ? cards.filter((c) => c.groupLabel === currentGroup.groupLabel && c.isDiscussed).length
+    : null;
+  const positionInGroup = groupDiscussedCards !== null ? groupDiscussedCards + 1 : null;
   const discussedCount = cards.filter((c) => c.isDiscussed).length;
   const totalCards = cards.length;
 
@@ -291,7 +314,25 @@ export function PhaseDiscussing({
         </div>
       </div>
 
-      {/* 2. Current card — key triggers enter animation on card change */}
+      {/* 2. Group indicator */}
+      {hasGroups && currentGroup && (
+        <div
+          key={currentGroup.groupLabel}
+          className="flex items-center gap-2 animate-in fade-in duration-200"
+        >
+          <span className="text-xs font-medium bg-muted px-2 py-0.5 rounded-full">
+            {currentGroup.groupLabel ?? t("discussion.ungroupedCards")}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {t("discussion.groupProgress", {
+              current: positionInGroup!,
+              total: groupTotalCards!,
+            })}
+          </span>
+        </div>
+      )}
+
+      {/* 3. Current card — key triggers enter animation on card change */}
       <div key={currentCard.id} className="animate-in fade-in slide-in-from-bottom-2 duration-200">
         <Card className="border-2">
           <CardHeader className="pb-2">
@@ -326,7 +367,7 @@ export function PhaseDiscussing({
         </Card>
       </div>
 
-      {/* 3. Primary actions — Skip / Done — always show text */}
+      {/* 4. Primary actions — Skip / Done — always show text */}
       <div className="flex gap-2">
         {currentCard.isSkipped ? (
           <Button
@@ -350,7 +391,7 @@ export function PhaseDiscussing({
         </Button>
       </div>
 
-      {/* 4. Skipped cards mini-list */}
+      {/* 5. Skipped cards mini-list */}
       {skippedCards.length > 0 && (
         <div className="space-y-1.5">
           <p className="text-xs text-muted-foreground font-medium px-1">
@@ -385,7 +426,7 @@ export function PhaseDiscussing({
         </div>
       )}
 
-      {/* 5. Notes & Actions — collapsible, auto-opens when card has items */}
+      {/* 6. Notes & Actions — collapsible, auto-opens when card has items */}
       <div className="border-t pt-3">
         <Button
           variant="ghost"
@@ -468,7 +509,7 @@ export function PhaseDiscussing({
         )}
       </div>
 
-      {/* 6. Add new card during discussion */}
+      {/* 7. Add new card during discussion */}
       <div className="border-t pt-3">
         <Button
           variant="ghost"

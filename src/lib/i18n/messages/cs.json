@@ -120,7 +120,9 @@
     "selectCategory": "Vybrat kategorii",
     "reactionFailed": "Nepodařilo se reagovat",
     "totalTime": "celkem",
-    "assignTo": "Přiřadit komu"
+    "assignTo": "Přiřadit komu",
+    "groupProgress": "Karta {current} z {total} v teto skupine",
+    "ungroupedCards": "Ostatni karty"
   },
   "grouping": {
     "title": "Seskupit karty",
