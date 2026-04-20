@@ -6,6 +6,7 @@ import type { SerializedRetro, SerializedCategory, SerializedCard, SerializedAct
 import type { SSEEvent } from "@/types/realtime";
 import { vibrate } from "@/lib/haptics";
 import { useRetroStream } from "@/hooks/use-retro-stream";
+import { useSetRetroHeaderTitle } from "@/components/layout/retro-header-context";
 import { PhaseBar } from "./phase-bar";
 import { PhaseWriting } from "./phase-writing";
 import { PhaseDiscussing } from "./phase-discussing";
@@ -61,6 +62,8 @@ export function RetroSession({
   const [reactions, setReactions] = useState(initialReactions);
   const [userReactions] = useState(initialUserReactions);
   const [imageUrls, setImageUrls] = useState<Record<string, string>>(initialCardImageUrls);
+
+  useSetRetroHeaderTitle(currentRetro.title);
 
   const handleSSEEvent = useCallback((event: SSEEvent) => {
     switch (event.type) {
