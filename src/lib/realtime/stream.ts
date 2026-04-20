@@ -1,5 +1,6 @@
 import type { SSEEvent, SSEPresenceUser } from "@/types/realtime";
 import { subscribe, trackPresence, removePresence, getPresenceUsers } from "./event-bus";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 /**
  * Creates a ReadableStream that pushes SSE-formatted events for a given retro.
@@ -7,7 +8,8 @@ import { subscribe, trackPresence, removePresence, getPresenceUsers } from "./ev
  */
 export function createSSEStream(
   retroId: string,
-  user: SSEPresenceUser
+  user: SSEPresenceUser,
+  retroTitle: string | null
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
   let unsubscribe: (() => void) | null = null;
@@ -15,8 +17,18 @@ export function createSSEStream(
 
   return new ReadableStream({
     start(controller) {
-      // Register presence
-      trackPresence(retroId, user);
+      // Register presence — only log if this is a fresh join (not a reconnect)
+      const isNew = trackPresence(retroId, user);
+      if (isNew) {
+        void logAudit({
+          actor: { id: user.id, name: user.name, email: null },
+          action: AUDIT_ACTIONS.RETRO_PRESENCE_JOIN,
+          entityType: "retro",
+          entityId: retroId,
+          retroId,
+          metadata: { retroId, retroTitle },
+        });
+      }
 
       // Send initial connected event with current presence
       const currentUsers = getPresenceUsers(retroId);
@@ -54,6 +66,14 @@ export function createSSEStream(
       unsubscribe?.();
       if (heartbeatInterval) clearInterval(heartbeatInterval);
       removePresence(retroId, user.id);
+      void logAudit({
+        actor: { id: user.id, name: user.name, email: null },
+        action: AUDIT_ACTIONS.RETRO_PRESENCE_LEAVE,
+        entityType: "retro",
+        entityId: retroId,
+        retroId,
+        metadata: { retroId, retroTitle },
+      });
     },
   });
 }

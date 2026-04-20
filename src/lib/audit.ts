@@ -16,6 +16,8 @@ export const AUDIT_ACTIONS = {
   RETRO_COMPLETE: "retro.complete",
   RETRO_PHOTO_UPLOAD: "retro.photo_upload",
   RETRO_CARD_IMPORT: "retro.card_import",
+  RETRO_PRESENCE_JOIN: "retro.presence_join",
+  RETRO_PRESENCE_LEAVE: "retro.presence_leave",
 
   // Card
   CARD_CREATE: "card.create",

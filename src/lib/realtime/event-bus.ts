@@ -58,7 +58,7 @@ export function subscribe(
 
 const PRESENCE_TIMEOUT_MS = 45_000; // 45s (heartbeat is every 30s)
 
-export function trackPresence(retroId: string, user: SSEPresenceUser) {
+export function trackPresence(retroId: string, user: SSEPresenceUser): boolean {
   const presenceMap = getPresenceMap();
   let retroPresence = presenceMap.get(retroId);
   if (!retroPresence) {
@@ -72,6 +72,7 @@ export function trackPresence(retroId: string, user: SSEPresenceUser) {
   if (isNew) {
     broadcastPresence(retroId);
   }
+  return isNew;
 }
 
 export function removePresence(retroId: string, userId: string) {
