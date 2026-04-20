@@ -290,7 +290,7 @@ export function PhaseDiscussing({
         </div>
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>
-            {t("card.cardOf", { current: currentIndex + 1, total: sortedCards.length, discussed: discussedCount })}
+            {t("card.cardOf", { current: discussedCount + 1, total: totalCards, discussed: discussedCount })}
           </span>
           <div className="flex items-center gap-3">
             {/* Per-card timer */}

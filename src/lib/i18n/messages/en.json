@@ -95,7 +95,7 @@
     "unskip": "Unskip",
     "markDiscussed": "Mark Discussed",
     "done": "Done",
-    "cardOf": "Card {current} of {total} remaining ({discussed} discussed)",
+    "cardOf": "Card {current} of {total} ({discussed} discussed)",
     "skipped": "Skipped",
     "skippedCards": "{count} skipped cards at end of queue",
     "startDictation": "Start dictation",
