@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { cards } from "@/lib/db/schema";
+import { cards, retros } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { groupCardsByTheme } from "@/lib/ai/group-cards";
 import { emit } from "@/lib/realtime/event-bus";
@@ -39,13 +39,24 @@ export async function POST(request: NextRequest) {
       .map((r) => ({ cardId: r.cardId, groupLabel: r.groupLabel! })),
   });
 
+  const [retro] = await db
+    .select({ title: retros.title })
+    .from(retros)
+    .where(eq(retros.id, retroId))
+    .limit(1);
+
   await logAudit({
     actor: session.user,
     action: AUDIT_ACTIONS.AI_GROUP,
     entityType: "retro",
     entityId: retroId,
     retroId,
-    metadata: { cardCount: retroCards.length, grouped: results.filter((r) => r.groupLabel).length },
+    metadata: {
+      retroId,
+      retroTitle: retro?.title ?? null,
+      cardCount: retroCards.length,
+      grouped: results.filter((r) => r.groupLabel).length,
+    },
   });
 
   return NextResponse.json({ results });

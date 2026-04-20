@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { actionItems } from "@/lib/db/schema";
+import { actionItems, users, retros } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth/session";
 import { createActionItemSchema } from "@/lib/validators";
 import { eq } from "drizzle-orm";
@@ -31,13 +31,34 @@ export async function createActionItem(formData: FormData) {
     })
     .returning();
 
+  let assigneeName: string | null = null;
+  if (item.assigneeId) {
+    const [assignee] = await db
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, item.assigneeId))
+      .limit(1);
+    assigneeName = assignee?.name ?? null;
+  }
+  const [retro] = await db
+    .select({ title: retros.title })
+    .from(retros)
+    .where(eq(retros.id, item.retroId))
+    .limit(1);
+
   await logAudit({
     actor: user,
     action: AUDIT_ACTIONS.ACTION_ITEM_CREATE,
     entityType: "action_item",
     entityId: item.id,
     retroId: item.retroId,
-    metadata: { assigneeId: item.assigneeId, textPreview: item.text.slice(0, 80) },
+    metadata: {
+      retroId: item.retroId,
+      retroTitle: retro?.title ?? null,
+      assigneeId: item.assigneeId,
+      assigneeName,
+      textLength: item.text.length,
+    },
   });
 
   emit(input.retroId, {
@@ -65,13 +86,18 @@ export async function updateActionItemStatus(itemId: string, status: string) {
     .returning();
 
   if (item) {
+    const [retro] = await db
+      .select({ title: retros.title })
+      .from(retros)
+      .where(eq(retros.id, item.retroId))
+      .limit(1);
     await logAudit({
       actor: user,
       action: AUDIT_ACTIONS.ACTION_ITEM_UPDATE,
       entityType: "action_item",
       entityId: itemId,
       retroId: item.retroId,
-      metadata: { status },
+      metadata: { retroId: item.retroId, retroTitle: retro?.title ?? null, status },
     });
     emit(item.retroId, {
       type: "action_item_updated",
@@ -91,12 +117,18 @@ export async function deleteActionItem(itemId: string) {
     .returning();
 
   if (item) {
+    const [retro] = await db
+      .select({ title: retros.title })
+      .from(retros)
+      .where(eq(retros.id, item.retroId))
+      .limit(1);
     await logAudit({
       actor: user,
       action: AUDIT_ACTIONS.ACTION_ITEM_DELETE,
       entityType: "action_item",
       entityId: itemId,
       retroId: item.retroId,
+      metadata: { retroId: item.retroId, retroTitle: retro?.title ?? null },
     });
     emit(item.retroId, { type: "action_item_deleted", itemId });
     revalidatePath(`/retros/${item.retroId}`);

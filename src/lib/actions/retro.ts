@@ -103,13 +103,28 @@ export async function createRetro(formData: FormData) {
     }
   }
 
+  let carriedFromRetroTitle: string | null = null;
+  if (fromRetroId) {
+    const [prev] = await db
+      .select({ title: retros.title })
+      .from(retros)
+      .where(eq(retros.id, fromRetroId))
+      .limit(1);
+    carriedFromRetroTitle = prev?.title ?? null;
+  }
+
   await logAudit({
     actor: user,
     action: AUDIT_ACTIONS.RETRO_CREATE,
     entityType: "retro",
     entityId: retro.id,
     retroId: retro.id,
-    metadata: { title: input.title, carriedFromRetroId: fromRetroId ?? null },
+    metadata: {
+      retroId: retro.id,
+      retroTitle: input.title,
+      carriedFromRetroId: fromRetroId ?? null,
+      carriedFromRetroTitle,
+    },
   });
 
   revalidatePath("/");
@@ -133,13 +148,19 @@ export async function updateRetro(retroId: string, formData: FormData) {
     })
     .where(eq(retros.id, retroId));
 
+  const [retro] = await db
+    .select({ title: retros.title })
+    .from(retros)
+    .where(eq(retros.id, retroId))
+    .limit(1);
+
   await logAudit({
     actor: user,
     action: AUDIT_ACTIONS.RETRO_UPDATE,
     entityType: "retro",
     entityId: retroId,
     retroId,
-    metadata: { changes: { ...input } },
+    metadata: { retroId, retroTitle: retro?.title ?? null, changes: { ...input } },
   });
 
   emit(retroId, { type: "retro_updated", changes: { ...input } });
@@ -153,6 +174,12 @@ export async function deleteRetro(retroId: string) {
     throw new Error("Not authorized to delete retros");
   }
 
+  const [retro] = await db
+    .select({ title: retros.title })
+    .from(retros)
+    .where(eq(retros.id, retroId))
+    .limit(1);
+
   await db.delete(retros).where(eq(retros.id, retroId));
 
   await logAudit({
@@ -160,6 +187,7 @@ export async function deleteRetro(retroId: string) {
     action: AUDIT_ACTIONS.RETRO_DELETE,
     entityType: "retro",
     entityId: retroId,
+    metadata: { retroId, retroTitle: retro?.title ?? null },
   });
 
   revalidatePath("/");

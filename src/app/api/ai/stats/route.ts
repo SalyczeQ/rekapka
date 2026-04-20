@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       entityType: "retro",
       entityId: retroId,
       retroId,
-      metadata: { cached: true },
+      metadata: { retroId, retroTitle: retro.title, cached: true },
     });
     return NextResponse.json(JSON.parse(retro.statsCache));
   }
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     entityType: "retro",
     entityId: retroId,
     retroId,
-    metadata: { cached: false, cardCount: retroCards.length },
+    metadata: { retroId, retroTitle: retro.title, cached: false, cardCount: retroCards.length },
   });
 
   return NextResponse.json(stats);

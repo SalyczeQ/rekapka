@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { predictions, users } from "@/lib/db/schema";
+import { predictions, users, retros } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth/session";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -49,13 +49,26 @@ export async function createPrediction(formData: FormData) {
     challengedUserName = challenged?.name ?? null;
   }
 
+  const [retro] = await db
+    .select({ title: retros.title })
+    .from(retros)
+    .where(eq(retros.id, retroId))
+    .limit(1);
+
   await logAudit({
     actor: user,
     action: AUDIT_ACTIONS.PREDICTION_CREATE,
     entityType: "prediction",
     entityId: prediction.id,
     retroId,
-    metadata: { challengedUserId, stake, textPreview: text.slice(0, 80) },
+    metadata: {
+      retroId,
+      retroTitle: retro?.title ?? null,
+      challengedUserId,
+      challengedUserName,
+      stake,
+      textLength: text.length,
+    },
   });
 
   emit(retroId, {
@@ -99,13 +112,33 @@ export async function resolvePrediction(
     .returning();
 
   if (prediction) {
+    const [origRetro] = await db
+      .select({ title: retros.title })
+      .from(retros)
+      .where(eq(retros.id, prediction.retroId))
+      .limit(1);
+    let resolvedInRetroTitle: string | null = null;
+    if (currentRetroId) {
+      const [r] = await db
+        .select({ title: retros.title })
+        .from(retros)
+        .where(eq(retros.id, currentRetroId))
+        .limit(1);
+      resolvedInRetroTitle = r?.title ?? null;
+    }
     await logAudit({
       actor: user,
       action: AUDIT_ACTIONS.PREDICTION_RESOLVE,
       entityType: "prediction",
       entityId: predictionId,
       retroId: prediction.retroId,
-      metadata: { status, resolvedInRetroId: currentRetroId ?? null },
+      metadata: {
+        retroId: prediction.retroId,
+        retroTitle: origRetro?.title ?? null,
+        status,
+        resolvedInRetroId: currentRetroId ?? null,
+        resolvedInRetroTitle,
+      },
     });
     emit(prediction.retroId, {
       type: "prediction_resolved",

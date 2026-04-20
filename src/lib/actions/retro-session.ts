@@ -45,13 +45,29 @@ export async function createCard(formData: FormData) {
     authorImage: author?.image ?? null,
   }));
 
+  const [ctx] = await db
+    .select({
+      retroTitle: retros.title,
+      categoryName: categories.name,
+    })
+    .from(retros)
+    .leftJoin(categories, eq(categories.id, input.categoryId))
+    .where(eq(retros.id, input.retroId))
+    .limit(1);
+
   await logAudit({
     actor: user,
     action: AUDIT_ACTIONS.CARD_CREATE,
     entityType: "card",
     entityId: card.id,
     retroId: input.retroId,
-    metadata: { categoryId: input.categoryId, textLength: processedText.length },
+    metadata: {
+      retroId: input.retroId,
+      retroTitle: ctx?.retroTitle ?? null,
+      categoryId: input.categoryId,
+      categoryName: ctx?.categoryName ?? null,
+      textLength: processedText.length,
+    },
   });
 
   emit(input.retroId, { type: "card_added", card: serialized });
@@ -80,13 +96,22 @@ export async function updateCard(cardId: string, formData: FormData) {
     .returning();
 
   if (card) {
+    const [retro] = await db
+      .select({ title: retros.title })
+      .from(retros)
+      .where(eq(retros.id, card.retroId))
+      .limit(1);
     await logAudit({
       actor: user,
       action: AUDIT_ACTIONS.CARD_UPDATE,
       entityType: "card",
       entityId: cardId,
       retroId: card.retroId,
-      metadata: { changes: Object.keys(changes).filter((k) => k !== "updatedAt") },
+      metadata: {
+        retroId: card.retroId,
+        retroTitle: retro?.title ?? null,
+        changes: Object.keys(changes).filter((k) => k !== "updatedAt"),
+      },
     });
     emit(card.retroId, {
       type: "card_updated",
@@ -105,12 +130,18 @@ export async function deleteCard(cardId: string) {
   const [card] = await db.delete(cards).where(eq(cards.id, cardId)).returning();
 
   if (card) {
+    const [retro] = await db
+      .select({ title: retros.title })
+      .from(retros)
+      .where(eq(retros.id, card.retroId))
+      .limit(1);
     await logAudit({
       actor: user,
       action: AUDIT_ACTIONS.CARD_DELETE,
       entityType: "card",
       entityId: cardId,
       retroId: card.retroId,
+      metadata: { retroId: card.retroId, retroTitle: retro?.title ?? null },
     });
     emit(card.retroId, { type: "card_deleted", cardId });
     revalidatePath(`/retros/${card.retroId}`);
@@ -119,6 +150,14 @@ export async function deleteCard(cardId: string) {
 
 export async function advancePhase(retroId: string, newPhase: string) {
   const user = await requireAuth();
+
+  const [prevRetro] = await db
+    .select({ status: retros.status, title: retros.title })
+    .from(retros)
+    .where(eq(retros.id, retroId))
+    .limit(1);
+  const fromPhase = prevRetro?.status ?? null;
+  const retroTitle = prevRetro?.title ?? null;
 
   const updates: Record<string, unknown> = {
     status: newPhase,
@@ -175,7 +214,7 @@ export async function advancePhase(retroId: string, newPhase: string) {
     entityType: "retro",
     entityId: retroId,
     retroId,
-    metadata: { phase: newPhase },
+    metadata: { retroId, retroTitle, from: fromPhase, to: newPhase },
   });
   emit(retroId, { type: "phase_changed", phase: newPhase });
   revalidatePath(`/retros/${retroId}`);
@@ -336,6 +375,12 @@ export async function addTagToCard(cardId: string, tagName: string) {
 export async function removeTagFromCard(cardId: string, tagId: string) {
   const user = await requireAuth();
 
+  const [tag] = await db
+    .select({ name: tags.name })
+    .from(tags)
+    .where(eq(tags.id, tagId))
+    .limit(1);
+
   await db
     .delete(cardTags)
     .where(and(eq(cardTags.cardId, cardId), eq(cardTags.tagId, tagId)));
@@ -349,7 +394,7 @@ export async function removeTagFromCard(cardId: string, tagId: string) {
       entityType: "card",
       entityId: cardId,
       retroId: card.retroId,
-      metadata: { tagId },
+      metadata: { tagId, tagName: tag?.name ?? null },
     });
     emit(card.retroId, {
       type: "card_updated",
@@ -362,17 +407,41 @@ export async function removeTagFromCard(cardId: string, tagId: string) {
 export async function assignCardAuthor(cardId: string, userId: string) {
   const user = await requireAuth();
 
+  const [prev] = await db
+    .select({
+      authorId: cards.authorId,
+      authorName: users.name,
+      retroId: cards.retroId,
+    })
+    .from(cards)
+    .leftJoin(users, eq(cards.authorId, users.id))
+    .where(eq(cards.id, cardId))
+    .limit(1);
+
   await db
     .update(cards)
     .set({ authorId: userId, updatedAt: new Date() })
     .where(eq(cards.id, cardId));
+
+  const [nextAuthor] = await db
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
 
   await logAudit({
     actor: user,
     action: AUDIT_ACTIONS.CARD_ASSIGN_AUTHOR,
     entityType: "card",
     entityId: cardId,
-    metadata: { newAuthorId: userId },
+    retroId: prev?.retroId ?? null,
+    metadata: {
+      retroId: prev?.retroId ?? null,
+      fromAuthorId: prev?.authorId ?? null,
+      fromAuthorName: prev?.authorName ?? null,
+      toAuthorId: userId,
+      toAuthorName: nextAuthor?.name ?? null,
+    },
   });
 
   revalidatePath("/retros");
