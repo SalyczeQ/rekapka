@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { retros } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { uploadPhoto } from "@/lib/s3/upload";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 export async function POST(
   request: NextRequest,
@@ -29,6 +30,27 @@ export async function POST(
     .update(retros)
     .set({ photoUrl: key, updatedAt: new Date() })
     .where(eq(retros.id, id));
+
+  const [retro] = await db
+    .select({ title: retros.title })
+    .from(retros)
+    .where(eq(retros.id, id))
+    .limit(1);
+
+  await logAudit({
+    actor: session.user,
+    action: AUDIT_ACTIONS.RETRO_PHOTO_UPLOAD,
+    entityType: "retro",
+    entityId: id,
+    retroId: id,
+    metadata: {
+      retroId: id,
+      retroTitle: retro?.title ?? null,
+      mimeType: file.type,
+      sizeBytes: file.size,
+      photoKey: key,
+    },
+  });
 
   return NextResponse.json({ key });
 }

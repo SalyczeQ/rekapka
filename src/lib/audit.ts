@@ -13,11 +13,15 @@ export const AUDIT_ACTIONS = {
   RETRO_UPDATE: "retro.update",
   RETRO_DELETE: "retro.delete",
   RETRO_PHASE_CHANGE: "retro.phase_change",
+  RETRO_COMPLETE: "retro.complete",
+  RETRO_PHOTO_UPLOAD: "retro.photo_upload",
+  RETRO_CARD_IMPORT: "retro.card_import",
 
   // Card
   CARD_CREATE: "card.create",
   CARD_UPDATE: "card.update",
   CARD_DELETE: "card.delete",
+  CARD_PHOTO_UPLOAD: "card.photo_upload",
   CARD_DISCUSS_START: "card.discuss_start",
   CARD_DISCUSS_DONE: "card.discuss_done",
   CARD_SKIP: "card.skip",

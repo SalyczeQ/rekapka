@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cards, categories } from "@/lib/db/schema";
+import { cards, categories, retros } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth/session";
 import { importCardsFromCsv } from "@/lib/csv/import";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 export async function POST(
   request: NextRequest,
@@ -41,6 +42,21 @@ export async function POST(
 
     imported++;
   }
+
+  const [retro] = await db
+    .select({ title: retros.title })
+    .from(retros)
+    .where(eq(retros.id, id))
+    .limit(1);
+
+  await logAudit({
+    actor: user,
+    action: AUDIT_ACTIONS.RETRO_CARD_IMPORT,
+    entityType: "retro",
+    entityId: id,
+    retroId: id,
+    metadata: { retroId: id, retroTitle: retro?.title ?? null, imported, totalRows: rows.length },
+  });
 
   return NextResponse.json({ imported });
 }
