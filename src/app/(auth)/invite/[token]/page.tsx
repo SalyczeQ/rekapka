@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { signIn } from "@/lib/auth";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 interface InvitePageProps {
   params: Promise<{ token: string }>;
@@ -59,6 +60,12 @@ export default async function InvitePage({ params }: InvitePageProps) {
           <form
             action={async () => {
               "use server";
+              await logAudit({
+                action: AUDIT_ACTIONS.INVITE_REDEEM,
+                entityType: "invite_token",
+                entityId: inviteToken.id,
+                metadata: { token },
+              });
               await signIn("google", { redirectTo: "/" });
             }}
           >

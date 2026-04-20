@@ -5,6 +5,7 @@ import { cards } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { groupCardsByTheme } from "@/lib/ai/group-cards";
 import { emit } from "@/lib/realtime/event-bus";
+import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -36,6 +37,15 @@ export async function POST(request: NextRequest) {
     cards: results
       .filter((r) => r.groupLabel)
       .map((r) => ({ cardId: r.cardId, groupLabel: r.groupLabel! })),
+  });
+
+  await logAudit({
+    actor: session.user,
+    action: AUDIT_ACTIONS.AI_GROUP,
+    entityType: "retro",
+    entityId: retroId,
+    retroId,
+    metadata: { cardCount: retroCards.length, grouped: results.filter((r) => r.groupLabel).length },
   });
 
   return NextResponse.json({ results });
