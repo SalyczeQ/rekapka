@@ -20,11 +20,12 @@ import { useTranslations } from "next-intl";
 interface PhaseBarProps {
   currentPhase: string;
   retroId: string;
+  retroTitle?: string;
   onPhaseChange: (phase: string) => void;
   currentUserEmail?: string;
 }
 
-export function PhaseBar({ currentPhase, retroId, onPhaseChange, currentUserEmail }: PhaseBarProps) {
+export function PhaseBar({ currentPhase, retroId, retroTitle, onPhaseChange, currentUserEmail }: PhaseBarProps) {
   const t = useTranslations("phase");
   const currentIndex = RETRO_STATUSES.indexOf(currentPhase as typeof RETRO_STATUSES[number]);
   const nextPhase = RETRO_STATUSES[currentIndex + 1];
@@ -73,6 +74,12 @@ export function PhaseBar({ currentPhase, retroId, onPhaseChange, currentUserEmai
             </div>
           ))}
         </nav>
+
+        {retroTitle && (
+          <h1 className="flex-1 min-w-0 px-3 text-sm font-semibold truncate text-center">
+            {retroTitle}
+          </h1>
+        )}
 
         <div className="flex items-center gap-2">
           {currentPhase === "discussing" && currentUserEmail === "salay14@gmail.com" && (
