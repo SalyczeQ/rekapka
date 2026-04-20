@@ -1,9 +1,18 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 import { advancePhase } from "@/lib/actions/retro-session";
 import { vibrate } from "@/lib/haptics";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ChevronRight, Undo2 } from "lucide-react";
 import { RETRO_STATUSES } from "@/types";
 import { useTranslations } from "next-intl";
@@ -19,8 +28,27 @@ export function PhaseBar({ currentPhase, retroId, onPhaseChange, currentUserEmai
   const t = useTranslations("phase");
   const currentIndex = RETRO_STATUSES.indexOf(currentPhase as typeof RETRO_STATUSES[number]);
   const nextPhase = RETRO_STATUSES[currentIndex + 1];
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const phaseLabel = (phase: string) => t(phase as "writing" | "discussing" | "completed");
+
+  const handleConfirm = () => {
+    if (!nextPhase) return;
+    startTransition(async () => {
+      await advancePhase(retroId, nextPhase);
+      vibrate(80);
+      onPhaseChange(nextPhase);
+      setConfirmOpen(false);
+    });
+  };
+
+  const confirmDescription =
+    nextPhase === "discussing"
+      ? t("confirmDiscussing")
+      : nextPhase === "completed"
+      ? t("confirmCompleted")
+      : "";
 
   return (
     <div className="border-b bg-background/95 backdrop-blur">
@@ -62,20 +90,37 @@ export function PhaseBar({ currentPhase, retroId, onPhaseChange, currentUserEmai
             </form>
           )}
           {nextPhase && (
-            <form
-              action={async () => {
-                await advancePhase(retroId, nextPhase);
-                vibrate(80);
-                onPhaseChange(nextPhase);
-              }}
-            >
-              <Button type="submit" size="sm">
-                {t("next", { phase: phaseLabel(nextPhase) })}
-              </Button>
-            </form>
+            <Button type="button" size="sm" onClick={() => setConfirmOpen(true)}>
+              {t("next", { phase: phaseLabel(nextPhase) })}
+            </Button>
           )}
         </div>
       </div>
+
+      {nextPhase && (
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("confirmTitle", { phase: phaseLabel(nextPhase) })}</DialogTitle>
+              <DialogDescription>{confirmDescription}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmOpen(false)}
+                disabled={isPending}
+              >
+                {t("cancel")}
+              </Button>
+              <Button type="button" size="sm" onClick={handleConfirm} disabled={isPending}>
+                {t("confirm")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
