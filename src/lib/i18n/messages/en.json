@@ -12,7 +12,10 @@
     "error": "Something went wrong",
     "back": "Back",
     "reconnecting": "Reconnecting…",
-    "you": "You"
+    "you": "You",
+    "online": "online",
+    "lastSeen": "last seen {when}",
+    "neverSeen": "never online"
   },
   "auth": {
     "signInWithGoogle": "Sign in with Google",

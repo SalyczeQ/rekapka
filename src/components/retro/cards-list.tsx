@@ -8,8 +8,7 @@ import { useTranslations } from "next-intl";
 import { assignCardAuthor, deleteCard } from "@/lib/actions/retro-session";
 import { Check, Pencil, Bot, Undo2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-
-const ANONYMOUS_ID = "00000000-0000-4000-8000-000000000000";
+import { ANONYMOUS_ID } from "@/lib/anonymous";
 
 interface CardData {
   id: string;

@@ -13,7 +13,7 @@ import { PhaseDiscussing } from "./phase-discussing";
 import { ParticipantBar } from "./participant-bar";
 import { CompletionModal } from "./completion-modal";
 import { PredictionSection } from "./prediction-section";
-import { AiGroupButton } from "./ai-group-button";
+import { ANONYMOUS_ID } from "@/lib/anonymous";
 
 export type { SerializedRetro, SerializedCategory, SerializedCard, SerializedActionItem, SerializedPrediction };
 
@@ -28,7 +28,7 @@ interface RetroSessionProps {
   initialUserReactions: Record<string, string[]>;
   currentUserId: string;
   currentUserEmail?: string;
-  allUsers: { id: string; name: string; color: string; image: string | null }[];
+  allUsers: { id: string; name: string; color: string; image: string | null; lastSeenAt?: string | null }[];
   photoUrl?: string | null;
   cardImageUrls?: Record<string, string>;
   dictationEnabled?: boolean;
@@ -198,19 +198,26 @@ export function RetroSession({
   });
 
   const onlineUserIds = new Set(presence.map((u) => u.id));
-  const participantList = allUsers.map((u) => ({
-    ...u,
-    online: onlineUserIds.size > 0 ? onlineUserIds.has(u.id) : u.id === currentUserId,
-  }));
+  const participantList = allUsers
+    .filter((u) => u.id !== ANONYMOUS_ID)
+    .map((u) => ({
+      ...u,
+      online: onlineUserIds.size > 0 ? onlineUserIds.has(u.id) : u.id === currentUserId,
+    }));
 
   return (
     <div className="flex flex-col h-full">
-      <PhaseBar currentPhase={currentPhase} retroId={retro.id} retroTitle={currentRetro.title} onPhaseChange={setCurrentPhase} currentUserEmail={currentUserEmail} />
+      <PhaseBar
+        currentPhase={currentPhase}
+        retroId={retro.id}
+        retroTitle={currentRetro.title}
+        onPhaseChange={setCurrentPhase}
+        currentUserEmail={currentUserEmail}
+        cards={currentCards}
+        onCardsChange={setCards}
+      />
       <div className="px-4 py-1 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          {currentPhase === "writing" && (
-            <AiGroupButton retroId={retro.id} cards={currentCards} onCardsChange={setCards} />
-          )}
           {!connected && (
             <span className="text-xs text-muted-foreground">{t("common.reconnecting")}</span>
           )}

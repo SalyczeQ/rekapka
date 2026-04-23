@@ -12,7 +12,10 @@
     "error": "Něco se pokazilo",
     "back": "Zpět",
     "reconnecting": "Připojování…",
-    "you": "Vy"
+    "you": "Vy",
+    "online": "online",
+    "lastSeen": "naposledy {when}",
+    "neverSeen": "nikdy online"
   },
   "auth": {
     "signInWithGoogle": "Přihlásit se přes Google",

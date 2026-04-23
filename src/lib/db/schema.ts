@@ -26,6 +26,7 @@ export const users = pgTable(
     uiTheme: text("ui_theme").notNull().default("default"),
     dictationEnabled: boolean("dictation_enabled").notNull().default(true),
     reactionSoundsEnabled: boolean("reaction_sounds_enabled").notNull().default(false),
+    lastSeenAt: timestamp("last_seen_at", { mode: "date", withTimezone: true }),
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   },

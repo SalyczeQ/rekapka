@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Plus, Settings, BarChart3, Shield, Menu, Play, Lightbulb, History, ScrollText } from "lucide-react";
+import { Home, Plus, Settings, BarChart3, Shield, Play, Lightbulb, History, ScrollText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { ThemeToggle } from "./theme-toggle";
@@ -12,7 +12,6 @@ import { BottomNav } from "./bottom-nav";
 import { SignOutButton } from "@/components/shared/sign-out-button";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useRetroHeaderTitle } from "./retro-header-context";
 
 interface ActiveRetro {
@@ -88,6 +87,7 @@ interface AppShellProps {
 
 export function AppShell({ children, activeRetro, isAdmin }: AppShellProps) {
   const retroHeaderTitle = useRetroHeaderTitle();
+  const t = useTranslations("nav");
   return (
     <div className="flex min-h-screen w-full overflow-x-hidden">
       {/* Desktop sidebar */}
@@ -101,24 +101,38 @@ export function AppShell({ children, activeRetro, isAdmin }: AppShellProps) {
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
         {/* Mobile header */}
         <header className="flex items-center justify-between px-4 h-14 border-b md:hidden">
-          <Sheet>
-            <SheetTrigger
-              render={<Button variant="ghost" size="icon" aria-label="Open menu" />}
-            >
-              <Menu className="h-5 w-5" aria-hidden="true" />
-            </SheetTrigger>
-            <SheetContent side="left" className="w-60 p-0" style={{ overscrollBehavior: "contain" }}>
-              <Suspense>
-                <SidebarContent activeRetro={activeRetro} isAdmin={isAdmin} />
-              </Suspense>
-            </SheetContent>
-          </Sheet>
-          <Link href="/retros" className="font-bold truncate min-w-0 flex-1 text-center px-2">
+          <Link
+            href={activeRetro ? `/retros/${activeRetro.id}` : "/retros"}
+            className="font-bold truncate min-w-0 flex-1 pr-2"
+          >
             {retroHeaderTitle ?? "Rekapka"}
           </Link>
           <div className="flex items-center gap-1">
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                render={<Link href="/audit" aria-label={t("audit")} />}
+              >
+                <ScrollText className="h-5 w-5" aria-hidden="true" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              render={<Link href="/admin" aria-label={t("admin")} />}
+            >
+              <Shield className="h-5 w-5" aria-hidden="true" />
+            </Button>
             <LocaleToggle />
             <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              render={<Link href="/settings" aria-label={t("settings")} />}
+            >
+              <Settings className="h-5 w-5" aria-hidden="true" />
+            </Button>
           </div>
         </header>
 

@@ -1,6 +1,22 @@
 import type { SSEEvent, SSEPresenceUser } from "@/types/realtime";
 import { subscribe, trackPresence, removePresence, getPresenceUsers } from "./event-bus";
 import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+
+function touchLastSeen(userId: string) {
+  (async () => {
+    try {
+      await db
+        .update(users)
+        .set({ lastSeenAt: new Date() })
+        .where(eq(users.id, userId));
+    } catch {
+      // best-effort: failing to persist last-seen should never interrupt the stream
+    }
+  })();
+}
 
 /**
  * Creates a ReadableStream that pushes SSE-formatted events for a given retro.
@@ -19,6 +35,7 @@ export function createSSEStream(
     start(controller) {
       // Register presence — only log if this is a fresh join (not a reconnect)
       const isNew = trackPresence(retroId, user);
+      touchLastSeen(user.id);
       if (isNew) {
         void logAudit({
           actor: { id: user.id, name: user.name, email: null },
@@ -55,6 +72,7 @@ export function createSSEStream(
         try {
           // Re-register presence on each heartbeat
           trackPresence(retroId, user);
+          touchLastSeen(user.id);
           controller.enqueue(encoder.encode(`: heartbeat\n\n`));
         } catch {
           // Stream closed
@@ -66,6 +84,7 @@ export function createSSEStream(
       unsubscribe?.();
       if (heartbeatInterval) clearInterval(heartbeatInterval);
       removePresence(retroId, user.id);
+      touchLastSeen(user.id);
       void logAudit({
         actor: { id: user.id, name: user.name, email: null },
         action: AUDIT_ACTIONS.RETRO_PRESENCE_LEAVE,

@@ -68,7 +68,7 @@ export default async function TeamStatsPage() {
 
   // Fetch all users
   const allUsers = await db
-    .select({ id: users.id, name: users.name, color: users.color })
+    .select({ id: users.id, name: users.name, color: users.color, lastSeenAt: users.lastSeenAt })
     .from(users);
 
   // Fetch top tags

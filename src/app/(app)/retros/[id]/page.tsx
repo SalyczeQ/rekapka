@@ -66,7 +66,13 @@ export default async function RetroPage({ params }: RetroPageProps) {
       .innerJoin(users, eq(cards.authorId, users.id))
       .where(eq(cards.retroId, id)),
     db
-      .select({ id: users.id, name: users.name, color: users.color, image: users.image })
+      .select({
+        id: users.id,
+        name: users.name,
+        color: users.color,
+        image: users.image,
+        lastSeenAt: users.lastSeenAt,
+      })
       .from(users),
     db
       .select({
@@ -187,7 +193,7 @@ export default async function RetroPage({ params }: RetroPageProps) {
       initialUserReactions={userReactionsMap}
       currentUserId={currentUser.id!}
       currentUserEmail={currentUser.email ?? ""}
-      allUsers={serialize<{ id: string; name: string; color: string; image: string | null }[]>(allUsers)}
+      allUsers={serialize<{ id: string; name: string; color: string; image: string | null; lastSeenAt: string | null }[]>(allUsers)}
       photoUrl={photoSignedUrl}
       cardImageUrls={cardImageUrls}
       dictationEnabled={currentUserRecord?.dictationEnabled ?? true}

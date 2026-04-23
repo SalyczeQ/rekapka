@@ -4,6 +4,9 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "next-intl";
+import { formatTimeAgo, type Locale } from "@/lib/time-ago";
+import { ANONYMOUS_ID } from "@/lib/anonymous";
 import {
   Clock,
   MessageSquare,
@@ -52,6 +55,7 @@ interface UserData {
   id: string;
   name: string;
   color: string;
+  lastSeenAt?: string | null;
 }
 
 interface TagData {
@@ -85,6 +89,8 @@ export function TeamStatsDashboard({
   topTags,
 }: TeamStatsDashboardProps) {
   const t = useTranslations("teamStats");
+  const tCommon = useTranslations("common");
+  const locale = useLocale() as Locale;
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [loadingAi, setLoadingAi] = useState(false);
@@ -155,12 +161,18 @@ export function TeamStatsDashboard({
       byCat[c.categoryName] = (byCat[c.categoryName] || 0) + 1;
     });
 
-    // Participation: cards per user
-    const byUser: Record<string, { name: string; color: string; count: number }> = {};
+    // Participation: cards per user (exclude the anonymous placeholder)
+    const byUser: Record<string, { name: string; color: string; count: number; lastSeenAt: string | null }> = {};
     filteredCards.forEach((c) => {
+      if (c.authorId === ANONYMOUS_ID) return;
       if (!byUser[c.authorId]) {
         const user = users.find((u) => u.id === c.authorId);
-        byUser[c.authorId] = { name: user?.name ?? c.authorName, color: user?.color ?? "#888", count: 0 };
+        byUser[c.authorId] = {
+          name: user?.name ?? c.authorName,
+          color: user?.color ?? "#888",
+          count: 0,
+          lastSeenAt: user?.lastSeenAt ?? null,
+        };
       }
       byUser[c.authorId].count++;
     });
@@ -402,16 +414,23 @@ export function TeamStatsDashboard({
         </CardHeader>
         <CardContent className="pb-3">
           <div className="space-y-1.5">
-            {stats.participation.map((p) => (
-              <div key={p.name} className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
-                <span className="flex-1">{p.name}</span>
-                <span className="tabular-nums text-muted-foreground">{p.count} cards</span>
-                <span className="tabular-nums text-muted-foreground text-xs">
-                  ({Math.round((p.count / stats.totalCards) * 100)}%)
-                </span>
-              </div>
-            ))}
+            {stats.participation.map((p) => {
+              const ago = formatTimeAgo(p.lastSeenAt, locale);
+              const seenLabel = ago
+                ? tCommon("lastSeen", { when: ago })
+                : tCommon("neverSeen");
+              return (
+                <div key={p.name} className="flex items-center gap-2 text-sm flex-wrap">
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
+                  <span className="flex-1 min-w-0 truncate">{p.name}</span>
+                  <span className="text-xs text-muted-foreground italic">{seenLabel}</span>
+                  <span className="tabular-nums text-muted-foreground">{p.count} cards</span>
+                  <span className="tabular-nums text-muted-foreground text-xs">
+                    ({Math.round((p.count / stats.totalCards) * 100)}%)
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
