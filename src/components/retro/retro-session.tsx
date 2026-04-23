@@ -13,7 +13,6 @@ import { PhaseDiscussing } from "./phase-discussing";
 import { ParticipantBar } from "./participant-bar";
 import { CompletionModal } from "./completion-modal";
 import { PredictionSection } from "./prediction-section";
-import { AiGroupButton } from "./ai-group-button";
 import { ANONYMOUS_ID } from "@/lib/anonymous";
 
 export type { SerializedRetro, SerializedCategory, SerializedCard, SerializedActionItem, SerializedPrediction };
@@ -208,12 +207,17 @@ export function RetroSession({
 
   return (
     <div className="flex flex-col h-full">
-      <PhaseBar currentPhase={currentPhase} retroId={retro.id} retroTitle={currentRetro.title} onPhaseChange={setCurrentPhase} currentUserEmail={currentUserEmail} />
+      <PhaseBar
+        currentPhase={currentPhase}
+        retroId={retro.id}
+        retroTitle={currentRetro.title}
+        onPhaseChange={setCurrentPhase}
+        currentUserEmail={currentUserEmail}
+        cards={currentCards}
+        onCardsChange={setCards}
+      />
       <div className="px-4 py-1 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          {currentPhase === "writing" && (
-            <AiGroupButton retroId={retro.id} cards={currentCards} onCardsChange={setCards} />
-          )}
           {!connected && (
             <span className="text-xs text-muted-foreground">{t("common.reconnecting")}</span>
           )}
