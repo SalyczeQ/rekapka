@@ -282,8 +282,16 @@ export function PhaseWriting({
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as string)} {...swipeHandlers}>
           <TabsList className="w-full">
             {categories.map((cat) => (
-              <TabsTrigger key={cat.id} value={cat.id} className="flex-1">
-                {cat.name} (<span className="tabular-nums">{cardsByCategory(cat.id).length}</span>)
+              <TabsTrigger
+                key={cat.id}
+                value={cat.id}
+                className="flex-1 font-semibold transition-colors !bg-(--cat-idle-bg) !text-(--cat-color) data-[active]:!bg-(--cat-color) data-[active]:!text-white"
+                style={cat.color ? {
+                  ["--cat-color" as string]: cat.color,
+                  ["--cat-idle-bg" as string]: hexToRgba(cat.color, 0.12),
+                } : undefined}
+              >
+                <span>{cat.name} (<span className="tabular-nums">{cardsByCategory(cat.id).length}</span>)</span>
               </TabsTrigger>
             ))}
           </TabsList>
