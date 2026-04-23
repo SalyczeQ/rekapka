@@ -253,6 +253,13 @@
       "when": 1776673557329,
       "tag": "0035_audit_logs",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1777152000000,
+      "tag": "0036_user_last_seen_at",
+      "breakpoints": true
     }
   ]
 }

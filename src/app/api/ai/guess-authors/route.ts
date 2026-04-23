@@ -5,8 +5,7 @@ import { cards, users } from "@/lib/db/schema";
 import { eq, ne, sql } from "drizzle-orm";
 import OpenAI from "openai";
 import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
-
-const ANONYMOUS_ID = "00000000-0000-4000-8000-000000000000";
+import { ANONYMOUS_ID } from "@/lib/anonymous";
 
 function getOpenAI() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });

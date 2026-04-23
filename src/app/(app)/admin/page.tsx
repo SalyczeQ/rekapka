@@ -13,8 +13,7 @@ import { Link2, Trash2, Plus, Calendar, Bot } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { RecalculateGuessesButton } from "@/components/admin/recalculate-guesses-button";
-
-const ANONYMOUS_ID = "00000000-0000-4000-8000-000000000000";
+import { ANONYMOUS_ID } from "@/lib/anonymous";
 
 export default async function AdminPage() {
   await requireAuth();
