@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { retros, cards, categories, users } from "@/lib/db/schema";
-import { eq, ne } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth/session";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -50,7 +50,11 @@ export default async function CardsPage({ params }: CardsPageProps) {
     })
     .from(cards)
     .innerJoin(users, eq(cards.authorId, users.id))
-    .where(eq(cards.retroId, id))
+    .where(
+      retro.status === "completed"
+        ? and(eq(cards.retroId, id), eq(cards.isDiscussed, true))
+        : eq(cards.retroId, id)
+    )
     .orderBy(cards.sortOrder);
 
   // Get unique authors who have cards in this retro
