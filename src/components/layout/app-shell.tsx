@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Plus, Settings, BarChart3, Shield, Play, Lightbulb, History, ScrollText } from "lucide-react";
+import { Home, Plus, Settings, BarChart3, Play, Lightbulb, History, ScrollText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { ThemeToggle } from "./theme-toggle";
@@ -33,7 +33,6 @@ function SidebarContent({ activeRetro, isAdmin }: { activeRetro?: ActiveRetro | 
     { href: "/retros", icon: History, label: t("retros") },
     { href: "/stats", icon: BarChart3, label: t("stats") },
     { href: "/predictions", icon: Lightbulb, label: t("predictions") },
-    { href: "/admin", icon: Shield, label: t("admin") },
     ...(isAdmin ? [{ href: "/audit", icon: ScrollText, label: t("audit") }] : []),
     { href: "/settings", icon: Settings, label: t("settings") },
   ];
@@ -112,23 +111,18 @@ export function AppShell({ children, activeRetro, isAdmin }: AppShellProps) {
               <Button
                 variant="ghost"
                 size="icon"
+                nativeButton={false}
                 render={<Link href="/audit" aria-label={t("audit")} />}
               >
                 <ScrollText className="h-5 w-5" aria-hidden="true" />
               </Button>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              render={<Link href="/admin" aria-label={t("admin")} />}
-            >
-              <Shield className="h-5 w-5" aria-hidden="true" />
-            </Button>
             <LocaleToggle />
             <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
+              nativeButton={false}
               render={<Link href="/settings" aria-label={t("settings")} />}
             >
               <Settings className="h-5 w-5" aria-hidden="true" />

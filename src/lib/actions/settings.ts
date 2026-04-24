@@ -75,7 +75,7 @@ export async function updateAppSettings(_prev: unknown, formData: FormData) {
       metadata: { groupName: groupName || null },
     });
 
-    revalidatePath("/admin");
+    revalidatePath("/settings");
     return { success: true, message: "Group name saved" };
   } catch {
     return { success: false, message: "Failed to save group name" };
