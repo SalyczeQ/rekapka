@@ -25,7 +25,7 @@ export async function createInviteToken() {
     entityId: token.id,
   });
 
-  revalidatePath("/admin");
+  revalidatePath("/settings");
   return token;
 }
 
@@ -38,5 +38,5 @@ export async function deleteInviteToken(tokenId: string) {
     entityType: "invite_token",
     entityId: tokenId,
   });
-  revalidatePath("/admin");
+  revalidatePath("/settings");
 }
