@@ -11,6 +11,7 @@ import { updateUserSettings, updateAppSettings } from "@/lib/actions/settings";
 import { createInviteToken, deleteInviteToken } from "@/lib/actions/invite";
 import { getTranslations } from "next-intl/server";
 import { ColorPicker } from "@/components/shared/color-picker";
+import { SettingsSelect } from "@/components/shared/settings-select";
 import { RecalculateGuessesButton } from "@/components/admin/recalculate-guesses-button";
 import { Link2, Trash2, Plus, Calendar, Bot } from "lucide-react";
 import { revalidatePath } from "next/cache";
@@ -34,7 +35,6 @@ export default async function SettingsPage() {
   const sessionUser = await requireAuth();
   const t = await getTranslations("settings");
   const tNav = await getTranslations("nav");
-  const tCommon = await getTranslations("common");
 
   const [user] = await db
     .select()
@@ -74,7 +74,7 @@ export default async function SettingsPage() {
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-balance">{tNav("settings")}</h1>
 
-      <ActionForm action={updateUserSettings} successMessage={t("saved")}>
+      <ActionForm action={updateUserSettings} successMessage={t("saved")} autoSubmit>
         {/* Profile */}
         <Card>
           <CardHeader>
@@ -85,7 +85,6 @@ export default async function SettingsPage() {
             <div className="space-y-2">
               <Label htmlFor="settings-name">{t("name")}</Label>
               <input
-                key={user.name}
                 id="settings-name"
                 name="name"
                 defaultValue={user.name}
@@ -120,19 +119,13 @@ export default async function SettingsPage() {
           <CardContent className="space-y-6 pb-8">
             <div className="space-y-2">
               <Label htmlFor="settings-theme">{t("theme")}</Label>
-              <select
-                key={user.uiTheme}
+              <SettingsSelect
                 id="settings-theme"
                 name="uiTheme"
                 defaultValue={user.uiTheme}
+                options={THEMES}
                 className="h-10 w-full text-sm bg-transparent border border-input rounded-lg px-3 py-2 focus:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
-                {THEMES.map((theme) => (
-                  <option key={theme.value} value={theme.value}>
-                    {theme.label}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="space-y-2">
@@ -142,25 +135,18 @@ export default async function SettingsPage() {
 
             <div className="space-y-2">
               <Label htmlFor="settings-locale">{t("language")}</Label>
-              <select
-                key={user.locale}
+              <SettingsSelect
                 id="settings-locale"
                 name="locale"
                 defaultValue={user.locale}
+                options={LOCALES}
                 className="h-10 w-full text-sm bg-transparent border border-input rounded-lg px-3 py-2 focus:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
-                {LOCALES.map((l) => (
-                  <option key={l.value} value={l.value}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center gap-3">
                 <input
-                  key={String(user.dictationEnabled)}
                   type="checkbox"
                   id="settings-dictation"
                   name="dictationEnabled"
@@ -179,7 +165,6 @@ export default async function SettingsPage() {
             <div className="space-y-2">
               <div className="flex items-center gap-3">
                 <input
-                  key={String(user.reactionSoundsEnabled)}
                   type="checkbox"
                   id="settings-reaction-sounds"
                   name="reactionSoundsEnabled"
@@ -197,9 +182,6 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
 
-        <div className="mt-6">
-          <Button type="submit" className="w-full sm:w-auto">{t("saveSettings")}</Button>
-        </div>
       </ActionForm>
 
       {/* Group settings */}
@@ -210,11 +192,10 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           {config ? (
-            <ActionForm action={updateAppSettings} className="space-y-4" successMessage={t("groupNameSaved")}>
+            <ActionForm action={updateAppSettings} className="space-y-4" successMessage={t("groupNameSaved")} autoSubmit>
               <div className="space-y-1.5">
                 <Label htmlFor="admin-group-name">{t("groupName")}</Label>
                 <input
-                  key={config.groupName}
                   id="admin-group-name"
                   name="groupName"
                   defaultValue={config.groupName}
@@ -223,7 +204,6 @@ export default async function SettingsPage() {
                   className="h-10 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
                 />
               </div>
-              <Button type="submit">{tCommon("save")}</Button>
             </ActionForm>
           ) : (
             <p className="text-muted-foreground">{t("runSeed")}</p>

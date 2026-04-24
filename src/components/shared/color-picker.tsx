@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Check } from "lucide-react";
 import { CARD_COLORS } from "@/lib/colors";
 
@@ -11,10 +11,16 @@ interface ColorPickerProps {
 
 export function ColorPicker({ name, defaultValue }: ColorPickerProps) {
   const [selected, setSelected] = useState(defaultValue);
+  const hiddenRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (selected === defaultValue) return;
+    hiddenRef.current?.form?.requestSubmit();
+  }, [selected, defaultValue]);
 
   return (
     <div className="flex flex-wrap gap-2">
-      <input type="hidden" name={name} value={selected} />
+      <input ref={hiddenRef} type="hidden" name={name} value={selected} />
       {CARD_COLORS.map((color) => (
         <button
           key={color}
